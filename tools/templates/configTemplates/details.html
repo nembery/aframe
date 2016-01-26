@@ -1,0 +1,62 @@
+
+{% extends "base.html" %}
+{% block title %}A-Frame - Template{% endblock %}
+{% block content %}
+<h2>Template Details</h2>
+<table>
+    <tr>
+        <td>
+            Name
+        </td>
+        <td>
+          {{ template.name }}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Description
+        </td>
+        <td>
+            {{ template.description }}
+        </td> 
+    </tr>
+     <tr>
+        <td>
+            Transport
+        </td>
+        <td>
+            {{ template.action_provider }}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Detail
+        </td>
+        <td>
+            <pre>
+{{ template.template }}
+            </pre>
+        </td> 
+    </tr>
+    <tr>
+        <td>
+            Options
+        </td>
+        <td>
+		    <a href='delete/{{ template.id }}'>Delete</a>
+            &nbsp;
+		    <a href='edit/{{ template.id }}'>Edit</a>
+	    </td>
+    </tr>
+     <tr>
+        <td>
+            Input Form
+        </td>
+        <td>
+		    <a href='/input_forms/view_from_template/{{ template.id }}'>View</a>
+            &nbsp;
+		    <a href='/input_forms/edit_from_template/{{ template.id }}'>Edit</a>
+        </td>
+    </tr>
+</table>
+{% endblock %}

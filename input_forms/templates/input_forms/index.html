@@ -1,0 +1,26 @@
+
+{% extends "base.html" %}
+{% block title %}a_frame{% endblock %}
+{% block content %}
+<h2>Input Forms</h2>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Options</th>
+    </tr>
+    {% for work_flow in work_flow_list %}
+    <tr>
+        <td><a href='{{ work_flow.id }}'>{{ work_flow.name }}</a> </td>
+        <td>{{ work_flow.description }}</td>
+        <td>
+            <a href='delete/{{ work_flow.id }}'>Delete</a>
+            &nbsp;
+            <a href='edit/{{ work_flow.id }}'>Edit</a>
+            &nbsp;
+            <a href='preview/{{ work_flow.id }}'>Preview</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

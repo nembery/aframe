@@ -1,0 +1,35 @@
+{% load staticfiles %}
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <title>{% block title %}a_frame{% endblock %}</title>
+    <script type="text/javascript" src="{% static 'js/jquery-1.8.1.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery-ui.min.js' %}"></script>
+    <link href="{% static 'images/a-frame-logo.png' %}" rel="shortcut icon">
+
+    <script type="text/javascript" src="{% static 'js/a_frame_utils.js' %}"></script>
+    {% block scripts %}{% endblock %}
+</head>
+<body>
+<div id="header">
+    <h1>A-Frame</h1>
+</div>
+<div id="header_menu">
+    <table>
+        <tr>
+            <td>
+                <a href="/endpoints/">Endpoints</a>
+            </td>
+            <td>
+                <a href="/tools/">Templates</a>
+            </td>
+        </tr>
+    </table>
+</div>
+<div id="content">
+    <div class="centered_box">
+        {% block content %}{% endblock %}
+    </div>
+</div>
+</body>
+</html>

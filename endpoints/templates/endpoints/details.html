@@ -1,0 +1,87 @@
+
+{% extends "base.html" %}
+{% block title %}a_frame{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+
+$(window).load(function() {
+    $( "#template_autocomplete" ).autocomplete({
+        source: "/input_forms/search",
+
+
+    });
+});
+
+
+</script>
+
+{% endblock %}
+{% block content %}
+
+<h2>Endpoints from Provider: {{ provider }}</h2>
+<table>
+    <tr>
+        <td>
+            Endpoint ID:
+        </td>
+        <td>
+            {{ endpoint.id }}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Endpoint Name:
+        </td>
+        <td>
+            {{ endpoint.name }}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            IP Address:
+        </td>
+        <td>
+            {{ endpoint.ip }}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Endpoint Type:
+        </td>
+        <td>
+            {{ endpoint.type }}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Username:
+        </td>
+        <td>
+            {{ endpoint.username }}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Password:
+        </td>
+        <td>
+            {{ endpoint.password }}
+        </td>
+    </tr>
+</table>
+<br/>
+<h3>Apply Template:</h3>
+<table>
+    <tr>
+        <td>
+            <form method="POST" action="/input_forms/configureTemplate">
+                <input type="hidden" name="provider" value="{{ provider }}">
+                <input type="hidden" name="endpoint_id" value="{{ endpoint.id}}">
+                <input type="text" name="input_form_name" size="25" id="template_autocomplete"
+                       placeholder="search input form definitions"> &nbsp;
+                <input type="submit">
+            </form>
+        </td>
+    </tr>
+</table>
+{% endblock %}

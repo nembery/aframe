@@ -1,0 +1,157 @@
+
+{% extends "base.html" %}
+{% block title %}a_frame{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+
+    var tags = [];
+    var j;
+
+    function submit_form() {
+        var json = $('#json');
+        var tag_configs = $('#tag_configurator');
+
+        var name = $('#name').val();
+        var description = $('#description').val();
+
+        if (name == "" || description == "") {
+            alert('You must provide a valid name and description');
+            $('#name').focus();
+            return false;
+        }
+
+        tag_configs.find("[id *= 'tag_']").each(
+            function(a,r) {
+                var row = $('#' + r.id);
+                var name_label = row.find('[name *= "_label"]');
+                console.log(name_label);
+                var name = name_label.attr('id').replace("_label", "");
+                var label = name_label.val();
+
+                var default_value = row.find('[id *= "_default"]').val();
+
+                console.log('name is: ' + name);
+                console.log('default is: ' + default_value);
+                console.log('label is: ' + label);
+
+                t = { 'name' : name, 'label' : label, 'default': default_value };
+                tags.push(t);
+            }
+         );
+         var json_text = JSON.stringify(tags, null, 2);
+
+         $('#json').val(json_text);
+
+        $('#update_form').submit();
+    }
+
+    function get_tag_config(tag_name) {
+        for(i=0; i<j.length; i++) {
+            var tag = j[i];
+            if (tag["name"] == tag_name) {
+                return tag;
+            }
+        }
+    }
+
+    $(window).load(function() {
+
+        var json_data = $('#json_data').val();
+        j = eval(json_data);
+        console.log("got json tag configs");
+        console.log(j);
+
+        var tag_configs = $('#tag_configurator');
+        tag_configs.find("[id *= 'tag_']").each(
+            function(a,r) {
+                var row = $('#' + r.id);
+                var name_label = row.find('[name *= "_label"]');
+                var name = name_label.attr('id').replace("_label", "");
+                t_config = get_tag_config(name);
+
+                name_label.val(t_config["label"]);
+
+                var default_value = row.find('[id *= "_default"]')
+                default_value.val(t_config["default"]);
+
+            }
+        );
+    });
+
+</script>
+{% endblock%}
+{% block content %}
+<h2>Edit Input Form</h2>
+<form method="POST" action="/input_forms/update" id="update_form">
+    <table>
+        <tr>
+            <td>
+                Name:
+            </td>
+            <td>
+                <input type="text" name="name" id="name" value="{{ input_form.name }}"
+                       onblur="return clean_string_no_special(this);"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Description:
+            </td>
+            <td>
+                <input type="text" name="description" id="description"  value="{{ input_form.description }}" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Instructions:
+            </td>
+            <td>
+                <textarea rows="5" cols="20" name="instructions" id="instructions">{{ input_form.instructions }}</textarea>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Template:
+            </td>
+            <td>
+                <a href="/tools/{{ config_template.id }}">{{ config_template.name }}</a>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                Available Tags:
+            </td>
+            <td>
+                <table id="tag_configurator">
+                    <th>Variable</th>
+                    <th>Label</th>
+                    <th>Default Value</th>
+                    {% for t in available_tags %}
+                    <tr id="tag_{{ forloop.counter }}">
+                        <td>
+                            {{ t }}
+                        </td>
+                        <td>
+                            <input type="text" id="{{ t }}_label" name="{{ t }}_label" value="{{ t }}"/>
+                        </td>
+                        <td>
+                            <input type="text" id="{{ t }}_default" name="{{ t }}_default" value="none"/>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <input type="hidden" name="json" id="json"/>
+                <input type="hidden" name="json_data" id="json_data" value="{{ input_form.json }}"/>
+                <input type="hidden" name="config_template_id" value="{{ config_template.id }}"/>
+                <input type="hidden" name="input_form_id" value="{{ input_form.id }}"/>
+                <input type="button" onclick="submit_form()" value="Save"/>
+            </td>
+        </tr>
+    </table>
+</form>
+{% endblock %}

@@ -1,0 +1,132 @@
+
+{% extends "base.html" %}
+{% block title %}a_frame{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+
+    var check_all = 'checked';
+    function selectAllEndpoints() {
+        $('[name *= "endpoints"]').each(function(i,x) {
+            x.checked = check_all;
+
+        });
+        if (check_all == 'checked') {
+            check_all = '';
+        } else {
+            check_all = 'checked';
+        }
+    }
+
+    $(window).load(function() {
+        $( "#template_autocomplete" ).autocomplete({
+            source: "/input_forms/search",
+        });
+    });
+
+</script>
+{% endblock %}
+{% block content %}
+
+<h2>Endpoints from Provider: {{ provider }}</h2>
+<h3>{{ provider_instance.label }}</h3>
+{% if filter != "" %}
+<font class="small">Filtering where "{{ filter }}" matches "{{ argument }}"</font>
+{% endif %}
+<br/>
+<table>
+    <th>Available Filters</th>
+    <tr>
+        <td style="text-align: center">
+            <form method="GET" action="/endpoints/list/{{ provider }}/">
+                <select name="filter">
+                    {% for f in filters %}
+                    <option value="{{ f.name }}" title="{{ f.description }}" {% if f.name == filter %} selected {% endif %}>
+                        {{ f.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                &nbsp;
+                <input type="text" name="argument" style="width: 50%">
+                &nbsp;
+                <input type="submit" value="Apply">
+                &nbsp;
+                <input type="button" value="Clear" onclick="javascript: window.location='/endpoints/list/{{ provider }}'"/>
+            </form>
+        </td>
+    </tr>
+</table>
+
+<form method="POST" action="/endpoints/addEndpoints">
+<table>
+    <th>
+        <input type="checkbox" name="all" id="all" onclick="javascript: selectAllEndpoints()"/>
+    </th>
+    <th>
+        Name
+    </th>
+    <th>
+        IP Address
+    </th>
+    <th>
+        Type
+    </th>
+    {% for d in endpoint_list %}
+    <tr>
+        <td>
+            {% if d.name in job_endpoint_names %}
+            <input type="checkbox" name="endpoints" checked="checked" value="{{ d.id }}"/>
+            {% else %}
+            <input type="checkbox" name="endpoints" value="{{ d.id }}"/>
+            {% endif %}
+        </td>
+        <td>
+            <a href="/endpoints/detail/{{ provider }}/{{ d.id }}">{{ d.name }}</a>
+        </td>
+        <td>
+            {{ d.ip }}
+        </td>
+        <td>
+            {{ d.type }}
+        </td>
+    </tr>
+    {% endfor %}
+    <tr>
+        <td colspan="4" style="text-align:right">
+            {% if prev >= 0 %}
+            <a href="/endpoints/list/{{ provider }}/?o={{ prev }}"> << </a>
+            &nbsp;
+            {% endif %}
+            {% if next >= 0 %}
+            <a href="/endpoints/list/{{ provider }}/?o={{ next }}"> >> </a>
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td colspan="4">
+            <input type="hidden" name="endpoint_provider" value="{{ provider }}"/>
+            <input type="submit" value="Add Selected Endpoints to Queue"/>
+            &nbsp;
+            <input type="button" value="Clear Queue" onclick="javascript: window.location = '/endpoints/clearEndpoints/{{ provider }}'"/>
+            &nbsp;
+            Queue: {{ job_endpoints|length }}
+        </td>
+    </tr>
+</table>
+</form>
+<br/>
+<h3>Apply Template to {{ job_endpoints|length }} Endpoints in Queue:</h3>
+<table>
+    <tr>
+        <td>
+            <form method="POST" action="/input_forms/configureTemplateForQueue">
+                <input type="hidden" name="provider" value="{{ provider }}">
+                <input type="hidden" name="endpoint_id" value="{{ endpoint.id}}">
+                <input type="text" name="input_form_name" size="25" id="template_autocomplete"
+                       placeholder="search input form definitions"> &nbsp;
+                <input type="submit">
+            </form>
+        </td>
+    </tr>
+</table>
+
+{% endblock %}

@@ -1,0 +1,29 @@
+
+{% extends "base.html" %}
+{% block title %}a_frame{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+
+</script>
+{% endblock%}
+{% block content %}
+<h2>{{ input_form.name }} Preview</h2>
+{{ input_form.instructions }}
+
+<table>
+    {% for j in json_object %}
+    <tbody>
+        <tr>
+            <td class="template_title">
+                {{ j.label }}
+            </td>
+            <td>
+                <input type="text" name="{{ name }}" placeholder="{{ j.default }}">
+            </td>
+        </tr>
+    </tbody>
+    {% endfor %}
+</table>
+<br/>
+<font class="small">This is a per-endpoint template. To execute this template, first choose an endpoint and select this template.</font>
+{% endblock %}

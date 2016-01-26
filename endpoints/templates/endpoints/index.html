@@ -1,0 +1,19 @@
+
+{% extends "base.html" %}
+{% block title %}a_frame{% endblock %}
+{% block content %}
+
+<h2>Endpoints</h2>
+<table>
+    <th>Provider Plugins</th>
+    {% for provider in provider_list %}
+    <tr>
+        <td>
+            <a href="/endpoints/list/{{ provider }}">{{ provider }}</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+
+{% endblock %}

@@ -1,0 +1,57 @@
+
+{% extends "base.html" %}
+{% block title %}a_frame{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+
+</script>
+{% endblock%}
+{% block content %}
+<h2>{{ input_form.name }}</h2>
+{{ input_form.instructions }}
+<form method="POST" action="/input_forms/apply">
+    <table>
+        <tbody>
+        <tr style="background: white">
+            <td class="template_title">
+                Endpoint:
+            </td>
+            <td>
+                {{ endpoint.name }}
+                <input type="hidden" name="provider" value="{{ provider }}"/>
+                <input type="hidden" name="endpoint_id" value="{{ endpoint.id }}"/>
+                <input type="hidden" name="input_form_id" value="{{ input_form.id }}"/>
+            </td>
+        </tr>
+        <tr style="background: white">
+            <td>
+                IP Address:
+            </td>
+            <td>
+                {{ endpoint.ip }}
+            </td>
+
+        </tr>
+        </tbody>
+        {% for j in json_object %}
+        <tbody>
+        <tr>
+            <td class="template_title">
+                {{ j.label }}
+            </td>
+            <td>
+                <input type="text" name="{{ j.name }}" value="{{ j.default }}" style="margin-left: 0px;"/>
+            </td>
+        </tr>
+        </tbody>
+        {% endfor %}
+        <tbody>
+        <tr>
+            <td colspan="2" style="text-align: right;">
+                <input type="submit" value="Apply">
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}A-Frame - New Template{% endblock %}
+{% block scripts %}
+<script type="text/javascript" src="{% static "js/jquery-1.8.1.min.js" %}"></script>
+    <script type="text/javascript">
+
+    function validateForm() {
+        return true;
+    }
+
+    </script>
+{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();"  action="/tools/create/">
+    <h2>New Template - Step 3 of 3</h2>
+    <table id="action_params_container">
+        <tr>
+            <td>
+                Action Provider
+            </td>
+            <td>
+                {{ action_provider }}
+            </td>
+        </tr>
+        {% for option in options.values %}
+        <tr>
+            <td>
+                {{ option.label }}
+            </td>
+            <td>
+                {{ option.value }}
+            </td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td>
+                Name:
+            </td>
+            <td>
+                <input type="text" name="name" placeholder="New Template"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Description:
+            </td>
+            <td>
+                <textarea name="description" placeholder="A brief description of this template"></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Template Type:
+            </td>
+            <td>
+                <select name="type">
+                    <option value="per-endpoint">Per-Endpoint</option>
+                    <option value="standalone">Standalone</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Template:
+            </td>
+            <td>
+                <textarea
+                        name="template" cols="40" rows="25"
+                        placeholder="
+The template text to be used. Use the {% templatetag openvariable %} format {% templatetag closevariable %} to
+introduce variables, in this case a variable named 'format' will be available to your forms.
+
+Variable names must not include special characters!"></textarea>
+            </td>
+        </tr>
+
+    </table>
+    <input type="hidden" name="action_provider" value="{{ action_provider }}"/>
+    <input type="submit" value="Create"/>
+</form>
+{% endblock %}
