@@ -2,13 +2,13 @@
 {% load staticfiles %}
 {% block title %}A-Frame - New Template{% endblock %}
 {% block scripts %}
-    <script type="text/javascript" src="{% static "js/jquery-1.8.1.min.js" %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery-1.8.1.min.js' %}"></script>
     <script type="text/javascript">
 
     function get_action_options(action_name) {
 
         var doc = jQuery(document.documentElement);
-        doc.css('cursor', 'progress');
+        doc.css("cursor", "progress");
 
         var params = {
             "action_name" : action_name
@@ -19,7 +19,7 @@
         var post = jQuery.post(url, params, function(response) {
             data = eval(response);
             if ("options" in data) {
-                console.log('dumping options');
+                console.log("dumping options");
                 var opts = data["options"];
                 for (o=0; o < opts.length; o++) {
                     console.log(opts[o]);
@@ -27,19 +27,19 @@
             }
         });
         post.fail(function() {
-            alert('Could not perform request!');
+            alert("Could not perform request!");
         });
 
         post.always(function() {
-            doc.css('cursor', '');
+            doc.css("cursor", "");
         });
     }
 
     $(window).load(function() {
-        console.log('loading');
-        $('#id_action_provider').change(
+        console.log("loading");
+        $("#id_action_provider").change(
             function(v){
-                var selected_action = $('#id_action_provider').val();
+                var selected_action = $("#id_action_provider").val();
                 get_action_options(selected_action);
             });
     });

@@ -1,0 +1,165 @@
+
+{% extends "base.html" %}
+{% block title %}A-Frame{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+
+    var provider_options_json;
+
+    function submit_form() {
+        var container = $('#provider_options_container');
+
+        // grab all input text fields and the values that were entered by the user
+        container.find("[id *= 'text_input_']").each(
+            function(a,r) {
+                for(j in provider_options_json) {
+                    var po = provider_options_json[j]
+                    console.log(po);
+
+                    if (po.name == r.name) {
+                        console.log('found it!');
+                        po.value = r.value;
+                    }
+                }
+
+            }
+         );
+
+         $('#provider_options').val(JSON.stringify(provider_options_json, null, 2));
+
+        console.log(provider_options_json);
+
+         $('#create_form').submit();
+    }
+
+    function add_list_item(option_name) {
+        // get table of list items for this option name
+        var list_items_table = $('#list_items_' + option_name);
+
+        // we are going to construct a new item based on input values
+        var new_item = {};
+
+        // create html fragment to show the item being added
+        var new_row = $('<tr/>');
+
+        // iterate through the table to find all items with id containing 'list_item_'
+        list_items_table.find("[id *= 'list_item_']").each(
+            function(index,r) {
+                // create the new item with name = value key pairs
+                new_item[r.name] = r.value;
+
+                // and append the value to the new_row we will add to the table below
+                new_row.append('<td>' + r.value + '</td>');
+
+            }
+         );
+
+        // now, let's update the provider_options_json with the newest addition
+        // provider_options_json is a list of dict objects, iterate the list and find the correct dict
+        // where name == option_name
+        for(j in provider_options_json) {
+
+            var po = provider_options_json[j]
+
+            if (po.name == option_name) {
+                // we have the correct dict object
+                var current_list = po.value;
+                if (typeof(current_list) == "string") {
+                    // hasn't yet been initialized to an actual list, so do that now
+                    current_list = eval(current_list);
+                }
+
+                // add the new_item to the list
+                current_list.push(new_item);
+
+                // and push list back to the parent object
+                po.value = current_list
+            }
+        }
+
+        // append the new_row html fragement to the new_rows tbody element
+        $('#new_rows').append(new_row);
+
+        // and debug log for developer sanity
+        console.log(provider_options_json);
+    }
+
+    $(window).load(function() {
+        console.log('loading page');
+        var json_text = $('#provider_options').val();
+        provider_options_json = eval(json_text);
+    });
+
+    </script>
+{% endblock %}
+
+{% block content %}
+
+<form action="/endpoints/createGroup/" id="create_form" method="POST">
+    <h2>New Endpoint Group - Step 2 of 2</h2>
+    <h3>Configure Endpoint Provider</h3>
+    <table id="provider_options_container">
+        <tr>
+            <td>
+                Group Name:
+            </td>
+            <td>
+                {{ group_name }}
+            </td>
+        </tr>
+        {% for opts in provider_options%}
+        <tr>
+            <td>
+                {{ opts.label }}
+            </td>
+            <td>
+                {% if opts.type == "text" %}
+                <input type="text" name="{{ opts.name }}" id="text_input_{{ opts.name }}"
+                       placeholder="{{ opts.value }}"/>
+                {% elif opts.type == "list" %}
+                <table id="list_items_{{ opts.name }}">
+                    <tbody>
+                    <tr>
+                    {% for list_item in opts.list_items %}
+                        <th>
+                            {{ list_item.label }}
+                        </th>
+                    {% endfor %}
+                    </tr>
+                    </tbody>
+                    <tbody id="new_rows">
+                    </tbody>
+                    <tbody>
+                    <tr>
+                        {% for list_item in opts.list_items %}
+                        <td>
+                            <input type="text" id="list_item_{{ list_item.name }}" name="{{ list_item.name }}"
+                                   placeholder="{{ list_item.value }}" size="8"/>
+                        </td>
+                        {% endfor %}
+                        <td>
+                            <input type="button" value="Add" onclick="javascript: add_list_item('{{ opts.name }}')"/>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                {% else %}
+                <select name="{{ opts.name }}">
+                    {% for c in opts.choices %}
+                    <option value="{{ c.name }}">{{ c.label }}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    <input type="hidden" name="provider_class" value="{{ provider_class }}"/>
+    <input type="hidden" name="group_name" value="{{ group_name }}"/>
+    <input type="hidden" name="group_description" value="{{ group_description }}"/>
+
+    <input type="hidden" name="provider_options" id="provider_options" value="{{ provider_options_json }}"/>
+
+    <input type="button" value="Create" onclick="javascript: submit_form();"/>
+</form>
+{% endblock %}

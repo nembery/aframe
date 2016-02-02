@@ -1,0 +1,44 @@
+
+{% extends "base.html" %}
+{% block title %}A-Frame{% endblock %}
+{% block content %}
+
+<h2>New Endpoint Group - Step 1 of 2</h2>
+<form action="/endpoints/configureGroup/" method="POST">
+    <table>
+        <tr>
+            <td>
+                Name:
+            </td>
+            <td>
+                <input type="text" name="name" placeholder="Group Name"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Description:
+            </td>
+            <td>
+                <textarea cols="65" rows="10" name="description" placeholder="Group based on some criteria"></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Endpoint Provider:
+            </td>
+            <td>
+                <select name="provider_class">
+                    {% for provider in provider_list %}
+                    <option value="{{ provider.class }}">{{ provider.name }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <input type="submit" value="Next"/>
+            </td>
+        </tr>
+    </table>
+</form>
+{% endblock %}

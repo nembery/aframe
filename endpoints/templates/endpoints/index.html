@@ -1,19 +1,28 @@
 
 {% extends "base.html" %}
-{% block title %}a_frame{% endblock %}
+{% block title %}A-Frame{% endblock %}
 {% block content %}
 
 <h2>Endpoints</h2>
 <table>
-    <th>Provider Plugins</th>
+    <th colspan="3">Endpoint Groups</th>
     {% for provider in provider_list %}
     <tr>
         <td>
-            <a href="/endpoints/list/{{ provider }}">{{ provider }}</a>
+            <a href="/endpoints/list/{{ provider.id }}">{{ provider.name }}</a>
+        </td>
+        <td>
+            {{ provider.description }}
+        </td>
+        <td>
+            <a href="/endpoints/deleteGroup/{{ provider.id }}">Delete</a>
+            &nbsp;
+            <a href="/endpoints/editGroup/{{ provider.id }}">Edit</a>
         </td>
     </tr>
     {% endfor %}
 </table>
+<a href="/endpoints/newGroup">Create new Endpoint Group</a>
 
 
 {% endblock %}

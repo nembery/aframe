@@ -28,7 +28,7 @@ class ActionBase(object):
         """
         for member in data:
             if hasattr(self, member):
-                setattr(self, member, data[member])
+                setattr(self, member, str(data[member]))
 
         return
 

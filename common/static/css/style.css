@@ -9,7 +9,7 @@ html {
 body {
 	background: #eee;
 	color: grey;
-	font-family:'lucida grande',verdana,helvetica,arial,sans-serif;
+	font-family:"lucida grande",verdana,helvetica,arial,sans-serif;
 	font-size:100%;
 	margin: 0px;
     height: 100%;
@@ -43,6 +43,46 @@ h2 {
     padding-bottom: 10px;
 }
 
+h3 {
+    color: orange;
+}
+
+#overlay_menu {
+    size: 8px;
+    text-align: right;
+}
+
+#overlay_menu a:hover {
+    text-decoration: none;
+}
+
+.overlay {
+    position: fixed;
+    margin: 0px;
+    padding: 0px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.75);
+    z-index: 1000;
+    overflow: scroll;
+}
+
+.overlay_box {
+    margin: auto;
+    margin-top: 30px;
+    width: 900px;
+    border: 4px solid rgb(104, 174, 100);
+    padding: 10px 10px 10px 10px;
+    background-color: #fff;
+}
+
+.overlay_box table tr td {
+    background: white;
+    padding: 10px;
+    margin-top: 10px;
+}
 
 #header {
     background-color: #fff;
@@ -94,13 +134,14 @@ label {
     font-size: 110%;
     margin-bottom:5px;
 }
+
 input[type=text], input[type=number], textarea {
     clear: both;
     font-size: 100%;
-    font-family: 'lucida grande',verdana,helvetica,arial,sans-serif;
+    font-family: "lucida grande",verdana,helvetica,arial,sans-serif;
     padding: 5px;
     margin-left: 15px;
-
+    width: 490px;
 }
 
 input[type=submit], input[type=button] {
@@ -110,6 +151,10 @@ input[type=submit], input[type=button] {
     border: 1px solid #000;
     padding: 5px;
     background-color: #ddd;
+}
+
+#tag_configurator input {
+    width: 200px;
 }
 
 table {
@@ -140,7 +185,7 @@ table tr:nth-child(even) {
 
 div .centered_box {
     margin: auto;
-    width: 800px;
+    width: 80%;
     border: 4px solid grey;
     padding: 10px 50px 30px 50px;
     background-color: #fff;

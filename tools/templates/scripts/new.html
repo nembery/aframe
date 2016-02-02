@@ -2,12 +2,12 @@
 {% load staticfiles %}
 {% block title %}A-Frame - New Script{% endblock %}
 {% block scripts %}
-<script type="text/javascript" src="{% static "js/jquery-1.8.1.min.js" %}"></script>
+<script type="text/javascript" src="{% static 'js/jquery-1.8.1.min.js' %}"></script>
     <script type="text/javascript">
     function validateForm() {
-        var d = $('#id_description');
-        var n = $('#id_name');
-        var s = $('#id_script');
+        var d = $("#id_description");
+        var n = $("#id_name");
+        var s = $("#id_script");
         if (n.val() == "") {
             alert("Please enter a name!");
             n.focus();

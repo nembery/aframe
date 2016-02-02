@@ -20,3 +20,20 @@
         var third_pass = second_pass.replace(/\s+$/, "");
         input_object.value = third_pass;
     }
+
+function load_overlay(content) {
+
+    var doc = $(document);
+    var overlay = $("<div/>").attr("id", "overlay").addClass("overlay");
+    $("body").append(overlay);
+
+    overlay.append(content);
+
+}
+
+function close_overlay() {
+    var overlay = $("#overlay");
+    overlay.empty();
+    overlay.removeClass("help-overlay");
+    overlay.remove();
+}

@@ -5,6 +5,40 @@ from netaddr.core import AddrFormatError
 
 
 class EndpointBase(object):
+    """
+    Base class for an endpoint provider. To subclass implement these methods:
+    get_default_config: Returns an list of configuration dicts in the following format:
+    [
+        {
+            "name": "name of the configuration option",
+            "label": "label that the user will see"
+            "type": "essentially a widget type. Can be [text|select|list]"
+            "value": "default value for text type entries"
+            "choices": "list of dict objects with name and label keys"
+        },
+        {
+            "name": "text type example",
+            "label": "Example configuration element of type text",
+            "type": "text",
+            "value": "text_value"
+        },
+        {
+            "name": "select type example",
+            "label": "Example select configuration option",
+            "type": "select",
+            "choices": [
+                {
+                    "name": "option name 1",
+                    "label": "option lable 1"
+                },
+                {
+                    "name": "option name 2",
+                    "label": "option label 2"
+                }
+            ]
+        }
+    ]
+    """
     __metaclass__ = abc.ABCMeta
 
     default_filters = []
@@ -12,6 +46,8 @@ class EndpointBase(object):
     filter_method = ""
     filter_args = ""
     label = ""
+    description = ""
+    instance_config = []
 
     def __init__(self):
         """
@@ -22,23 +58,23 @@ class EndpointBase(object):
         global default_filters
         filters = [
             {
-                'name': 'Subnet',
-                'method': 'filter_by_subnet',
-                'description': 'Returns a list of endpoints within the given subnet',
-                'argument_description': 'A subnet in CIDR format (1.1.1.0/24)'
+                "name": "Subnet",
+                "method": "filter_by_subnet",
+                "description": "Returns a list of endpoints within the given subnet",
+                "argument_description": "A subnet in CIDR format (1.1.1.0/24)"
 
             },
             {
-                'name': 'Name',
-                'method': 'filter_by_name',
-                'description': 'Returns a list of endpoints filtered by Name',
-                'argument_description': 'A regular expression (^vmx\d+$)'
+                "name": "Name",
+                "method": "filter_by_name",
+                "description": "Returns a list of endpoints filtered by Name",
+                "argument_description": "A regular expression (^vmx\d+$)"
             },
             {
-                'name': 'Type',
-                'method': 'filter_by_type',
-                'description': 'Returns a list of endpoints filtered by Type',
-                'argument_description': 'A regular expression (^acx2.00$)'
+                "name": "Type",
+                "method": "filter_by_type",
+                "description": "Returns a list of endpoints filtered by Type",
+                "argument_description": "A regular expression (^acx2.00$)"
             }
         ]
         self.default_filters = filters
@@ -48,7 +84,11 @@ class EndpointBase(object):
         return
 
     @abc.abstractmethod
-    def load(self):
+    def load_instance_config(self, config):
+        return
+
+    @abc.abstractmethod
+    def get_config_options(self):
         return
 
     def get_endpoint_by_id(self, endpoint_id):
@@ -58,6 +98,7 @@ class EndpointBase(object):
             implementation has been provided here
         """
         for endpoint in self:
+            print endpoint
             if endpoint["id"] == endpoint_id:
                 return endpoint
 
@@ -90,14 +131,20 @@ class EndpointBase(object):
         """
         Returns a basic pyObject representing the most basic information for a endpoint
         feel free to override this to include more specific data members if needed
+        :param endpoint_id: unique id
+        :param endpoint_name: name
+        :param ip: IPv4 address of the endpoint
+        :param username: username used to authenticate to the endpoint
+        :param password: password used to authenticate to the endpoint
+        :param endpoint_type: type of endpoint
         """
         endpoint_data = {
-            'id': endpoint_id,
-            'name': endpoint_name,
-            'ip': ip,
-            'username': username,
-            'password': password,
-            'type': endpoint_type
+            "id": endpoint_id,
+            "name": endpoint_name,
+            "ip": ip,
+            "username": username,
+            "password": password,
+            "type": endpoint_type
         }
         return endpoint_data
 
@@ -144,6 +191,33 @@ class EndpointBase(object):
             return endpoint
         else:
             return None
+
+    def get_config_value(self, name):
+        """
+         Continence method to search config list and return the value of the
+         desired config element
+
+         for config == [{"name": "findme", "value": "righthere" }, {"name": "another", "value": "anotherval" }]
+         and name == findme
+         returns "righthere"
+
+        :param name: value of the name key to find
+        :return: return the value of the "value" key
+        """
+        for config_element in self.instance_config:
+            if config_element["name"] == name:
+                return config_element["value"]
+
+    def set_instance_config(self, config):
+        """
+        saves the instance config to the self.instance_config variable
+        then calls the user defined load_instance_config
+
+        :param config: instance configuration object
+        :return: None
+        """
+        self.instance_config = config
+        self.load_instance_config(config)
 
     def get_page(self, offset, page_size):
         results = []

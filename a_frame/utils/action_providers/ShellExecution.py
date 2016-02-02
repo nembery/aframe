@@ -5,7 +5,7 @@ import os
 import subprocess
 
 
-class OffBoxScriptAction(ActionBase):
+class ShellExecution(ActionBase):
     """
         Runs a template as a local script
         !!! Potentially dangerous !!!
@@ -23,18 +23,17 @@ class OffBoxScriptAction(ActionBase):
     endpoint_password = ""
 
     def set_endpoint(self, endpoint):
-        # create the required iterator from the endpoint_list
-        self.endpoint_ip = endpoint["device_ip"]
-        self.endpoint_username  = endpoint["username"]
+        self.endpoint_ip = endpoint["ip"]
+        self.endpoint_username = endpoint["username"]
         self.endpoint_password = endpoint["password"]
         return
 
     def execute_template(self, template):
         """
         writes the template to a tmp file and executes it on the server.
-        Potentially very dangerous. You probably shouldn't do this!
+        Potentially very dangerous. You probably shouldn"t do this!
 
-        If you do want to do this ( you shouldn't ), your script should
+        If you do want to do this ( you shouldn"t ), your script should
         look for the device endpoint parameters stored in the env as
         ENDPOINT_USERNAME
         ENDPOINT_PASSWORD
@@ -44,16 +43,23 @@ class OffBoxScriptAction(ActionBase):
         :return: String results from the output of the script
         """
 
+        cleaned_template = template.replace('\r\n', '\n')
+
         f = tempfile.NamedTemporaryFile()
-        f.write(template)
+        f.write(cleaned_template)
+        f.flush()
 
         os.chmod(f.name, 0700)
         env = os.environ.copy()
+
         env["ENDPOINT_USERNAME"] = self.endpoint_username
         env["ENDPOINT_PASSWORD"] = self.endpoint_password
         env["ENDPOINT_IP"] = self.endpoint_ip
-        output = subprocess.check_output(f.name, shell=True, env=env)
 
+        print self.endpoint_ip
+
+        output = subprocess.check_output(f.name, shell=True, env=env)
+        print output
         f.close()
         return output
 

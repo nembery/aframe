@@ -1,6 +1,6 @@
 
 {% extends "base.html" %}
-{% block title %}a_frame{% endblock %}
+{% block title %}A-Frame{% endblock %}
 {% block content %}
 <h2>Input Forms</h2>
 <table>
@@ -9,16 +9,16 @@
         <th>Description</th>
         <th>Options</th>
     </tr>
-    {% for work_flow in work_flow_list %}
+    {% for input_form in input_form_list %}
     <tr>
-        <td><a href='{{ work_flow.id }}'>{{ work_flow.name }}</a> </td>
-        <td>{{ work_flow.description }}</td>
+        <td><a href="{{ input_form.id }}">{{ input_form.name }}</a> </td>
+        <td>{{ input_form.description }}</td>
         <td>
-            <a href='delete/{{ work_flow.id }}'>Delete</a>
+            <a href="delete/{{ input_form.id }}">Delete</a>
             &nbsp;
-            <a href='edit/{{ work_flow.id }}'>Edit</a>
+            <a href="edit/{{ input_form.id }}">Edit</a>
             &nbsp;
-            <a href='preview/{{ work_flow.id }}'>Preview</a>
+            <a href="preview/{{ input_form.id }}">Preview</a>
         </td>
     </tr>
     {% endfor %}

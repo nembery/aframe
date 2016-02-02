@@ -2,7 +2,6 @@
 {% load staticfiles %}
 {% block title %}A-Frame - New Template{% endblock %}
 {% block scripts %}
-<script type="text/javascript" src="{% static "js/jquery-1.8.1.min.js" %}"></script>
     <script type="text/javascript">
 
     function validateForm() {
@@ -46,7 +45,7 @@
                 Description:
             </td>
             <td>
-                <textarea name="description" placeholder="A brief description of this template"></textarea>
+                <textarea cols="65" rows="5" name="description" placeholder="A brief description of this template"></textarea>
             </td>
         </tr>
         <tr>
@@ -66,7 +65,7 @@
             </td>
             <td>
                 <textarea
-                        name="template" cols="40" rows="25"
+                        name="template" cols="65" rows="25"
                         placeholder="
 The template text to be used. Use the {% templatetag openvariable %} format {% templatetag closevariable %} to
 introduce variables, in this case a variable named 'format' will be available to your forms.

@@ -1,14 +1,12 @@
 
 {% extends "base.html" %}
-{% block title %}a_frame{% endblock %}
+{% block title %}A-Frame{% endblock %}
 {% block scripts %}
 <script type="text/javascript">
 
 $(window).load(function() {
     $( "#template_autocomplete" ).autocomplete({
         source: "/input_forms/search",
-
-
     });
 });
 
@@ -18,7 +16,7 @@ $(window).load(function() {
 {% endblock %}
 {% block content %}
 
-<h2>Endpoints from Provider: {{ provider }}</h2>
+<h2>Endpoint Details</h2>
 <table>
     <tr>
         <td>
@@ -75,7 +73,7 @@ $(window).load(function() {
     <tr>
         <td>
             <form method="POST" action="/input_forms/configureTemplate">
-                <input type="hidden" name="provider" value="{{ provider }}">
+                <input type="hidden" name="group_id" value="{{ group_id }}">
                 <input type="hidden" name="endpoint_id" value="{{ endpoint.id}}">
                 <input type="text" name="input_form_name" size="25" id="template_autocomplete"
                        placeholder="search input form definitions"> &nbsp;

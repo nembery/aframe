@@ -1,0 +1,29 @@
+<div class="overlay_box">
+    <div id="overlay_menu">
+        <a href="#" onclick="javascript: close_overlay();">X</a>
+    </div>
+    <table>
+        <tr>
+            <td>
+                <textarea rows="40" cols="80" id="overlay_text_area">
+# template name: {{ name }}
+# description: {{ description }}
+# To embed this template, provide the following input parameters:
+input_parameters = {
+    "template_id": "{{ id }}",
+{% for ip in input_parameters %}
+    "{{ ip }}": "?",
+{% endfor %}
+}
+as a POST to this URL:
+
+{{ a_frame_url }}
+
+# example python
+import urllib2
+results = urllib2.urlopen("{{ a_frame_url }}", input_parameters).read()
+                </textarea>
+            </td>
+        </tr>
+    </table>
+</div>

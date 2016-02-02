@@ -1,5 +1,5 @@
 import abc
-from a_frame.utils.endpoint_providers.endpoint_base import EndpointBase
+from endpoint_base import EndpointBase
 
 
 class FileDiscovery(EndpointBase):
@@ -13,7 +13,22 @@ class FileDiscovery(EndpointBase):
     """
     file_name = ""
 
-    def load(self, filename):
+    def get_config_options(self):
+        """
+        :return: List of configuration options for per-instance configuration
+        """
+        config = [
+            {
+                "name": "file_path",
+                "label": "File Path",
+                "type": "text",
+                "value": "/var/tmp/some_file_name.txt"
+            }
+        ]
+        return config
+
+    def load_instance_config(self, config):
+        filename = config["file_path"]["value"]
         try:
             self.file_name = open(filename)
         except IOError:
@@ -26,16 +41,20 @@ class FileDiscovery(EndpointBase):
         next_line = self.file_name.next()
         print next_line
         # ignore comments
-        if not next_line.startswith('#'):
+        if not next_line.startswith("#"):
             print "found valid data"
             # remove line-breaks
-            cleaned_line = next_line.replace('\n', '')
+            cleaned_line = next_line.replace("\n", "")
             # split on the comma
-            endpoint_array = cleaned_line.split(',')
+            endpoint_array = cleaned_line.split(",")
             # remove all quotes
-            endpoint_array = map(lambda x: x.replace('\'', ''), endpoint_array)
+            endpoint_array = map(lambda x: x.replace("\"", ""), endpoint_array)
             if len(endpoint_array) == 6:
                 # use the splat operator to unpack the resulting line array
+                # create_endpoint is a convience function in the base class
+                # feel free to modify this if your file format differs
+                # expected argument ordering:
+                # create_endpoint(endpoint_id, endpoint_name, ip, username, password, endpoint_type)
                 endpoint = self.create_endpoint(*endpoint_array)
                 print "returning endpoint"
                 return endpoint

@@ -1,6 +1,6 @@
 
 {% extends "base.html" %}
-{% block title %}a_frame{% endblock %}
+{% block title %}A-Frame{% endblock %}
 {% block scripts %}
 <script type="text/javascript">
 
@@ -18,7 +18,7 @@
             </td>
             <td>
                 {{ endpoint.name }}
-                <input type="hidden" name="provider" value="{{ provider }}"/>
+                <input type="hidden" name="group_id" value="{{ group_id }}"/>
                 <input type="hidden" name="endpoint_id" value="{{ endpoint.id }}"/>
                 <input type="hidden" name="input_form_id" value="{{ input_form.id }}"/>
             </td>

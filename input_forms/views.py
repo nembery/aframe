@@ -6,14 +6,14 @@ from django.core.exceptions import ObjectDoesNotExist
 import json
 from input_forms.models import InputForm
 from tools.models import ConfigTemplate
-from a_frame.utils import endpoint_provider
 from a_frame.utils import action_provider
+from endpoints import endpoint_provider
 
 
 def index(request):
-    work_flow_list = InputForm.objects.all().order_by('modified')
-    context = {'work_flow_list': work_flow_list}
-    return render(request, 'input_forms/index.html', context)
+    input_form_list = InputForm.objects.all().order_by("modified")
+    context = {"input_form_list": input_form_list}
+    return render(request, "input_forms/index.html", context)
 
 
 def search(request):
@@ -26,7 +26,7 @@ def search(request):
     input_form_list = InputForm.objects.filter(name__contains=term)
     results = []
     for input_form in input_form_list:
-        if input_form.script.type == 'per-endpoint':
+        if input_form.script.type == "per-endpoint":
             results.append(input_form.name)
 
     return HttpResponse(json.dumps(results), content_type="application/json")
@@ -52,31 +52,31 @@ def edit(request, input_form_id):
             if variable_string not in available_tags:
                 available_tags.append(variable_string)
 
-    context = {'input_form': input_form, 'config_template': config_template, 'available_tags': available_tags}
-    return render(request, 'input_forms/edit.html', context)
+    context = {"input_form": input_form, "config_template": config_template, "available_tags": available_tags}
+    return render(request, "input_forms/edit.html", context)
 
 
 def detail(request, input_form_id):
     input_form = InputForm.objects.get(pk=input_form_id)
     print input_form.json
     json_object = json.loads(input_form.json)
-    context = {'input_form': input_form, 'json_object': json_object}
+    context = {"input_form": input_form, "json_object": json_object}
     if input_form.script.type == "standalone":
-        return render(request, 'input_forms/configure_standalone_template.html', context)
+        return render(request, "input_forms/configure_standalone_template.html", context)
     else:
-        return render(request, 'input_forms/preview.html', context)
+        return render(request, "input_forms/preview.html", context)
 
 
 def delete(request, input_form_id):
     input_form = get_object_or_404(InputForm, pk=input_form_id)
     input_form.delete()
-    return HttpResponseRedirect('/input_forms')
+    return HttpResponseRedirect("/input_forms")
 
 
 def new(request):
-    config_templates = ConfigTemplate.objects.all().order_by('name')
-    context = {'config_templates': config_templates}
-    return render(request, 'input_forms/new.html', context)
+    config_templates = ConfigTemplate.objects.all().order_by("name")
+    context = {"config_templates": config_templates}
+    return render(request, "input_forms/new.html", context)
 
 
 def new_from_template(request, template_id):
@@ -92,14 +92,14 @@ def new_from_template(request, template_id):
             if variable_string not in available_tags:
                 available_tags.append(variable_string)
 
-    context = {'config_template': config_template, 'available_tags': available_tags}
-    return render(request, 'input_forms/new.html', context)
+    context = {"config_template": config_template, "available_tags": available_tags}
+    return render(request, "input_forms/new.html", context)
 
 
 def create(request):
-    required_fields = set(['config_template_id', 'name', 'description', 'json'])
+    required_fields = set(["config_template_id", "name", "description", "json"])
     if not required_fields.issubset(request.POST):
-        return render(request, 'error.html', {'error': "Invalid Parameters in POST"})
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     template_id = request.POST["config_template_id"]
     name = request.POST["name"]
@@ -116,13 +116,13 @@ def create(request):
     input_form.json = json_data
     input_form.script = config_template
     input_form.save()
-    return HttpResponseRedirect('/input_forms')
+    return HttpResponseRedirect("/tools/%s" % template_id)
 
 
 def update(request):
-    required_fields = set(['input_form_id', 'config_template_id', 'name', 'description', 'json'])
+    required_fields = set(["input_form_id", "config_template_id", "name", "description", "json"])
     if not required_fields.issubset(request.POST):
-        return render(request, 'error.html', {'error': "Invalid Parameters in POST"})
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     input_form_id = request.POST["input_form_id"]
     template_id = request.POST["config_template_id"]
@@ -141,27 +141,29 @@ def update(request):
     input_form.json = json_data
     input_form.script = config_template
     input_form.save()
-    return HttpResponseRedirect('/input_forms')
+    return HttpResponseRedirect("/tools/%s" % config_template.id)
 
 
 def preview(request, input_form_id):
     input_form = InputForm.objects.get(pk=input_form_id)
     print input_form.json
     json_object = json.loads(input_form.json)
-    context = {'input_form': input_form, 'json_object': json_object}
-    return render(request, 'input_forms/preview.html', context)
+    context = {"input_form": input_form, "json_object": json_object}
+    return render(request, "input_forms/preview.html", context)
 
 
 def configure_template_for_endpoint(request):
-    required_fields = set(['input_form_name', 'provider', 'endpoint_id'])
+    required_fields = set(["input_form_name", "group_id", "endpoint_id"])
     if not required_fields.issubset(request.POST):
-        return render(request, 'error.html', {'error': "Invalid Parameters in POST"})
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     input_form_name = request.POST["input_form_name"]
-    provider = request.POST["provider"]
+    group_id = request.POST["group_id"]
     endpoint_id = request.POST["endpoint_id"]
 
-    provider_instance = endpoint_provider.get_provider_instance(provider)
+    print endpoint_id
+
+    provider_instance = endpoint_provider.get_provider_instance_from_group(group_id)
     endpoint = provider_instance.get_endpoint_by_id(endpoint_id)
 
     input_form = InputForm.objects.get(name=input_form_name)
@@ -169,38 +171,41 @@ def configure_template_for_endpoint(request):
     print input_form.json
     json_object = json.loads(input_form.json)
 
-    context = {'input_form': input_form, 'json_object': json_object, 'endpoint': endpoint, 'provider': provider}
-    return render(request, 'input_forms/configure_per_endpoint_template.html', context)
+    context = {"input_form": input_form, "json_object": json_object, "endpoint": endpoint, "group_id": group_id}
+    return render(request, "input_forms/configure_per_endpoint_template.html", context)
 
 
 def configure_template_for_queue(request):
-    required_fields = set(['input_form_name', 'provider'])
+    required_fields = set(["input_form_name", "group_id"])
     if not required_fields.issubset(request.POST):
-        return render(request, 'error.html', {'error': "Invalid Parameters in POST"})
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     input_form_name = request.POST["input_form_name"]
-    provider = request.POST["provider"]
-    endpoints = request.session["job_endpoints"]
+    group_id = request.POST["group_id"]
+    endpoints = request.session["endpoint_queue"]
 
     input_form = InputForm.objects.get(name=input_form_name)
 
     print input_form.json
     json_object = json.loads(input_form.json)
 
-    context = {'input_form': input_form, 'json_object': json_object, 'endpoints': endpoints, 'provider': provider}
-    return render(request, 'input_forms/configure_template_for_queue.html', context)
+    context = {"input_form": input_form, "json_object": json_object, "endpoints": endpoints, "group_id": group_id}
+    return render(request, "input_forms/configure_template_for_queue.html", context)
 
 
 def apply_template(request):
-    required_fields = set(['input_form_id', 'endpoint_id'])
+    # FIXME - needs to take endpoint group id first
+    # and apply the endpoint configuration
+    # should create a utility function to do that!
+    required_fields = set(["input_form_id", "endpoint_id", "group_id"])
     if not required_fields.issubset(request.POST):
-        return render(request, 'error.html', {'error': "Invalid Parameters in POST"})
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     input_form_id = request.POST["input_form_id"]
     endpoint_id = request.POST["endpoint_id"]
-    provider = request.POST["provider"]
+    group_id = request.POST["group_id"]
 
-    provider_instance = endpoint_provider.get_provider_instance(provider)
+    provider_instance = endpoint_provider.get_provider_instance_from_group(group_id)
     endpoint = provider_instance.get_endpoint_by_id(endpoint_id)
 
     print "got endpoint ok"
@@ -215,6 +220,11 @@ def apply_template(request):
         print "setting context %s" % j["name"]
         context[j["name"]] = str(request.POST[j["name"]])
 
+    context["af_endpoint_ip"] = endpoint["ip"]
+    context["af_endpoint_username"] = endpoint["username"]
+    context["af_endpoint_password"] = endpoint["password"]
+    context["af_endpoint_type"] = endpoint["type"]
+
     print context
 
     config_template = input_form.script
@@ -227,18 +237,18 @@ def apply_template(request):
     action_name = config_template.action_provider
     action_options = json.loads(config_template.action_provider_options)
 
-    print "transport name is: " + action_name
+    print "action name is: " + action_name
 
     action = action_provider.get_provider_instance(action_name, action_options)
     action.set_endpoint(endpoint)
     results = action.execute_template(completed_template)
     context = {"results": results}
-    return render(request, 'input_forms/results.html', context)
+    return render(request, "input_forms/results.html", context)
 
 
 def apply_standalone_template(request):
     if "input_form_id" not in request.POST:
-        return render(request, 'error.html', {'error': "Invalid Parameters in POST"})
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     input_form_id = request.POST["input_form_id"]
 
@@ -258,20 +268,21 @@ def apply_standalone_template(request):
 
     print completed_template
     action_name = config_template.action_provider
+    print action_name
     action_options = json.loads(config_template.action_provider_options)
 
     action = action_provider.get_provider_instance(action_name, action_options)
     results = action.execute_template(completed_template)
     context = {"results": results}
-    return render(request, 'input_forms/results.html', context)
+    return render(request, "input_forms/results.html", context)
 
 
 def apply_template_to_queue(request):
     if "input_form_id" not in request.POST:
-        return render(request, 'error.html', {'error': "Invalid Parameters in POST"})
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     input_form_id = request.POST["input_form_id"]
-    endpoints = request.session["job_endpoints"]
+    endpoints = request.session["endpoint_queue"]
     input_form = InputForm.objects.get(pk=input_form_id)
 
     print input_form.json
@@ -287,20 +298,25 @@ def apply_template_to_queue(request):
     config_template = input_form.script
 
     compiled_template = get_template_from_string(config_template.template)
-    completed_template = str(compiled_template.render(context))
 
-    print "TEMPLATE IS:"
-    print completed_template
     action_name = config_template.action_provider
     action_options = json.loads(config_template.action_provider_options)
 
-    print "transport name is: " + action_name
+    print "action name is: " + action_name
     print "action options are: " + str(action_options)
 
     action = action_provider.get_provider_instance(action_name, action_options)
 
     results = ""
     for endpoint in endpoints:
+        print endpoint
+        context["af_endpoint_ip"] = endpoint["ip"]
+        context["af_endpoint_username"] = endpoint["username"]
+        context["af_endpoint_password"] = endpoint["password"]
+        context["af_endpoint_type"] = endpoint["type"]
+
+        completed_template = str(compiled_template.render(context))
+
         results += "================ %s ================\n" % endpoint["name"]
         action.set_endpoint(endpoint)
         result = action.execute_template(completed_template)
@@ -308,22 +324,22 @@ def apply_template_to_queue(request):
         results += "\n"
 
     context = {"results": results}
-    return render(request, 'input_forms/results.html', context)
+    return render(request, "input_forms/results.html", context)
 
 
 def view_from_template(request, template_id):
     config_template = get_object_or_404(ConfigTemplate, pk=template_id)
     try:
         input_form = InputForm.objects.get(script=config_template)
-        return HttpResponseRedirect('/input_forms/%s' % input_form.id)
+        return HttpResponseRedirect("/input_forms/%s" % input_form.id)
     except ObjectDoesNotExist:
-        return HttpResponseRedirect('/input_forms/new/%s' % template_id)
+        return HttpResponseRedirect("/input_forms/new/%s" % template_id)
 
 
 def edit_from_template(request, template_id):
     config_template = get_object_or_404(ConfigTemplate, pk=template_id)
     try:
         input_form = InputForm.objects.get(script=config_template)
-        return HttpResponseRedirect('/input_forms/edit/%s' % input_form.id)
+        return HttpResponseRedirect("/input_forms/edit/%s" % input_form.id)
     except ObjectDoesNotExist:
-        return HttpResponseRedirect('/input_forms/new/%s' % template_id)
+        return HttpResponseRedirect("/input_forms/new/%s" % template_id)

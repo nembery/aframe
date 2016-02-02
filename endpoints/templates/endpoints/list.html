@@ -1,19 +1,19 @@
 
 {% extends "base.html" %}
-{% block title %}a_frame{% endblock %}
+{% block title %}A-Frame{% endblock %}
 {% block scripts %}
 <script type="text/javascript">
 
-    var check_all = 'checked';
+    var check_all = "checked";
     function selectAllEndpoints() {
         $('[name *= "endpoints"]').each(function(i,x) {
             x.checked = check_all;
 
         });
-        if (check_all == 'checked') {
-            check_all = '';
+        if (check_all == "checked") {
+            check_all = "";
         } else {
-            check_all = 'checked';
+            check_all = "checked";
         }
     }
 
@@ -27,8 +27,8 @@
 {% endblock %}
 {% block content %}
 
-<h2>Endpoints from Provider: {{ provider }}</h2>
-<h3>{{ provider_instance.label }}</h3>
+<h2>Endpoint Group: {{ provider_instance.label }}</h2>
+<h3>{{ provider_instance.description }}</h3>
 {% if filter != "" %}
 <font class="small">Filtering where "{{ filter }}" matches "{{ argument }}"</font>
 {% endif %}
@@ -37,7 +37,7 @@
     <th>Available Filters</th>
     <tr>
         <td style="text-align: center">
-            <form method="GET" action="/endpoints/list/{{ provider }}/">
+            <form method="GET" action="/endpoints/list/{{ endpoint_group.id }}/">
                 <select name="filter">
                     {% for f in filters %}
                     <option value="{{ f.name }}" title="{{ f.description }}" {% if f.name == filter %} selected {% endif %}>
@@ -50,7 +50,7 @@
                 &nbsp;
                 <input type="submit" value="Apply">
                 &nbsp;
-                <input type="button" value="Clear" onclick="javascript: window.location='/endpoints/list/{{ provider }}'"/>
+                <input type="button" value="Clear" onclick="javascript: window.location="/endpoints/list/{{ endpoint_group.id }}""/>
             </form>
         </td>
     </tr>
@@ -73,14 +73,14 @@
     {% for d in endpoint_list %}
     <tr>
         <td>
-            {% if d.name in job_endpoint_names %}
+            {% if d.name in endpoint_queue_names %}
             <input type="checkbox" name="endpoints" checked="checked" value="{{ d.id }}"/>
             {% else %}
             <input type="checkbox" name="endpoints" value="{{ d.id }}"/>
             {% endif %}
         </td>
         <td>
-            <a href="/endpoints/detail/{{ provider }}/{{ d.id }}">{{ d.name }}</a>
+            <a href="/endpoints/detail/{{ endpoint_group.id }}/{{ d.id }}">{{ d.name }}</a>
         </td>
         <td>
             {{ d.ip }}
@@ -93,34 +93,34 @@
     <tr>
         <td colspan="4" style="text-align:right">
             {% if prev >= 0 %}
-            <a href="/endpoints/list/{{ provider }}/?o={{ prev }}"> << </a>
+            <a href="/endpoints/list/{{ endpoint_group.id }}/?o={{ prev }}"> << </a>
             &nbsp;
             {% endif %}
             {% if next >= 0 %}
-            <a href="/endpoints/list/{{ provider }}/?o={{ next }}"> >> </a>
+            <a href="/endpoints/list/{{ endpoint_group.id }}/?o={{ next }}"> >> </a>
             {% endif %}
         </td>
     </tr>
     <tr>
         <td colspan="4">
-            <input type="hidden" name="endpoint_provider" value="{{ provider }}"/>
+            <input type="hidden" name="group_id" value="{{ endpoint_group.id }}"/>
             <input type="submit" value="Add Selected Endpoints to Queue"/>
             &nbsp;
-            <input type="button" value="Clear Queue" onclick="javascript: window.location = '/endpoints/clearEndpoints/{{ provider }}'"/>
+            <input type="button" value="Clear Queue"
+                   onclick="javascript: window.location = '/endpoints/clearEndpoints/{{ endpoint_group.id }}'"/>
             &nbsp;
-            Queue: {{ job_endpoints|length }}
+            Queue: {{ endpoint_queue|length }}
         </td>
     </tr>
 </table>
 </form>
 <br/>
-<h3>Apply Template to {{ job_endpoints|length }} Endpoints in Queue:</h3>
+<h3>Apply Template to {{ endpoint_queue|length }} Endpoints in Queue:</h3>
 <table>
     <tr>
         <td>
             <form method="POST" action="/input_forms/configureTemplateForQueue">
-                <input type="hidden" name="provider" value="{{ provider }}">
-                <input type="hidden" name="endpoint_id" value="{{ endpoint.id}}">
+                <input type="hidden" name="group_id" value="{{ endpoint_group.id }}">
                 <input type="text" name="input_form_name" size="25" id="template_autocomplete"
                        placeholder="search input form definitions"> &nbsp;
                 <input type="submit">

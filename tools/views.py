@@ -1,31 +1,27 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect, HttpResponse
-
+from django.template.base import VariableNode
+from django.template.loader import get_template_from_string
 import json
 
 from tools.models import ConfigTemplate
 from tools.models import ConfigTemplateForm
-
-from tools.models import Script
-from tools.models import ScriptForm
-
 from a_frame.utils import action_provider
 from a_frame import settings
 
 
 def index(request):
-    template_list = ConfigTemplate.objects.all().order_by('modified')
-    script_list = Script.objects.all().order_by('modified')
-    context = {'template_list': template_list, 'script_list': script_list}
-    return render(request, 'configTemplates/index.html', context)
+    template_list = ConfigTemplate.objects.all().order_by("name")
+    context = {"template_list": template_list}
+    return render(request, "configTemplates/index.html", context)
 
 
 def choose_action(request):
 
     action_providers = action_provider.get_action_provider_select()
 
-    context = {'action_providers': action_providers}
-    return render(request, 'configTemplates/choose_action.html', context)
+    context = {"action_providers": action_providers}
+    return render(request, "configTemplates/choose_action.html", context)
 
 
 def configure_action(request):
@@ -39,11 +35,11 @@ def configure_action(request):
     action_options = action_provider.get_options_for_provider(provider_name)
 
     if action_options == "":
-        context = {'error': 'action provider not found'}
-        return render(request, 'error.html', context)
+        context = {"error": "action provider not found"}
+        return render(request, "error.html", context)
 
-    context = {'action_options': action_options, 'action_provider': provider_name}
-    return render(request, 'configTemplates/configure_action.html', context)
+    context = {"action_options": action_options, "action_provider": provider_name}
+    return render(request, "configTemplates/configure_action.html", context)
 
 
 def define_template(request):
@@ -58,13 +54,13 @@ def define_template(request):
             o["label"] = opt["label"]
             configured_options[o["name"]] = o
         else:
-            context = {'error': 'Required option not found in request!'}
-            return render(request, 'error.html', context)
+            context = {"error": "Required option not found in request!"}
+            return render(request, "error.html", context)
 
     print "Setting configured options to the session %s" % configured_options
     request.session["new_template_action_options"] = configured_options
-    context = {'options': configured_options, 'action_provider': action_provider_name}
-    return render(request, 'configTemplates/define_template.html', context)
+    context = {"options": configured_options, "action_provider": action_provider_name}
+    return render(request, "configTemplates/define_template.html", context)
 
 
 def new_template(request):
@@ -73,8 +69,8 @@ def new_template(request):
 
     template_form = ConfigTemplateForm()
     template_form.fields["action_provider"].choices = action_providers
-    context = {'template_form': template_form, 'action_providers': action_providers}
-    return render(request, 'configTemplates/new.html', context)
+    context = {"template_form": template_form, "action_providers": action_providers}
+    return render(request, "configTemplates/new.html", context)
 
 
 def get_options_for_action(request):
@@ -89,37 +85,55 @@ def get_options_for_action(request):
 def edit(request, template_id):
     template = get_object_or_404(ConfigTemplate, pk=template_id)
 
-    template_form = ConfigTemplateForm(instance=template)
-    context = {'template_form': template_form, 'template': template}
-    return render(request, 'configTemplates/edit.html', context)
+    default_options = action_provider.get_options_for_provider(template.action_provider)
+    action_options = json.loads(template.action_provider_options)
+
+    context = {"template": template, "action_options": json.dumps(action_options), "default_options": default_options}
+    return render(request, "configTemplates/edit.html", context)
 
 
 def update(request):
     try:
+        print "HERE WE GO"
         if "id" in request.POST:
-            template_id = request.POST['id']
+            template_id = request.POST["id"]
             template = get_object_or_404(ConfigTemplate, pk=template_id)
-            template.name = request.POST['name']
-            template.description = request.POST['description']
-            template.template = request.POST['template']
-            template.action_provider_options = request.POST["action_provider_options"]
+            template.name = request.POST["name"]
+            template.description = request.POST["description"]
+            template.template = request.POST["template"]
+
+            options = action_provider.get_options_for_provider(template.action_provider)
+            configured_options = dict()
+            for opt in options:
+                print "Checking %s" % opt["name"]
+                if opt["name"] in request.POST:
+                    o = dict()
+                    o["name"] = opt["name"]
+                    o["value"] = request.POST[opt["name"]]
+                    o["label"] = opt["label"]
+                    configured_options[o["name"]] = o
+                else:
+                    context = {"error": "Required option not found in request!"}
+                    return render(request, "error.html", context)
+
+            template.action_provider_options = json.dumps(configured_options)
             template.save()
-            return HttpResponseRedirect('/tools')
+            return HttpResponseRedirect("/tools")
         else:
-            return render(request, 'error.html', {
-                'error_message': "Invalid data in POST"
+            return render(request, "error.html", {
+                "error": "Invalid data in POST"
             })
 
     except KeyError:
-        return render(request, 'error.html', {
-            'error_message': "Invalid data in POST"
+        return render(request, "error.html", {
+            "error": "Invalid data in POST - Key error"
         })
 
 
 def create(request):
-    required_fields = set(['name', 'description', 'template', 'type'])
+    required_fields = set(["name", "description", "template", "type"])
     if not required_fields.issubset(request.POST):
-        return render(request, 'error.html', {'error': "Invalid Parameters in POST"})
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     template = ConfigTemplate()
     template.name = request.POST["name"]
@@ -129,8 +143,8 @@ def create(request):
     template.type = request.POST["type"]
 
     if "new_template_action_options" not in request.session:
-        return render(request, 'error.html', {
-            'error_message': "Invalid session data!"
+        return render(request, "error.html", {
+            "error": "Invalid session data!"
         })
 
     configured_action_options = request.session["new_template_action_options"]
@@ -138,92 +152,77 @@ def create(request):
 
     print "Saving form"
     template.save()
-    return HttpResponseRedirect('/input_forms/view_from_template/%s' % template.id)
+    return HttpResponseRedirect("/input_forms/view_from_template/%s" % template.id)
 
 
 def detail(request, template_id):
     template = get_object_or_404(ConfigTemplate, pk=template_id)
-    return render(request, 'configTemplates/details.html', {'template': template})
+    return render(request, "configTemplates/details.html", {"template": template})
 
 
 def delete(request, template_id):
     template = get_object_or_404(ConfigTemplate, pk=template_id)
     template.delete()
-    return HttpResponseRedirect('/tools')
+    return HttpResponseRedirect("/tools")
 
 
-def error(request):
-    context = {'error': "Unknown Error"}
-    return render(request, 'error.html', context)
+def get_template_input_parameters(request):
+    """
+    Describes how to embed the given template
+    :param request:
+    :return: json payload describing how to embed this template
+    """
 
-
-def new_script(request):
-    script_form = ScriptForm()
-    context = {'script_form': script_form}
-    return render(request, 'scripts/new.html', context)
-
-
-def create_script(request):
-    required_fields = set(['name', 'description', 'script'])
+    required_fields = set(["template_name"])
     if not required_fields.issubset(request.POST):
-        return render(request, 'error.html', {
-            'error': "Form isn't valid!"
-        })
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
-    # clean up crlf
-    script_content = request.POST["script"]
-    request.POST["script"] = script_content.replace("\r", "")
+    template_name = request.POST["template_name"]
 
-    script_form = ScriptForm(request.POST, request.FILES)
-    if script_form.is_valid():
-        print "Saving form"
-        script_form.save()
-        return HttpResponseRedirect('/tools')
-    else:
-        context = {'error': "Form isn't valid!"}
-        return render(request, 'error.html', context)
+    config_template = get_object_or_404(ConfigTemplate, name=template_name)
+    t = get_template_from_string(config_template.template)
+    input_parameters = []
+    for node in t:
+        defined_tags = node.get_nodes_by_type(VariableNode)
+        for v in defined_tags:
+            print "adding %s as an available tag" % v.filter_expression
+            variable_string = str(v.filter_expression)
+            if variable_string not in input_parameters:
+                input_parameters.append(variable_string)
 
+    # FIXME maybe move these to the settings.py ?
+    host = request.META["HTTP_HOST"]
+    url = "/api/execute_template"
 
-def view_script(request, script_id):
-    script = get_object_or_404(Script, pk=script_id)
-    return render(request, 'scripts/details.html', {'script': script})
+    template_usage = {
+        "id": config_template.id,
+        "name": config_template.name,
+        "description": config_template.description,
+        "a_frame_url": "http://" + host + url,
+        "input_parameters": input_parameters
+    }
 
+    print config_template.type
 
-def edit_script(request, script_id):
-    script = get_object_or_404(Script, pk=script_id)
-    script_form = ScriptForm(instance=script)
-    context = {'script_form': script_form, 'script': script}
-    return render(request, 'scripts/edit.html', context)
+    if config_template.type == "per-endpoint":
+        input_parameters.append("af_endpoint_ip")
+        input_parameters.append("af_endpoint_username")
+        input_parameters.append("af_endpoint_password")
+        input_parameters.append("af_endpoint_type")
 
-
-def update_script(request):
-    required_fields = set(['id', 'name', 'description', 'script'])
-    if not required_fields.issubset(request.POST):
-        return render(request, 'scripts/error.html', {
-            'error_message': "Invalid data in POST"
-        })
-    try:
-        if "id" in request.POST:
-            script_id = request.POST['id']
-            script = get_object_or_404(Script, pk=script_id)
-            script.name = request.POST['name']
-            script.description = request.POST['description']
-            script.script = request.POST['script'].replace("\r", "")
-            script.save()
-            return HttpResponseRedirect('/tools')
-        else:
-            return render(request, 'scripts/error.html', {
-                'error_message': "Invalid data in POST"
-            })
-
-    except Exception as e:
-        print str(e)
-        return render(request, 'scripts/error.html', {
-            'error_message': 'Could not update script!'
-        })
+    return render(request, "configTemplates/overlay.html", template_usage)
 
 
-def delete_script(request, script_id):
-    script = get_object_or_404(Script, pk=script_id)
-    script.delete()
-    return HttpResponseRedirect('/tools')
+def search(request):
+    """
+    used for UI autocomplete searches. Only used on the endpoint details page. Filter out standalone type templates
+    :param request:
+    :return:
+    """
+    term = request.GET["term"]
+    template_list = ConfigTemplate.objects.filter(name__contains=term)
+    results = []
+    for template in template_list:
+        results.append(template.name)
+
+    return HttpResponse(json.dumps(results), content_type="application/json")

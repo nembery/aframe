@@ -1,18 +1,80 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect, HttpResponse
-from a_frame.utils import endpoint_provider
+from endpoints import endpoint_provider
 from a_frame import settings
+from models import EndpointGroup
 import json
 
 
 def index(request):
+    provider_list = EndpointGroup.objects.all().order_by("name")
+    context = {"provider_list": provider_list}
+    return render(request, "endpoints/index.html", context)
+
+
+def new_group(request):
     provider_list = endpoint_provider.get_endpoint_discovery_provider_list()
-    context = {'provider_list': provider_list}
-    return render(request, 'endpoints/index.html', context)
+    context = {"provider_list": provider_list}
+    return render(request, "endpoints/new_group.html", context)
 
 
-def endpoint_list(request, provider):
-    provider_instance = endpoint_provider.get_provider_instance(provider)
+def configure_group(request):
+    required_fields = set(["name", "description", "provider_class"])
+    if not required_fields.issubset(request.POST):
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
+    provider_class = request.POST["provider_class"]
+    name = request.POST["name"]
+    description = request.POST["description"]
+
+    print str(provider_class)
+
+    provider_instance = endpoint_provider.get_provider_instance(provider_class)
+
+    provider_options = provider_instance.get_config_options()
+
+    provider_options_json = json.dumps(provider_options)
+
+    context = {
+        "group_name": name, "group_description": description, "provider_class": provider_class,
+        "provider_options": provider_options, "provider_options_json": provider_options_json
+    }
+    return render(request, "endpoints/configure_group.html", context)
+
+
+def create_group(request):
+    required_fields = set(["group_name", "group_description", "provider_class", "provider_options"])
+    if not required_fields.issubset(request.POST):
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
+    provider_class = request.POST["provider_class"]
+    name = request.POST["group_name"]
+    description = request.POST["group_description"]
+    provider_configuration = request.POST["provider_options"]
+
+    print provider_configuration
+
+    group = EndpointGroup()
+    group.provider_class = provider_class
+    group.name = name
+    group.description = description
+    group.provider_configuration = provider_configuration
+
+    group.save()
+
+    return HttpResponseRedirect("/endpoints/list/%s" % group.id)
+
+
+def delete_group(request, group_id):
+    group = get_object_or_404(EndpointGroup, pk=group_id)
+    group.delete()
+    return HttpResponseRedirect("/endpoints/")
+
+
+def endpoint_list(request, group_id):
+
+    group = get_object_or_404(EndpointGroup, pk=group_id)
+    provider_instance = endpoint_provider.get_provider_instance_from_group(group_id)
 
     page_size = int(settings.DEVICE_LIST_PAGING_SIZE)
     offset = 0
@@ -39,35 +101,39 @@ def endpoint_list(request, provider):
 
     filters = provider_instance.available_filters()
 
-    job_endpoints = []
-    job_endpoint_names = []
+    endpoint_queue = []
+    endpoint_queue_names = []
 
-    if "job_endpoints" in request.session:
-        job_endpoints = request.session["job_endpoints"]
+    if "endpoint_queue" in request.session:
+        endpoint_queue = request.session["endpoint_queue"]
 
-    if "job_endpoint_names" in request.session:
-        job_endpoint_names = request.session["job_endpoint_names"]
+    if "endpoint_queue_names" in request.session:
+        endpoint_queue_names = request.session["endpoint_queue_names"]
 
     context = {"endpoint_list": endpoint_array,
-               "provider": provider,
+               "endpoint_group": group,
+               "provider": group.provider_class,
                "provider_instance": provider_instance,
                "prev": prev,
                "next": next_offset,
                "filters": filters,
                "filter": filter_name,
                "argument": argument,
-               "job_endpoints": job_endpoints,
-               "job_endpoint_names": job_endpoint_names
+               "endpoint_queue": endpoint_queue,
+               "endpoint_queue_names": endpoint_queue_names
                }
-    return render(request, 'endpoints/list.html', context)
+    return render(request, "endpoints/list.html", context)
 
 
-def endpoint_details(request, provider, endpoint_id):
-    provider_instance = endpoint_provider.get_provider_instance(provider)
+def endpoint_details(request, group_id, endpoint_id):
+
+    # get the right provider instance
+    provider_instance = endpoint_provider.get_provider_instance_from_group(group_id)
+
     endpoint = provider_instance.get_endpoint_by_id(endpoint_id)
-    print endpoint
-    context = {'endpoint': endpoint, 'provider': provider}
-    return render(request, 'endpoints/details.html', context)
+
+    context = {"endpoint": endpoint, "group_id": group_id}
+    return render(request, "endpoints/details.html", context)
 
 
 def provider_list_json(request):
@@ -83,47 +149,47 @@ def provider_filters(request, provider_name):
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-def add_endpoints_to_job(request):
+def add_endpoints_to_queue(request):
     """
     takes a list of selected endpoints and adds them to the user session under a key named
-    'job_endpoints'. Also adds another list of 'job_endpoint_names' to avoid limitiations with django template
+    "endpoint_queue". Also adds another list of "endpoint_queue_names" to avoid limitations with django template
     language stuff to show already selected items in the queue
 
     """
-    required_fields = set(['endpoints', 'endpoint_provider'])
+    required_fields = set(["endpoints", "group_id"])
     if not required_fields.issubset(request.POST):
-        return render(request, 'error.html', {'error': "Invalid Parameters in POST"})
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
-    endpoint_provider_name = request.POST["endpoint_provider"]
+    group_id = request.POST["group_id"]
+    provider_instance = endpoint_provider.get_provider_instance_from_group(group_id)
 
-    job_endpoints = []
-    job_endpoint_names = []
+    endpoint_queue = []
+    endpoint_queue_names = []
 
-    if "job_endpoints" in request.session:
-        job_endpoints = request.session["job_endpoints"]
+    if "endpoint_queue" in request.session:
+        endpoint_queue = request.session["endpoint_queue"]
 
-    if "job_endpoint_names" in request.session:
-        job_endpoint_names = request.session["job_endpoint_names"]
+    if "endpoint_queue_names" in request.session:
+        endpoint_queue_names = request.session["endpoint_queue_names"]
 
-    provider_instance = endpoint_provider.get_provider_instance(endpoint_provider_name)
     for e in request.POST.getlist("endpoints"):
         endpoint = provider_instance.get_endpoint_by_id(e)
-        if endpoint not in job_endpoints:
-            job_endpoints.append(endpoint)
-            job_endpoint_names.append(endpoint["name"])
+        if endpoint not in endpoint_queue:
+            endpoint_queue.append(endpoint)
+            endpoint_queue_names.append(endpoint["name"])
 
-    request.session["job_endpoints"] = job_endpoints
-    request.session["job_endpoint_names"] = job_endpoint_names
+    request.session["endpoint_queue"] = endpoint_queue
+    request.session["endpoint_queue_names"] = endpoint_queue_names
 
-    return HttpResponseRedirect('/endpoints/list/%s' % endpoint_provider_name)
+    return HttpResponseRedirect("/endpoints/list/%s" % group_id)
 
 
-def clear_job_endpoints(request, provider):
-    if "job_endpoints" in request.session:
-        request.session["job_endpoints"] = []
-    if "job_endpoint_names" in request.session:
-        request.session["job_endpoint_names"] = []
+def clear_endpoint_queue(request, provider):
+    if "endpoint_queue" in request.session:
+        request.session["endpoint_queue"] = []
+    if "endpoint_queue_names" in request.session:
+        request.session["endpoint_queue_names"] = []
 
-    return HttpResponseRedirect('/endpoints/list/%s' % provider)
+    return HttpResponseRedirect("/endpoints/list/%s" % provider)
 
 
