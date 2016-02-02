@@ -87,8 +87,8 @@ class JunosSpaceDeviceList(EndpointBase):
 
         name = d.find('./name').text
         ip = d.find('./ipAddr').text
-        username = "NA"
-        password = "NA"
+        username = "FIXME"
+        password = "space_doesnt_know"
         endpoint_type = d.find('./platform').text
 
         endpoint_data = {
