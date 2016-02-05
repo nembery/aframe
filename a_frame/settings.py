@@ -130,8 +130,13 @@ ACTION_PROVIDERS = (
                         "arguments": []
                     },
                     {
-                        "name": "assert_configuration",
-                        "label": "Assert a Configuration statement exists",
+                        "name": "assert_set_configuration",
+                        "label": "Assert a RegEx expression matches the Configuration in set format",
+                        "arguments": []
+                    },
+                    {
+                        "name": "assert_xpath_configuration",
+                        "label": "Assert a xPath expression matches the Configuration in XML format",
                         "arguments": []
                     }
                 ]

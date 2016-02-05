@@ -5,23 +5,44 @@
     <table>
         <tr>
             <td>
+                To embed one template into another, you can use the aframe api at:
+                <br/>
+                {{ a_frame_url }}
+                <br/>
+                To call one template from another, you need to supply the correct input parameters as POST data.
+                They are given below in python format as an example.
+                <br/>
+                To embed a 'Per-Endpoint' template, you will need to pass the endpoint parameters. To get the endpoint
+                parameters of the existing script, use the
+                {% templatetag openvariable %} af_endpoint_ip {% templatetag closevariable %} syntax.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {{ name }}
+            </td>
+        </tr>
+         <tr>
+            <td>
+                {{ description }}
+            </td>
+        </tr>
+        <tr>
+            <td>
                 <textarea rows="40" cols="80" id="overlay_text_area">
-# template name: {{ name }}
-# description: {{ description }}
-# To embed this template, provide the following input parameters:
+# python example
+#!/usr/bin/env python
+import urllib2
+import urllib
+
 input_parameters = {
     "template_id": "{{ id }}",
 {% for ip in input_parameters %}
-    "{{ ip }}": "?",
+    "{{ ip }}": "{% templatetag openvariable %} {{ ip }} {% templatetag closevariable %}",
 {% endfor %}
 }
-as a POST to this URL:
-
-{{ a_frame_url }}
-
-# example python
-import urllib2
-results = urllib2.urlopen("{{ a_frame_url }}", input_parameters).read()
+post_data = urllib.urlencode(input_parameters)
+results = urllib2.urlopen("{{ a_frame_url }}", post_data).read()
                 </textarea>
             </td>
         </tr>

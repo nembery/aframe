@@ -50,7 +50,8 @@ def edit(request, input_form_id):
             print "adding %s as an available tag" % v.filter_expression
             variable_string = str(v.filter_expression)
             if variable_string not in available_tags:
-                available_tags.append(variable_string)
+                if not variable_string.startswith("af_"):
+                    available_tags.append(variable_string)
 
     context = {"input_form": input_form, "config_template": config_template, "available_tags": available_tags}
     return render(request, "input_forms/edit.html", context)
@@ -90,7 +91,8 @@ def new_from_template(request, template_id):
             print "adding %s as an available tag" % v.filter_expression
             variable_string = str(v.filter_expression)
             if variable_string not in available_tags:
-                available_tags.append(variable_string)
+                if not variable_string.startswith("af_"):
+                    available_tags.append(variable_string)
 
     context = {"config_template": config_template, "available_tags": available_tags}
     return render(request, "input_forms/new.html", context)
@@ -194,9 +196,11 @@ def configure_template_for_queue(request):
 
 
 def apply_template(request):
-    # FIXME - needs to take endpoint group id first
-    # and apply the endpoint configuration
-    # should create a utility function to do that!
+    """
+
+    :param request: HTTPRequest from the input form
+    :return: results of the template execution
+    """
     required_fields = set(["input_form_id", "endpoint_id", "group_id"])
     if not required_fields.issubset(request.POST):
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
@@ -208,7 +212,17 @@ def apply_template(request):
     provider_instance = endpoint_provider.get_provider_instance_from_group(group_id)
     endpoint = provider_instance.get_endpoint_by_id(endpoint_id)
 
-    print "got endpoint ok"
+    if "username" not in endpoint or endpoint["username"] == "":
+        if "global_username" in request.POST:
+            endpoint["username"] = request.POST["global_username"]
+        else:
+            raise Exception("Authentication is required!")
+
+    if "password" not in endpoint or endpoint["password"] == "":
+        if "global_password" in request.POST:
+            endpoint["password"] = request.POST["global_password"]
+        else:
+            raise Exception("Authentication is required!")
 
     input_form = InputForm.objects.get(pk=input_form_id)
 
@@ -309,7 +323,18 @@ def apply_template_to_queue(request):
 
     results = ""
     for endpoint in endpoints:
-        print endpoint
+        if "username" not in endpoint or endpoint["username"] == "":
+            if "global_username" in request.POST:
+                endpoint["username"] = request.POST["global_username"]
+            else:
+                raise Exception("Authentication is required!")
+
+        if "password" not in endpoint or endpoint["password"] == "":
+            if "global_password" in request.POST:
+                endpoint["password"] = request.POST["global_password"]
+            else:
+                raise Exception("Authentication is required!")
+
         context["af_endpoint_ip"] = endpoint["ip"]
         context["af_endpoint_username"] = endpoint["username"]
         context["af_endpoint_password"] = endpoint["password"]

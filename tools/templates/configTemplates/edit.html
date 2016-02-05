@@ -18,32 +18,6 @@
         }
     }
 
-    function embed_template() {
-
-        var template_name = $('#template_autocomplete').val();
-
-        var doc = jQuery(document.documentElement);
-        doc.css('cursor', 'progress');
-
-        var params = {
-            "template_name" : template_name
-        }
-
-        var url = "/tools/embedTemplate/"
-
-        var post = jQuery.post(url, params, function(response) {
-            load_overlay(response);
-        });
-
-        post.fail(function() {
-            alert('Could not perform request!');
-        });
-
-        post.always(function() {
-            doc.css('cursor', '');
-        });
-    }
-
     $(window).load(function() {
         var ao = $( "#action_options" ).val();
         var action_options_json = JSON.parse(ao);
@@ -81,7 +55,8 @@
         </tr>
         <tr>
             <td>Template</td>
-            <td><textarea cols="65" rows="10" name="template">{{ template.template }}</textarea></td>
+            <td><textarea cols="65" rows="10" class="template_editor"
+                          name="template">{{ template.template }}</textarea></td>
         </tr>
 
     </table>

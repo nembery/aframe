@@ -2,7 +2,10 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect, HttpResponse
 from django.template.base import VariableNode
 from django.template.loader import get_template_from_string
+from django.template import Context
+
 import json
+import socket
 
 from tools.models import ConfigTemplate
 from tools.models import ConfigTemplateForm
@@ -166,20 +169,7 @@ def delete(request, template_id):
     return HttpResponseRedirect("/tools")
 
 
-def get_template_input_parameters(request):
-    """
-    Describes how to embed the given template
-    :param request:
-    :return: json payload describing how to embed this template
-    """
-
-    required_fields = set(["template_name"])
-    if not required_fields.issubset(request.POST):
-        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
-
-    template_name = request.POST["template_name"]
-
-    config_template = get_object_or_404(ConfigTemplate, name=template_name)
+def get_input_parameters_for_template(config_template):
     t = get_template_from_string(config_template.template)
     input_parameters = []
     for node in t:
@@ -188,11 +178,13 @@ def get_template_input_parameters(request):
             print "adding %s as an available tag" % v.filter_expression
             variable_string = str(v.filter_expression)
             if variable_string not in input_parameters:
-                input_parameters.append(variable_string)
+                if not variable_string.startswith("af_"):
+                    # skip internal af parameters
+                    input_parameters.append(variable_string)
 
     # FIXME maybe move these to the settings.py ?
-    host = request.META["HTTP_HOST"]
-    url = "/api/execute_template"
+    host = socket.gethostname()
+    url = "/tools/execute_template"
 
     template_usage = {
         "id": config_template.id,
@@ -210,7 +202,89 @@ def get_template_input_parameters(request):
         input_parameters.append("af_endpoint_password")
         input_parameters.append("af_endpoint_type")
 
+    return template_usage
+
+
+def get_template_input_parameters_overlay(request):
+    """
+    Describes how to embed the given template
+    :param request:
+    :return: json payload describing how to embed this template
+    """
+
+    required_fields = set(["template_name"])
+    if not required_fields.issubset(request.POST):
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
+    template_name = request.POST["template_name"]
+
+    config_template = get_object_or_404(ConfigTemplate, name=template_name)
+    template_usage = get_input_parameters_for_template(config_template)
+
     return render(request, "configTemplates/overlay.html", template_usage)
+
+
+def execute_template(request):
+    required_fields = set(["template_id"])
+    if not required_fields.issubset(request.POST):
+            error = {"output": "missing required template_id parameter", "status": 1}
+            return HttpResponse(json.dumps(error), content_type="application/json")
+
+    template_id = request.POST["template_id"]
+    config_template = ConfigTemplate.objects.get(pk=template_id)
+    template_api = get_input_parameters_for_template(config_template)
+
+    context = Context()
+
+    try:
+        print str(template_api["input_parameters"])
+        input_parameters = template_api["input_parameters"]
+
+        for j in input_parameters:
+            print "setting context %s" % j
+            context[j] = str(request.POST[j])
+
+    except Exception as ex:
+        print str(ex)
+        error = {"output": "missing required parameters", "status": 1}
+        return HttpResponse(json.dumps(error), content_type="application/json")
+
+    compiled_template = get_template_from_string(config_template.template)
+    completed_template = str(compiled_template.render(context))
+
+    print completed_template
+    action_name = config_template.action_provider
+    action_options = json.loads(config_template.action_provider_options)
+
+    print "action name is: " + action_name
+
+    action = action_provider.get_provider_instance(action_name, action_options)
+    if config_template.type == "per-endpoint":
+        required_fields = set(["af_endpoint_ip", "af_endpoint_username",
+                               "af_endpoint_password", "af_endpoint_password"]
+                              )
+
+        if not required_fields.issubset(request.POST):
+            error = {"output": "missing required authentication parameters", "status": 1}
+            return HttpResponse(json.dumps(error), content_type="application/json")
+
+        endpoint = dict()
+        endpoint["ip"] = request.POST["af_endpoint_ip"]
+        endpoint["username"] = request.POST["af_endpoint_username"]
+        endpoint["password"] = request.POST["af_endpoint_password"]
+        endpoint["type"] = request.POST["af_endpoint_type"]
+
+        action.set_endpoint(endpoint)
+
+    try:
+        results = action.execute_template(completed_template)
+        response = {"output": results, "status": 0}
+
+    except Exception as ex:
+        print str(ex)
+        response = {"output": "Error executing template", "status": 1}
+
+    return HttpResponse(json.dumps(response), content_type="application/json")
 
 
 def search(request):

@@ -7,6 +7,11 @@
     function validateForm() {
         return true;
     }
+    $(window).load(function() {
+        $( "#template_autocomplete" ).autocomplete({
+            source: "/tools/search",
+        });
+    });
 
     </script>
 {% endblock %}
@@ -73,7 +78,19 @@ introduce variables, in this case a variable named 'format' will be available to
 Variable names must not include special characters!"></textarea>
             </td>
         </tr>
-
+    </table>
+    <h3>Advanced Options:</h3>
+    <table>
+        <tr>
+            <td>
+                Embed Template:
+            </td>
+            <td>
+                <input type="text" name="embedded_template" size="25" id="template_autocomplete"
+                       placeholder="search templates definitions"> &nbsp;
+                <input type="button" onclick="javascript: embed_template()" value="View API"/>
+            </td>
+        </tr>
     </table>
     <input type="hidden" name="action_provider" value="{{ action_provider }}"/>
     <input type="submit" value="Create"/>

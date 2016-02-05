@@ -35,8 +35,10 @@ class NetconfAction(ActionBase):
             return self.apply_template(template)
         elif self.request_type == "execute_cheat_command":
             return self.execute_cheat_command(template)
-        elif self.request_type == "assert_configuration":
-            return self.assert_configuration(template)
+        elif self.request_type == "assert_set_configuration":
+            return self.assert_set_configuration(template)
+        elif self.request_type == "assert_xpath_configuration":
+            return self.assert_xpath_configuration(template)
         else:
             return self.execute_op_command(template)
 
@@ -55,28 +57,28 @@ class NetconfAction(ActionBase):
         results = self.dev.cli(template)
         return results
 
-    def assert_configuration(self, pattern):
-        if re.search(r"^\s*set\s", pattern):
+    def assert_set_configuration(self, pattern):
 
-            print "Checking set command regex"
-            config = self.dev.cli('show configuration | display set')
-            print config
-            config_pattern = re.compile(pattern)
+        print "Checking set command regex"
+        config = self.dev.cli('show configuration | display set')
+        print config
+        config_pattern = re.compile(pattern)
 
-            results = ""
-            for line in config.split('\n'):
-                if config_pattern.match(line):
-                    results += line + "\n"
+        results = ""
+        for line in config.split('\n'):
+            if config_pattern.match(line):
+                results += line + "\n"
 
-            if results != "":
-                return results
+        if results != "":
+            return results
 
-        else:
-            print "Searching xpath"
-            configuration_xml = self.dev.execute("<get-configuration></get-configuration>")
-            print configuration_xml
-            if configuration_xml.find(pattern):
-                return "Configuration element: %s is present" % pattern
+    def assert_xpath_configuration(self, xpath):
+
+        print "Searching xpath"
+        configuration_xml = self.dev.execute("<get-configuration></get-configuration>")
+        print configuration_xml
+        if configuration_xml.find(xpath):
+            return "Configuration element: %s is present" % xpath
 
         return "not found"
 
