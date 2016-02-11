@@ -1,8 +1,0 @@
-# id,name,ip,username,password,type
-'2','vmx02','192.168.122.102','root','Clouds123','vmx'
-'3','vmx03','192.168.122.103','root','Clouds123','vmx'
-'4','vmx04','192.168.122.104','root','Clouds123','vmx'
-'1','vmx01','192.168.122.101','root','Clouds123','vmx'
-'100','phl-mbh-124-006','192.168.124.6','root','Clouds123','acx2200'
-'101','phl-mbh-124-005','192.168.124.5','root','Clouds123','acx1100'
-'102','phl-mbh-core-1','192.168.123.68','root','Clouds123','mx480'
