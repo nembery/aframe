@@ -38,7 +38,7 @@ class RestAction(ActionBase):
         if not self.url.startswith('/'):
             self.url = "/" + self.url
 
-        # set up debuggin output
+        # set up debugging output
         handler=urllib2.HTTPHandler(debuglevel=1)
         opener = urllib2.build_opener(handler)
         urllib2.install_opener(opener)

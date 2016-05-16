@@ -4,6 +4,7 @@ from django.template.loader import get_template_from_string
 from django.template import Context
 from django.core.exceptions import ObjectDoesNotExist
 import json
+import re
 from input_forms.models import InputForm
 from tools.models import ConfigTemplate
 from a_frame.utils import action_provider
@@ -61,7 +62,11 @@ def detail(request, input_form_id):
     input_form = InputForm.objects.get(pk=input_form_id)
     print input_form.json
     json_object = json.loads(input_form.json)
-    context = {"input_form": input_form, "json_object": json_object}
+
+    config_template = input_form.script
+    action_options = json.loads(config_template.action_provider_options)
+
+    context = {"input_form": input_form, "json_object": json_object, 'action_options': action_options}
     if input_form.script.type == "standalone":
         return render(request, "input_forms/configure_standalone_template.html", context)
     else:
@@ -173,7 +178,12 @@ def configure_template_for_endpoint(request):
     print input_form.json
     json_object = json.loads(input_form.json)
 
-    context = {"input_form": input_form, "json_object": json_object, "endpoint": endpoint, "group_id": group_id}
+    config_template = input_form.script
+    action_options = json.loads(config_template.action_provider_options)
+
+    context = {"input_form": input_form, "json_object": json_object, "endpoint": endpoint, "group_id": group_id,
+               'action_options' : action_options
+               }
     return render(request, "input_forms/configure_per_endpoint_template.html", context)
 
 
@@ -200,7 +210,10 @@ def apply_template(request):
 
     :param request: HTTPRequest from the input form
     :return: results of the template execution
+
     """
+    print "APPLY TEMPLATE"
+
     required_fields = set(["input_form_id", "endpoint_id", "group_id"])
     if not required_fields.issubset(request.POST):
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
@@ -283,7 +296,17 @@ def apply_standalone_template(request):
     print completed_template
     action_name = config_template.action_provider
     print action_name
+
     action_options = json.loads(config_template.action_provider_options)
+    print action_options
+
+    for ao in action_options:
+        if "action_options_" + str(ao) in request.POST:
+            print "Found a customized action option!"
+            new_val = request.POST["action_options_" + str(ao)]
+            current_value = action_options[ao]["value"]
+            action_options[ao]["value"] = re.sub("{{ .* }}", new_val, current_value)
+            print action_options[ao]["value"]
 
     action = action_provider.get_provider_instance(action_name, action_options)
     results = action.execute_template(completed_template)

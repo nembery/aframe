@@ -35,6 +35,17 @@
         });
     }
 
+    function check_embedded_variable(el) {
+        var element_value = el.value;
+        console.log(element_value);
+        if (element_value.includes("{% templatetag openvariable %}")) {
+            console.log("Showing label options");
+            var label_input = $("#" + el.name + "_variable")
+            label_input.css("display", "");
+            label_input.attr("placeholder", "Label for " + el.value);
+        }
+    }
+
     $(window).load(function() {
         console.log("loading");
         $("#id_action_provider").change(
@@ -47,7 +58,9 @@
     </script>
 {% endblock %}
 {% block content %}
-<form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();"  action="/tools/defineTemplate/">
+<form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();"
+      action="/tools/defineTemplate/">
+
     <h2>New Template - Step 2 of 3</h2>
     <h3>Configure Action Options</h3>
     <table id="action_params_container">
@@ -66,7 +79,13 @@
             </td>
             <td name="action_params_data">
                 {% if opts.type == "text" %}
-                    <input type="text" name="{{ opts.name }}" placeholder="{{ opts.default }}"/>
+                    <input type="text" name="{{ opts.name }}" placeholder="{{ opts.default }}"
+                           onblur="javascript: check_embedded_variable(this)"/>
+                     &nbsp;
+                    <input type="text" name="{{ opts.name }}_variable"
+                           id="{{ opts.name }}_variable"
+                           placeholder="{% templatetag openvariable %} Variable {% templatetag closevariable %} Label"
+                           style="display: none; width: 165px"/>
                 {% else %}
                     <select name="{{ opts.name }}">
                         {% for c in opts.choices %}

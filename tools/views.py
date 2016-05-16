@@ -55,6 +55,11 @@ def define_template(request):
             o["name"] = opt["name"]
             o["value"] = request.POST[opt["name"]]
             o["label"] = opt["label"]
+
+            # check for hidden action option customization
+            if opt["name"] + "_variable" in request.POST:
+                o["variable"] = request.POST[opt["name"] + "_variable"]
+
             configured_options[o["name"]] = o
         else:
             context = {"error": "Required option not found in request!"}
@@ -142,7 +147,7 @@ def create(request):
     template.name = request.POST["name"]
     template.description = request.POST["description"]
     template.action_provider = request.POST["action_provider"]
-    template.template = request.POST["template"]
+    template.template = request.POST["template"].strip().replace('\r\n', '\n')
     template.type = request.POST["type"]
 
     if "new_template_action_options" not in request.session:
@@ -277,7 +282,7 @@ def execute_template(request):
         action.set_endpoint(endpoint)
 
     try:
-        results = action.execute_template(completed_template)
+        results = action.execute_template(completed_template.strip().replace('\r\n', '\n'))
         response = {"output": results, "status": 0}
 
     except Exception as ex:

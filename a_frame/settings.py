@@ -143,7 +143,7 @@ ACTION_PROVIDERS = (
             }
         ]
     },
-     {
+    {
         "name": "ShellExecution",
         "label": "Executes Template in a Shell on the local server",
         "options": []
@@ -205,8 +205,17 @@ ACTION_PROVIDERS = (
             {
                 "label": "Protocol",
                 "name": "protocol",
-                "type": "text",
-                "default": "https"
+                "type": "select",
+                "choices": [
+                    {
+                        "name": "https",
+                        "label": "HTTPS",
+                    },
+                    {
+                        "name": "http",
+                        "label": "HTTP",
+                    }
+                ]
             },
             {
                 "label": "Endpoint Host",

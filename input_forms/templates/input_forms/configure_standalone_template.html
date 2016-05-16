@@ -9,9 +9,27 @@
 {% block content %}
 <h2>{{ input_form.name }}</h2>
 {{ input_form.instructions }}
-<form method="POST" action="/input_forms/applyStandalone">
+
+<form method="POST" action="/input_forms/a
+pplyStandalone">
 
     <table>
+        {% for ao, ao_val in action_options.items %}
+
+            {% if ao_val.variable %}
+            <tbody>
+            <tr>
+                <td class="template_title">
+                    {{ ao_val.variable }}
+                </td>
+                <td>
+                    <input type="text" name="action_options_{{ ao_val.name }}" placeholder="{{ ao.name }}"/>
+                </td>
+            </tr>
+            </tbody>
+            {% endif %}
+        {% endfor %}
+
         {% for j in json_object %}
         <tbody>
         <tr>
