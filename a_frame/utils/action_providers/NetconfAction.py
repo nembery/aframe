@@ -41,7 +41,7 @@ class NetconfAction(ActionBase):
         """
         if self.dev is None:
             return self.result_msg
-        
+
         if self.request_type == "apply_template":
             return self.apply_template(template)
         elif self.request_type == "execute_cheat_command":
@@ -113,7 +113,7 @@ class NetconfAction(ActionBase):
             print "Could not lock database!"
             print str(le)
             self.dev.close()
-            return False
+            return "Failed to lock configuration database! %s" % str(le)
 
         try:
             print "loading config"
@@ -121,8 +121,13 @@ class NetconfAction(ActionBase):
         except Exception as e:
             print "Could not load configuration"
             print str(e)
+            try:
+                cu.unlock()
+            except UnlockError as ue:
+                print str(ue)
+
             self.dev.close()
-            return "Failed, could not load the configuration template"
+            return "Failed, could not load the configuration template. %s" % str(e)
 
         diff = cu.diff()
         print diff
@@ -133,10 +138,17 @@ class NetconfAction(ActionBase):
                 cu.commit(comment="Commit via a_frame")
 
             except CommitError as ce:
-                print "Could not load config!"
+                print "Could not load config! %s" % str(ce)
                 cu.rollback()
+                try:
+                    print "Unlocking database!"
+                    cu.unlock()
+                except UnlockError as ue:
+                    print "Could not unlock database"
+                    print str(ue)
                 print repr(ce)
-                return "Failed, commit check failed"
+                self.dev.close()
+                return "Failed, commit check failed. %s" % str(ce)
 
         else:
             # nothing to commit
@@ -149,6 +161,7 @@ class NetconfAction(ActionBase):
         except UnlockError as ue:
             print "Could not unlock database"
             print str(ue)
+            self.dev.close()
             return "Committed, but could not unlock db"
 
         print "Closing device handle"
