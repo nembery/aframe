@@ -94,7 +94,7 @@ class NmapDiscovery(EndpointBase):
             }
         """
         (id, data) = results_object
-        if len(data["hostnames"]) > 0:
+        if "hostnames" in data: 
             name = data["hostnames"][0]["name"]
         else:
             name = id
