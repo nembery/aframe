@@ -17,11 +17,19 @@ class NetconfAction(ActionBase):
 
     dev = None
     request_type = "apply_template"
+    result_msg = ""
 
     def set_endpoint(self, endpoint):
-        # create the required iterator from the endpoint_list
-        self.dev = Device(user=endpoint["username"], password=endpoint["password"], host=endpoint["ip"])
-        self.dev.open(gather_facts=False)
+        try:
+            # create the required iterator from the endpoint_list
+            self.dev = Device(user=endpoint["username"], password=endpoint["password"], host=endpoint["ip"])
+            self.dev.open(gather_facts=False)
+
+        except Exception as err:
+            print "Could not open device!"
+            self.result_msg = str(err)
+            self.dev = None
+
         return
 
     def execute_template(self, template):
@@ -31,6 +39,9 @@ class NetconfAction(ActionBase):
         :param template:
         :return: String results from the endpoint netconf subsystem
         """
+        if self.dev is None:
+            return self.result_msg
+        
         if self.request_type == "apply_template":
             return self.apply_template(template)
         elif self.request_type == "execute_cheat_command":
