@@ -12,7 +12,7 @@ from endpoints import endpoint_provider
 
 
 def index(request):
-    input_form_list = InputForm.objects.all().order_by("modified")
+    input_form_list = InputForm.objects.all().order_by("name")
     context = {"input_form_list": input_form_list}
     return render(request, "input_forms/index.html", context)
 
