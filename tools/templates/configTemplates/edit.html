@@ -41,18 +41,20 @@
 <form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/tools/update/">
     {% csrf_token %}
     <table>
+
         <tr>
             <td>
-                Name:
+                Template Name:
             </td>
             <td>
-                <input type="text" name="name" id="name" value="{{ template.name }}"/>
+                {{ input_form.name }}
             </td>
         </tr>
         <tr>
             <td>Description</td>
-            <td><textarea cols="65" rows="5" name="description">{{ template.description }}</textarea></td>
+            {{ input_form.description }}
         </tr>
+
         <tr>
             <td>Template</td>
             <td><textarea cols="65" rows="10" class="template_editor"

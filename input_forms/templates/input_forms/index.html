@@ -14,9 +14,11 @@
         <td><a href="{{ input_form.id }}">{{ input_form.name }}</a> </td>
         <td>{{ input_form.description }}</td>
         <td>
-            <a href="delete/{{ input_form.id }}">Delete</a>
+            <a href="/tools/delete/{{ input_form.script.id }}">Delete</a>
             &nbsp;
-            <a href="edit/{{ input_form.id }}">Edit</a>
+            <a href="edit/{{ input_form.id }}">Edit Form</a>
+            &nbsp;
+            <a href="/tools/edit/{{ input_form.script.id }}/">Edit Template</a>
             &nbsp;
             <a href="preview/{{ input_form.id }}">Preview</a>
         </td>

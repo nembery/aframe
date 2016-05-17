@@ -166,6 +166,6 @@ class NetconfAction(ActionBase):
 
         print "Closing device handle"
         self.dev.close()
-        return "Completed with diff: " + diff
+        return "Completed with diff: %s" % diff
 
 

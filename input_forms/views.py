@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, HttpResponseRedirect, Ht
 from django.template.base import VariableNode
 from django.template.loader import get_template_from_string
 from django.template import Context
+from django.template import TemplateSyntaxError
 from django.core.exceptions import ObjectDoesNotExist
 import json
 import re
@@ -36,7 +37,11 @@ def search(request):
 def edit(request, input_form_id):
     input_form = InputForm.objects.get(pk=input_form_id)
     config_template = input_form.script
-    t = get_template_from_string(config_template.template)
+    try:
+        t = get_template_from_string(config_template.template)
+    except TemplateSyntaxError as e:
+        print "Caught a template syntax error!"
+        return render(request, "error.html", {"error": "Invalid Template Syntax: %s" % str(e)})
 
     print "JSON IS"
     print input_form.json

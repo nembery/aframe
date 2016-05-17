@@ -9,6 +9,7 @@ import socket
 
 from tools.models import ConfigTemplate
 from tools.models import ConfigTemplateForm
+from input_forms.models import InputForm
 from a_frame.utils import action_provider
 from a_frame import settings
 
@@ -96,18 +97,27 @@ def edit(request, template_id):
     default_options = action_provider.get_options_for_provider(template.action_provider)
     action_options = json.loads(template.action_provider_options)
 
-    context = {"template": template, "action_options": json.dumps(action_options), "default_options": default_options}
-    return render(request, "configTemplates/edit.html", context)
+    try:
+        input_form = InputForm.objects.get(script=template)
+        context = {"template": template,
+                   "action_options": json.dumps(action_options),
+                   "default_options": default_options,
+                   "input_form": input_form
+                   }
+        return render(request, "configTemplates/edit.html", context)
+
+    except InputForm.DoesNotExist:
+        context = {"error": "Required option not found in request!"}
+        return render(request, "error.html", context)
 
 
 def update(request):
     try:
-        print "HERE WE GO"
         if "id" in request.POST:
             template_id = request.POST["id"]
             template = get_object_or_404(ConfigTemplate, pk=template_id)
-            template.name = request.POST["name"]
-            template.description = request.POST["description"]
+            # template.name = request.POST["name"]
+            # template.description = request.POST["description"]
             template.template = request.POST["template"]
 
             options = action_provider.get_options_for_provider(template.action_provider)
@@ -126,7 +136,12 @@ def update(request):
 
             template.action_provider_options = json.dumps(configured_options)
             template.save()
-            return HttpResponseRedirect("/tools")
+            try:
+                input_form = InputForm.objects.get(script=template)
+                return HttpResponseRedirect('/input_forms/edit/%s' % input_form.id)
+            except InputForm.DoesNotExist as dne:
+                return HttpResponseRedirect("/input_forms/")
+
         else:
             return render(request, "error.html", {
                 "error": "Invalid data in POST"
@@ -171,7 +186,7 @@ def detail(request, template_id):
 def delete(request, template_id):
     template = get_object_or_404(ConfigTemplate, pk=template_id)
     template.delete()
-    return HttpResponseRedirect("/tools")
+    return HttpResponseRedirect("/input_forms/")
 
 
 def get_input_parameters_for_template(config_template):
