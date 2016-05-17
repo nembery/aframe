@@ -2,10 +2,9 @@ import abc
 from a_frame.utils.action_providers.action_base import ActionBase
 from lxml import etree
 import urllib2
-import urllib
 import base64
+import platform
 import json
-
 
 class RestAction(ActionBase):
     """
@@ -17,6 +16,8 @@ class RestAction(ActionBase):
     # inherited set_global_options from action_base.py will overwrite all of these automatically from the
     # "create_template" selections
     auth_type = "none"
+    keystone_host = "127.0.0.1"
+    keystone_project = "admin"
     username = "demo"
     password = "demo"
     url = "/api/space/device-management/devices"
@@ -25,6 +26,9 @@ class RestAction(ActionBase):
     request_type = "GET"
     content_type = "application/json"
     accepts_type = "application/json"
+
+    _keystone_auth_path = ":5000/v3/auth/tokens"
+    _auth_token = ""
 
     def execute_template(self, template):
         """
@@ -35,7 +39,7 @@ class RestAction(ActionBase):
         """
         print "executing %s" % template
 
-        if not self.url.startswith('/'):
+        if not self.url.startswith(':') and not self.url.startswith('/'):
             self.url = "/" + self.url
 
         # set up debugging output
@@ -48,10 +52,15 @@ class RestAction(ActionBase):
 
         request = urllib2.Request(self.protocol + "://" + self.host + self.url)
         if self.auth_type == "basic":
-            # fixme - add keystone auth here
             print "using username: %s" % self.username
             base64string = base64.encodestring("%s:%s" % (self.username, self.password))
             request.add_header("Authorization", "Basic %s" % base64string)
+        elif self.auth_type == "keystone":
+            if not self.connect_to_keystone():
+                return "Authentication error connecting to Keystone!"
+
+            print "Connected to Keystone!"
+            request.add_header("X-Auth-Token", self._auth_token)
 
         request.get_method = lambda: self.request_type
         # request.add_header("Accept", self.accepts_type)
@@ -72,8 +81,13 @@ class RestAction(ActionBase):
                     xml = etree.fromstring(results)
                     return etree.tostring(xml, pretty_print=True)
 
-                # otherwise, just return what we have
-                return results
+                # is the result valid json?
+                try:
+                    json_string = json.loads(results)
+                    return json.dumps(json_string, indent=4)
+                except ValueError:
+                    # this isn't xml or json, so just return it!
+                    return results
             except Exception as ex:
                 print str(ex)
                 return "Error!"
@@ -82,3 +96,45 @@ class RestAction(ActionBase):
             request.add_header("Content-Length", len(data))
             return urllib2.urlopen(request, data).read()
 
+    def connect_to_keystone(self):
+        """
+        connects to Keystone in the specified project scope
+
+        :return: boolean if successful
+
+        """
+
+        _auth_json = """
+            { "auth": {
+                "identity": {
+                  "methods": ["password"],
+                  "password": {
+                    "user": {
+                      "name": "%s",
+                      "domain": { "id": "default" },
+                      "password": "%s"
+                    }
+                  }
+                },
+                  "scope": {
+                        "project": {
+                            "domain": {
+                                "id": "default"
+                            },
+                            "name": "%s"
+                        }
+                    }
+                }
+            }
+            """ % (self.username, self.password, self.keystone_project)
+
+        full_url = "http://" + self.keystone_host + self._keystone_auth_path
+        print full_url
+        request = urllib2.Request(full_url)
+        request.add_header("Content-Type", "application/json")
+        request.add_header("charset", "UTF-8")
+        request.add_header("X-Contrail-Useragent", "%s:%s" % (platform.node(), "aframe_rest_client"))
+        request.add_header("Content-Length", len(_auth_json))
+        result = urllib2.urlopen(request, _auth_json)
+        self._auth_token = result.info().getheader('X-Subject-Token')
+        return True

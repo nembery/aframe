@@ -1,5 +1,8 @@
 AFrame is a minimalistic automation framework / experiement. 
 
+The idea is to present a single point of management for network automation.
+Virtually any API is, or can be, supported from one central place. 
+
 To build, you'll need pyez, django 1.9, python-netaddr, and nmap installed to get started.
 
 sudo apt-get install python-netaddr python-pip python-nmap nmap python-lxml python-dev libssl-dev libxslt-dev -y

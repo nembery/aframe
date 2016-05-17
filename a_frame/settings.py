@@ -182,6 +182,18 @@ ACTION_PROVIDERS = (
                 "default": "password"
             },
             {
+                "label": "Keystone Host",
+                "name": "keystone_host",
+                "type": "text",
+                "default": "n/a"
+            },
+             {
+                "label": "Keystone Project Scope",
+                "name": "keystone_project",
+                "type": "text",
+                "default": "admin"
+            },
+            {
                 "label": "Request type",
                 "name": "request_type",
                 "type": "select",

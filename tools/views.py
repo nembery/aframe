@@ -130,6 +130,11 @@ def update(request):
                     o["name"] = opt["name"]
                     o["value"] = request.POST[opt["name"]]
                     o["label"] = opt["label"]
+
+                    # check for hidden action option customization
+                    if opt["name"] + "_variable" in request.POST:
+                        o["variable"] = request.POST[opt["name"] + "_variable"]
+
                     configured_options[o["name"]] = o
                 else:
                     context = {"error": "Required option not found in request!"}
