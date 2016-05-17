@@ -1,9 +1,8 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from tools import views
 
-
-urlpatterns = patterns("",
+urlpatterns = [
                        url(r"^$", views.index,
                            name="index"),
                        url(r"^new/$", views.new_template,
@@ -33,4 +32,4 @@ urlpatterns = patterns("",
                        url(r"^execute_template", views.execute_template,
                            name="execute_template"),
 
-                       )
+                       ]

@@ -1,8 +1,11 @@
 AFrame is a minimalistic automation framework / experiement. 
 
-To build, you'll need pyez, django, and nmap installed to get started.
+To build, you'll need pyez, django 1.9, python-netaddr, and nmap installed to get started.
 
-first, create your db by running ./manage.py syncdb
+sudo apt-get install python-netaddr python-pip python-nmap nmap python-lxml python-dev libssl-dev libxslt-dev -y
+sudo pip install django junos-pyez
+
+first, create your db by running ./manage.py migrate
 then run the application by ./manage.py runserver 0.0.0.0:8080
 
 To do interesting things, you'll need to create an endpoint group or write an

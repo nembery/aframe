@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, HttpResponseRedirect, HttpResponse
 from django.template.base import VariableNode
-from django.template.loader import get_template_from_string
+from django.template import engines
 from django.template import Context
 from django.template import TemplateSyntaxError
 from django.core.exceptions import ObjectDoesNotExist
@@ -37,8 +37,9 @@ def search(request):
 def edit(request, input_form_id):
     input_form = InputForm.objects.get(pk=input_form_id)
     config_template = input_form.script
+
     try:
-        t = get_template_from_string(config_template.template)
+        t = engines['django'].from_string(config_template.template)
     except TemplateSyntaxError as e:
         print "Caught a template syntax error!"
         return render(request, "error.html", {"error": "Invalid Template Syntax: %s" % str(e)})
@@ -48,7 +49,7 @@ def edit(request, input_form_id):
     print "END JSON"
 
     available_tags = []
-    for node in t:
+    for node in t.template.nodelist:
         # django template contains a list of Nodes
         # which can be used to find the user configured variables in the template
         defined_tags = node.get_nodes_by_type(VariableNode)
@@ -93,9 +94,15 @@ def new(request):
 def new_from_template(request, template_id):
     print "new from template called"
     config_template = get_object_or_404(ConfigTemplate, pk=template_id)
-    t = get_template_from_string(config_template.template)
+    try:
+        t = engines['django'].from_string(config_template.template)
+    except TemplateSyntaxError as e:
+        print "Caught a template syntax error!"
+        return render(request, "error.html", {"error": "Invalid Template Syntax: %s" % str(e)})
+
     available_tags = []
-    for node in t:
+
+    for node in t.template.nodelist:
         defined_tags = node.get_nodes_by_type(VariableNode)
         for v in defined_tags:
             print "adding %s as an available tag" % v.filter_expression
@@ -261,8 +268,12 @@ def apply_template(request):
 
     config_template = input_form.script
 
-    compiled_template = get_template_from_string(config_template.template)
-    completed_template = str(compiled_template.render(context))
+    try:
+        compiled_template = engines['django'].from_string(config_template.template)
+        completed_template = str(compiled_template.render(context))
+    except TemplateSyntaxError as e:
+        print "Caught a template syntax error!"
+        return render(request, "error.html", {"error": "Invalid Template Syntax: %s" % str(e)})
 
     print "TEMPLATE IS:"
     print completed_template
@@ -295,7 +306,12 @@ def apply_standalone_template(request):
 
     config_template = input_form.script
 
-    compiled_template = get_template_from_string(config_template.template)
+    try:
+        compiled_template = engines['django'].from_string(config_template.template)
+    except TemplateSyntaxError as e:
+        print "Caught a template syntax error!"
+        return render(request, "error.html", {"error": "Invalid Template Syntax: %s" % str(e)})
+
     completed_template = str(compiled_template.render(context))
 
     print completed_template
@@ -339,7 +355,11 @@ def apply_template_to_queue(request):
 
     config_template = input_form.script
 
-    compiled_template = get_template_from_string(config_template.template)
+    try:
+        compiled_template = engines['django'].from_string(config_template.template)
+    except TemplateSyntaxError as e:
+        print "Caught a template syntax error!"
+        return render(request, "error.html", {"error": "Invalid Template Syntax: %s" % str(e)})
 
     action_name = config_template.action_provider
     action_options = json.loads(config_template.action_provider_options)

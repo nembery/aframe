@@ -186,8 +186,8 @@ class EndpointBase(object):
         except AddrFormatError:
             print "Bad address format"
             return None
-
-        if endpoint["ip"] in ip_network:
+        ip = netaddr.IPAddress(endpoint["ip"])
+        if ip in ip_network:
             return endpoint
         else:
             return None

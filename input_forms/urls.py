@@ -1,9 +1,9 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from input_forms import views
 
 
-urlpatterns = patterns("",
+urlpatterns = [
                        url(r"^$", views.index,
                            name="index"),
                        url(r"^create$", views.create,
@@ -36,4 +36,4 @@ urlpatterns = patterns("",
                            name="view_from_template"),
                        url(r"^edit_from_template/(?P<template_id>[^/]+)/$", views.edit_from_template,
                            name="edit_from_template"),
-                       )
+                       ]

@@ -1,8 +1,9 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect, HttpResponse
 from django.template.base import VariableNode
-from django.template.loader import get_template_from_string
+# from django.template.loader import get_template_from_string
 from django.template import Context
+from django.template import engines
 
 import json
 import socket
@@ -190,9 +191,10 @@ def delete(request, template_id):
 
 
 def get_input_parameters_for_template(config_template):
-    t = get_template_from_string(config_template.template)
+    t = engines['django'].from_string(config_template.template)
+    # t = get_template_from_string(config_template.template)
     input_parameters = []
-    for node in t:
+    for node in t.template.nodelist:
         defined_tags = node.get_nodes_by_type(VariableNode)
         for v in defined_tags:
             print "adding %s as an available tag" % v.filter_expression

@@ -1,9 +1,9 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from endpoints import views
 
 
-urlpatterns = patterns("",
+urlpatterns = [ 
                        url(r"^$", views.index, name="index"),
                        url(r"^addEndpoints$", views.add_endpoints_to_queue, name="addEndpoints"),
                        url(r"^clearEndpoints/(?P<provider>[^/]+)/$", views.clear_endpoint_queue,
@@ -17,4 +17,4 @@ urlpatterns = patterns("",
                        url(r"^deleteGroup/(?P<group_id>[^/]+)/$", views.delete_group,
                            name="delete_group"),
 
-                       )
+                       ]
