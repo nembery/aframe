@@ -120,6 +120,7 @@ def update(request):
             # template.name = request.POST["name"]
             # template.description = request.POST["description"]
             template.template = request.POST["template"]
+            template.type = request.POST["type"]
 
             options = action_provider.get_options_for_provider(template.action_provider)
             configured_options = dict()
@@ -133,6 +134,8 @@ def update(request):
 
                     # check for hidden action option customization
                     if opt["name"] + "_variable" in request.POST:
+                        print "FOUND VARIABLE in tools update!"
+                        print "value is %s " % request.POST[opt["name"] + "_variable"]
                         o["variable"] = request.POST[opt["name"] + "_variable"]
 
                     configured_options[o["name"]] = o

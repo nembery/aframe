@@ -42,7 +42,8 @@
             console.log("Showing label options");
             var label_input = $("#" + el.name + "_variable")
             label_input.css("display", "");
-            label_input.attr("placeholder", "Label for " + el.value);
+            //label_input.attr("placeholder", "Label for " + el.value);
+            label_input.val(el.name);
         }
     }
 
@@ -60,7 +61,6 @@
 {% block content %}
 <form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();"
       action="/tools/defineTemplate/">
-
     <h2>New Template - Step 2 of 3</h2>
     <h3>Configure Action Options</h3>
     <table id="action_params_container">

@@ -26,22 +26,40 @@
             var label_input = $("#" + el.name + "_variable")
             label_input.css("display", "");
             label_input.attr("placeholder", "Label for " + el.value);
+        } else {
+            var label_input = $("#" + el.name + "_variable")
+            label_input.css("display", "none");
+            label_input.val("");
         }
     }
 
     $(window).load(function() {
+        // Set values for all items from the action_options json object
+        // jQuery is much cleaner to set form values than django templates
+        // i.e. much less logic in the template
+
+        // get the action options hidden form element value
         var ao = $( "#action_options" ).val();
+        // parse into JSON
         var action_options_json = JSON.parse(ao);
+        // iterate over each one
         for (opt in action_options_json) {
             var opt_obj = action_options_json[opt];
             var name = opt_obj["name"];
             console.log(name + " : " + opt_obj["value"]);
-            var default_opt = $('[name *= "' + name + '"]');
-            default_opt.val(opt_obj["value"]);
+            // use jquery 'exact match' selector to get the appropriate form element
+            var opt_form_element = $('[name = "' + name + '"]');
+            // set the value of the form element here
+            opt_form_element.val(opt_obj["value"]);
+            // do we have a customized action option?
             if (opt_obj["value"].includes("{% templatetag openvariable %}")) {
+                // yes we do, let's show the label option form element
                 console.log("Showing label options");
-                var label_input = $("#" + name + "_variable")
+                // naming convention is always option name with "_variable" appended
+                var label_input = $("#" + name + "_variable");
+                // show it
                 label_input.css("display", "");
+                // set the value from the json object
                 label_input.val(opt_obj["variable"]);
             }
         }
@@ -58,7 +76,6 @@
 <form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/tools/update/">
     {% csrf_token %}
     <table>
-
         <tr>
             <td>
                 Template Name:
@@ -71,7 +88,23 @@
             <td>Description</td>
             {{ input_form.description }}
         </tr>
-
+        <tr>
+            <td>
+                Template Type:
+            </td>
+            <td>
+                <select name="type">
+                    <option value="standalone"
+                            {% if input_form.type == 'standalone' %} selected {% endif %}>
+                        Standalone
+                    </option>
+                    <option value="per-endpoint"
+                            {% if input_form.type == 'per-endpoint' %} selected {% endif %}>
+                        Per-Endpoint
+                    </option>
+                </select>
+            </td>
+        </tr>
         <tr>
             <td>Template</td>
             <td><textarea cols="65" rows="10" class="template_editor"

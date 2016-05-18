@@ -5,6 +5,8 @@ import urllib2
 import base64
 import platform
 import json
+from urllib2 import HTTPError
+
 
 class RestAction(ActionBase):
     """
@@ -37,7 +39,7 @@ class RestAction(ActionBase):
         :param template: the completed template from the user or API
         :return Boolean based on execution outcome.
         """
-        print "executing %s" % template
+        # print "executing %s" % template
 
         if not self.url.startswith(':') and not self.url.startswith('/'):
             self.url = "/" + self.url
@@ -90,11 +92,14 @@ class RestAction(ActionBase):
                     return results
             except Exception as ex:
                 print str(ex)
-                return "Error!"
+                return "Error! %s" % str(ex)
         else:
-            request.add_header("Content-Type", self.content_type)
-            request.add_header("Content-Length", len(data))
-            return urllib2.urlopen(request, data).read()
+            try:
+                request.add_header("Content-Type", self.content_type)
+                request.add_header("Content-Length", len(data))
+                return urllib2.urlopen(request, data).read()
+            except HTTPError as he:
+                return "Error! %s" % str(he)
 
     def connect_to_keystone(self):
         """

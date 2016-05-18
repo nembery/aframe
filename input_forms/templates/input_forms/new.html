@@ -4,12 +4,19 @@
 {% block scripts %}
 <script type="text/javascript">
 
-    var tags = [];
+    var template_variables = [];
 
     function submit_form() {
-        var json = $("#json");
-        var tag_configs = $("#tag_configurator");
+        // on form submission, gather up all the template variables
+        // and keep in a json object. We only care about the constructed
+        // json object from here on out
 
+        // get the json object hidden form element
+        var json = $("#json");
+        // get a ref to a document element that contains all our template variables
+        var template__variable__configs = $("#template__variable__configurator");
+
+        // do some basic validation on name and description
         var name = $("#name").val();
         var description = $("#description").val();
 
@@ -19,28 +26,41 @@
             return false;
         }
 
-        tag_configs.find('[id *= "tag_"]').each(
+        // use a jquery selector to find all document elements that 'start with' "template__variable__"
+        // iterate over each one
+        // for each template variable we want to know 3 things:
+        // what is the name of the variable, the human readable label, and the default value
+        template__variable__configs.find('[id ^= "template__variable__"]').each(
             function(a,r) {
+                // these are indexed by table row below
                 var row = $("#" + r.id);
-                var name_label = row.find('[name *= "_label"]');
+
+                // get the label object use a 'ends with' selector
+                var name_label = row.find('[name $= "_label"]');
+                // let the dev know we found it!
                 console.log(name_label);
+                // get the name form object that corresponds to this label element
                 var name = name_label.attr("id").replace("_label", "");
+                // get thh value of the label
                 var label = name_label.val();
+                // now use the 'ends with' selector to get the default value form element and value
+                var default_value = row.find('[id $= "_default"]').val();
 
-                var default_value = row.find('[id *= "_default"]').val();
-
+                // let's log it here for the dev again
                 console.log("name is: " + name);
                 console.log("default is: " + default_value);
                 console.log("label is: " + label);
 
+                // construct a simple object and add to the 'template_variables' array
                 t = { "name" : name, "label" : label, "default": default_value };
-                tags.push(t);
+                template_variables.push(t);
             }
-         );
-        var json_text = JSON.stringify(tags, null, 2);
-
+        );
+        // dump the template_variables array to a string and set on the json form element
+        var json_text = JSON.stringify(template_variables, null, 2);
         $("#json").val(json_text);
 
+        // submit the form here after we are all done
         $("#create_form").submit();
     }
 </script>
@@ -88,12 +108,12 @@
                 Available Tags:
             </td>
             <td>
-                <table id="tag_configurator">
+                <table id="template_variable_configurator">
                     <th>Variable</th>
                     <th>Label</th>
                     <th>Default Value</th>
                     {% for t in available_tags %}
-                    <tr id="tag_{{ forloop.counter }}">
+                    <tr id="template__variable__{{ forloop.counter }}">
                         <td>
                             {{ t }}
                         </td>
