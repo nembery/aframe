@@ -77,29 +77,45 @@ class RestAction(ActionBase):
             try:
                 r = urllib2.urlopen(request)
                 results = r.read()
+                return self.format_results(results)
 
-                # use pretty_print if we have an xml document returned
-                if results.startswith("<?xml"):
-                    xml = etree.fromstring(results)
-                    return etree.tostring(xml, pretty_print=True)
-
-                # is the result valid json?
-                try:
-                    json_string = json.loads(results)
-                    return json.dumps(json_string, indent=4)
-                except ValueError:
-                    # this isn't xml or json, so just return it!
-                    return results
             except Exception as ex:
                 print str(ex)
                 return "Error! %s" % str(ex)
         else:
+            # this is a POST attempt
             try:
                 request.add_header("Content-Type", self.content_type)
                 request.add_header("Content-Length", len(data))
-                return urllib2.urlopen(request, data).read()
+                results = urllib2.urlopen(request, data).read()
+                return self.format_results(results)
             except HTTPError as he:
                 return "Error! %s" % str(he)
+
+    @staticmethod
+    def format_results(results):
+        """
+        detects string format (xml || json) and formats appropriately
+
+        :param results: string from urlopen
+        :return: formatted string output
+        """
+        # use pretty_print if we have an xml document returned
+        if results.startswith("<?xml"):
+            print "Found XML results - using pretty_print"
+            print results
+            xml = etree.fromstring(results)
+            return etree.tostring(xml, pretty_print=True)
+
+        # is the result valid json?
+        try:
+            json_string = json.loads(results)
+            print "Found JSON results"
+            return json.dumps(json_string, indent=4)
+        except ValueError:
+            # this isn't xml or json, so just return it!
+            print "Unknown results!"
+            return results
 
     def connect_to_keystone(self):
         """
@@ -138,7 +154,7 @@ class RestAction(ActionBase):
         request = urllib2.Request(full_url)
         request.add_header("Content-Type", "application/json")
         request.add_header("charset", "UTF-8")
-        request.add_header("X-Contrail-Useragent", "%s:%s" % (platform.node(), "aframe_rest_client"))
+        request.add_header("X-AFrame-Useragent", "%s:%s" % (platform.node(), "aframe_rest_client"))
         request.add_header("Content-Length", len(_auth_json))
         result = urllib2.urlopen(request, _auth_json)
         self._auth_token = result.info().getheader('X-Subject-Token')
