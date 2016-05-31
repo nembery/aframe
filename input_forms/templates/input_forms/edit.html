@@ -9,7 +9,7 @@
 
     function submit_form() {
         var json = $("#json");
-        var tag_configs = $("#tag_configurator");
+        var template__variable__configs = $("#tag_configurator");
 
         var name = $("#name").val();
         var description = $("#description").val();
@@ -20,15 +20,15 @@
             return false;
         }
 
-        tag_configs.find('[id *= "tag_"]').each(
+        template__variable__configs.find('[id ^= "template__variable__"]').each(
             function(a,r) {
                 var row = $("#" + r.id);
-                var name_label = row.find('[name *= "_label"]');
+                var name_label = row.find('[name $= "_label"]');
                 console.log(name_label);
                 var name = name_label.attr("id").replace("_label", "");
                 var label = name_label.val();
 
-                var default_value = row.find('[id *= "_default"]').val();
+                var default_value = row.find('[id $= "_default"]').val();
 
                 console.log("name is: " + name);
                 console.log("default is: " + default_value);
@@ -61,17 +61,17 @@
         console.log("got json tag configs");
         console.log(j);
 
-        var tag_configs = $("#tag_configurator");
-        tag_configs.find('[id *= "tag_"]').each(
+        var template__variable__configs = $("#tag_configurator");
+        template__variable__configs.find('[id ^= "template__variable__"]').each(
             function(a,r) {
                 var row = $("#" + r.id);
-                var name_label = row.find('[name *= "_label"]');
+                var name_label = row.find('[name $= "_label"]');
                 var name = name_label.attr("id").replace("_label", "");
                 t_config = get_tag_config(name);
 
                 name_label.val(t_config["label"]);
 
-                var default_value = row.find('[id *= "_default"]')
+                var default_value = row.find('[id $= "_default"]')
                 default_value.val(t_config["default"]);
             }
         );
@@ -126,7 +126,7 @@
                     <th>Label</th>
                     <th>Default Value</th>
                     {% for t in available_tags %}
-                    <tr id="tag_{{ forloop.counter }}">
+                    <tr id="template__variable__{{ forloop.counter }}">
                         <td>
                             {{ t }}
                         </td>

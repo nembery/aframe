@@ -81,12 +81,14 @@
                 Template Name:
             </td>
             <td>
-                {{ input_form.name }}
+                <input type="text" name="name" value="{{ template.name }}">
             </td>
         </tr>
         <tr>
             <td>Description</td>
-            {{ input_form.description }}
+            <td>
+                <textarea name="description">{{ template.description }}</textarea>
+            </td>
         </tr>
         <tr>
             <td>
@@ -95,11 +97,11 @@
             <td>
                 <select name="type">
                     <option value="standalone"
-                            {% if input_form.type == 'standalone' %} selected {% endif %}>
+                            {% if template.type == 'standalone' %} selected {% endif %}>
                         Standalone
                     </option>
                     <option value="per-endpoint"
-                            {% if input_form.type == 'per-endpoint' %} selected {% endif %}>
+                            {% if template.type == 'per-endpoint' %} selected {% endif %}>
                         Per-Endpoint
                     </option>
                 </select>
@@ -155,6 +157,7 @@
     </table>
     <input type="hidden" name="id" value="{{ template.id }}"/>
     <input type="hidden" id="action_options" value="{{ action_options }}"/>
-    <input type="submit"/>
+    <input type="submit" value="Update"/> &nbsp;
+    <input type="button" onclick="javascript: window.location.href = '/tools/clone/{{ template.id }}'" value="Clone"/>
 </form>
 {% endblock %}

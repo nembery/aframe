@@ -135,7 +135,7 @@ def create(request):
     input_form.json = json_data
     input_form.script = config_template
     input_form.save()
-    return HttpResponseRedirect("/tools/%s" % template_id)
+    return HttpResponseRedirect("/input_forms")
 
 
 def update(request):
@@ -160,7 +160,7 @@ def update(request):
     input_form.json = json_data
     input_form.script = config_template
     input_form.save()
-    return HttpResponseRedirect("/tools/%s" % config_template.id)
+    return HttpResponseRedirect("/input_forms")
 
 
 def preview(request, input_form_id):

@@ -98,18 +98,11 @@ def edit(request, template_id):
     default_options = action_provider.get_options_for_provider(template.action_provider)
     action_options = json.loads(template.action_provider_options)
 
-    try:
-        input_form = InputForm.objects.get(script=template)
-        context = {"template": template,
-                   "action_options": json.dumps(action_options),
-                   "default_options": default_options,
-                   "input_form": input_form
-                   }
-        return render(request, "configTemplates/edit.html", context)
-
-    except InputForm.DoesNotExist:
-        context = {"error": "Required option not found in request!"}
-        return render(request, "error.html", context)
+    context = {"template": template,
+               "action_options": json.dumps(action_options),
+               "default_options": default_options
+               }
+    return render(request, "configTemplates/edit.html", context)
 
 
 def update(request):
@@ -117,8 +110,8 @@ def update(request):
         if "id" in request.POST:
             template_id = request.POST["id"]
             template = get_object_or_404(ConfigTemplate, pk=template_id)
-            # template.name = request.POST["name"]
-            # template.description = request.POST["description"]
+            template.name = request.POST["name"]
+            template.description = request.POST["description"]
             template.template = request.POST["template"]
             template.type = request.POST["type"]
 
@@ -149,7 +142,7 @@ def update(request):
                 input_form = InputForm.objects.get(script=template)
                 return HttpResponseRedirect('/input_forms/edit/%s' % input_form.id)
             except InputForm.DoesNotExist as dne:
-                return HttpResponseRedirect("/input_forms/")
+                return HttpResponseRedirect("/input_forms/view_from_template/%s" % template.id)
 
         else:
             return render(request, "error.html", {
@@ -185,6 +178,30 @@ def create(request):
     print "Saving form"
     template.save()
     return HttpResponseRedirect("/input_forms/view_from_template/%s" % template.id)
+
+
+def clone(request, template_id):
+    """
+    Clones a template. Allows quickly creating new templates from existing ones.
+
+    :param request:
+    :param template_id: id of the template to be cloned
+    :return: redirect to edit screen of new template!
+    """
+    template = get_object_or_404(ConfigTemplate, pk=template_id)
+
+    # create our Dolly the sheep (clone)
+    dolly = ConfigTemplate()
+    dolly.name = template.name + " Clone"
+    dolly.description = template.description
+    dolly.action_provider = template.action_provider
+    dolly.action_provider_options = template.action_provider_options
+    dolly.template = template.template
+    dolly.type = template.type
+
+    print "Cloning template %s" % template.name
+    dolly.save()
+    return HttpResponseRedirect('/tools/edit/%s/' % dolly.id)
 
 
 def detail(request, template_id):
