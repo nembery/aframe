@@ -1,9 +1,10 @@
 import abc
 from a_frame.utils.action_providers.action_base import ActionBase
-import tempfile
 import os
 import subprocess
-
+import time
+import uuid
+from subprocess import CalledProcessError
 
 class ShellExecution(ActionBase):
     """
@@ -44,12 +45,14 @@ class ShellExecution(ActionBase):
         """
 
         cleaned_template = template.replace('\r\n', '\n')
-
-        f = tempfile.NamedTemporaryFile()
+        path = "/tmp/" + str(uuid.uuid4())
+        f = open(path, "w+")
         f.write(cleaned_template)
         f.flush()
-
-        os.chmod(f.name, 0700)
+        time.sleep(.5)
+        filename = f.name
+        os.chmod(filename, 0700)
+        f.close()
         env = os.environ.copy()
 
         env["ENDPOINT_USERNAME"] = self.endpoint_username
@@ -58,9 +61,15 @@ class ShellExecution(ActionBase):
 
         print self.endpoint_ip
 
-        output = subprocess.check_output(f.name, shell=True, env=env)
-        print output
-        f.close()
-        return output
-
-
+        try:
+            output = subprocess.check_output(filename, shell=True, env=env)
+            print output
+            return output
+        except CalledProcessError as cpe:
+            o = "Error calling local script"
+            o += subprocess.check_output('cat %s' % filename, shell=True, env=env)
+            o += "\n-----------------------------\n"
+            o += str(cpe)
+            o += "\n-----------------------------\n"
+            print o
+            return o

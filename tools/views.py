@@ -296,7 +296,8 @@ def execute_template(request):
         error = {"output": "missing required parameters", "status": 1}
         return HttpResponse(json.dumps(error), content_type="application/json")
 
-    compiled_template = get_template_from_string(config_template.template)
+    compiled_template = engines['django'].from_string(config_template.template)
+    #compiled_template = get_template_from_string(config_template.template)
     completed_template = str(compiled_template.render(context))
 
     print completed_template

@@ -6,7 +6,9 @@ from django.template import TemplateSyntaxError
 from django.core.exceptions import ObjectDoesNotExist
 import json
 import re
+from urllib import quote, unquote
 from input_forms.models import InputForm
+from input_forms.forms import ImportForm
 from tools.models import ConfigTemplate
 from a_frame.utils import action_provider
 from endpoints import endpoint_provider
@@ -136,6 +138,72 @@ def create(request):
     input_form.script = config_template
     input_form.save()
     return HttpResponseRedirect("/input_forms")
+
+
+def export_form(request, input_form_id):
+    print "exporting %s" % input_form_id
+    input_form = InputForm.objects.get(pk=input_form_id)
+    config_template = input_form.script
+
+    template_options = dict()
+    template_options["name"] = config_template.name
+    template_options["description"] = config_template.description
+    template_options["action_provider"] = config_template.action_provider
+    template_options["action_provider_options"] = config_template.action_provider_options
+    template_options["type"] = config_template.type
+    template_options["template"] = quote(config_template.template)
+
+    form_options = dict()
+    form_options["name"] = input_form.name
+    form_options["description"] = input_form.description
+    form_options["instructions"] = input_form.instructions
+    form_options["json"] = quote(input_form.json)
+
+    exported_object = dict()
+    exported_object["template"] = template_options
+    exported_object["form"] = form_options
+
+    print json.dumps(exported_object)
+
+    response = HttpResponse(json.dumps(exported_object), content_type="application/json")
+    response['Content-Disposition'] = 'attachment; filename=' + 'aframe-' + str(config_template.name) + '.json'
+
+    return response
+
+
+def import_form(request):
+    if request.method == "POST":
+        json_file = request.FILES['file']
+        json_string = json_file.read()
+        json_data = json.loads(json_string)
+
+        template_options = json_data["template"]
+        form_options = json_data["form"]
+
+        template = ConfigTemplate()
+        template.name = template_options["name"]
+        template.description = template_options["description"]
+        template.action_provider = template_options["action_provider"]
+        template.action_provider_options = template_options["action_provider_options"]
+        template.type = template_options["type"]
+        template.template = unquote(template_options["template"])
+
+        template.save()
+
+        input_form = InputForm()
+        input_form.name = form_options["name"]
+        input_form.description = form_options["description"]
+        input_form.instuctions = form_options["instructions"]
+        input_form.json = unquote(form_options["json"])
+        input_form.script = template
+
+        input_form.save()
+
+        return HttpResponseRedirect("/input_forms")
+    else:
+        form = ImportForm()
+        context = {'form': form }
+        return render(request, 'input_forms/import.html', context)
 
 
 def update(request):
