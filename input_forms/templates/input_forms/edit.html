@@ -37,10 +37,10 @@
                 t = { "name" : name, "label" : label, "default": default_value };
                 tags.push(t);
             }
-         );
-         var json_text = JSON.stringify(tags, null, 2);
+        );
+        var json_text = JSON.stringify(tags, null, 2);
 
-         $("#json").val(json_text);
+        $("#json").val(json_text);
 
         $("#update_form").submit();
     }
@@ -52,6 +52,8 @@
                 return tag;
             }
         }
+        console.log("COULD NOT FIND TAG WITH NAME: " + tag_name);
+        return null;
     }
 
     $(window).load(function() {
@@ -61,6 +63,11 @@
         console.log("got json tag configs");
         console.log(j);
 
+        if(j.length == 0) {
+            console.log("no json data available, bailing out!");
+            return;
+        }
+
         var template__variable__configs = $("#tag_configurator");
         template__variable__configs.find('[id ^= "template__variable__"]').each(
             function(a,r) {
@@ -68,7 +75,11 @@
                 var name_label = row.find('[name $= "_label"]');
                 var name = name_label.attr("id").replace("_label", "");
                 t_config = get_tag_config(name);
-
+                if (t_config == null) {
+                    // jquery .each doesn't have a continue statement
+                    // so return true instead
+                    return true;
+                }
                 name_label.val(t_config["label"]);
 
                 var default_value = row.find('[id $= "_default"]')

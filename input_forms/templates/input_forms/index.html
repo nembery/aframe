@@ -2,7 +2,7 @@
 {% extends "base.html" %}
 {% block title %}A-Frame{% endblock %}
 {% block content %}
-<h2>Input Forms</h2>
+<h2>Network Automations</h2>
 <table>
     <tr>
         <th>Name</th>
@@ -20,10 +20,12 @@
             &nbsp;
             <a href="/tools/edit/{{ input_form.script.id }}/">Edit Template</a>
             &nbsp;
-            <a href="preview/{{ input_form.id }}">Preview</a>
+            <a href="export/{{ input_form.id }}">Export</a>
         </td>
     </tr>
     {% endfor %}
 </table>
-<a href="/tools/newTemplate/">Define new template</a>
+<a href="/tools/newTemplate/">Define new Automation</a>
+&nbsp;
+<a href="import">Import Automation</a>
 {% endblock %}
