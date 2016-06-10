@@ -77,7 +77,7 @@
             }
         }
 
-        // append the new_row html fragement to the new_rows tbody element
+        // append the new_row html fragment to the new_rows tbody element
         $('#new_rows').append(new_row);
 
         // and debug log for developer sanity
@@ -134,7 +134,7 @@
                         {% for list_item in opts.list_items %}
                         <td>
                             <input type="text" id="list_item_{{ list_item.name }}" name="{{ list_item.name }}"
-                                   placeholder="{{ list_item.value }}" size="8"/>
+                                   placeholder="{{ list_item.value }}" style="width: 125px"/>
                         </td>
                         {% endfor %}
                         <td>
