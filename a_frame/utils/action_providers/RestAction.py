@@ -5,6 +5,7 @@ import urllib2
 import base64
 import platform
 import json
+import ssl
 from urllib2 import HTTPError
 
 
@@ -49,13 +50,17 @@ class RestAction(ActionBase):
         opener = urllib2.build_opener(handler)
         urllib2.install_opener(opener)
 
+        context = ssl.create_default_context()  # disables SSL cert checking!
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
         # ensure no CRLF has snuck through
         template = template.replace('\r\n', '\n')
 
         request = urllib2.Request(self.protocol + "://" + self.host + self.url)
         if self.auth_type == "basic":
             print "using username: %s" % self.username
-            base64string = base64.encodestring("%s:%s" % (self.username, self.password))
+            base64string = base64.b64encode("%s:%s" % (self.username, self.password))
             request.add_header("Authorization", "Basic %s" % base64string)
         elif self.auth_type == "keystone":
             if not self.connect_to_keystone():
@@ -75,7 +80,7 @@ class RestAction(ActionBase):
 
         if self.request_type == "GET" or self.request_type == "DELETE":
             try:
-                r = urllib2.urlopen(request)
+                r = urllib2.urlopen(request, context=context)
                 results = r.read()
                 return self.format_results(results)
 
@@ -87,7 +92,7 @@ class RestAction(ActionBase):
             try:
                 request.add_header("Content-Type", self.content_type)
                 request.add_header("Content-Length", len(data))
-                results = urllib2.urlopen(request, data).read()
+                results = urllib2.urlopen(request, data, context=context).read()
                 return self.format_results(results)
             except HTTPError as he:
                 return "Error! %s" % str(he)

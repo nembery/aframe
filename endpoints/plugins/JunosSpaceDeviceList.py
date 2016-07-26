@@ -4,6 +4,7 @@ from django.core.cache import cache
 import urllib2
 import urllib
 import base64
+import ssl
 from lxml import etree
 
 
@@ -85,6 +86,16 @@ class JunosSpaceDeviceList(EndpointBase):
         if device_id is None:
             device_id = d.find('./id').text
 
+        # skip creation if device is down
+        if d.find('./connectionStatus') is not None:
+            # different XML location for status in device list
+            connection_status =  d.find('./connectionStatus').text
+        else:
+            # vs by device_id
+            connection_status = d.find('./connection-status/status').text
+        if connection_status != 'up':
+            return
+
         name = d.find('./name').text
         ip = d.find('./ipAddr').text
         username = ""
@@ -137,12 +148,14 @@ class JunosSpaceDeviceList(EndpointBase):
 
         request = urllib2.Request(full_url)
 
-        base64string = base64.encodestring("%s:%s" % (self.username, self.password))
+        context = ssl.create_default_context()  # disables SSL cert checking!
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        base64string = base64.b64encode("%s:%s" % (self.username, self.password))
         request.add_header("Authorization", "Basic %s" % base64string)
 
         request.get_method = lambda: "GET"
-        xml = urllib2.urlopen(request).read()
+        xml = urllib2.urlopen(request, context=context).read()
         print xml
         return xml
-
-
