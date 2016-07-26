@@ -297,7 +297,7 @@ def execute_template(request):
         return HttpResponse(json.dumps(error), content_type="application/json")
 
     compiled_template = engines['django'].from_string(config_template.template)
-    #compiled_template = get_template_from_string(config_template.template)
+    # compiled_template = get_template_from_string(config_template.template)
     completed_template = str(compiled_template.render(context))
 
     print completed_template
@@ -348,3 +348,28 @@ def search(request):
         results.append(template.name)
 
     return HttpResponse(json.dumps(results), content_type="application/json")
+
+
+def test_api(request):
+    """
+    Simple method for API usage example
+    :param request: HttpRequest object either application/json encoded or x-www-form-urlencode
+    :return: json encoded string with data and status members
+    """
+    if request.META["CONTENT_TYPE"] == "application/json":
+        try:
+            data = json.loads(request.body)
+        except ValueError:
+            data = "Could not parse json message body!"
+
+    elif request.META["CONTENT_TYPE"] == "application/x-www-form-urlencoded":
+        if "data" in request.POST:
+            data = request.POST["data"]
+        else:
+            data = "Unknown form data"
+
+    else:
+        data = "Unsupported content_type %s" % request.META["CONTENT_TYPE"]
+
+    output = {"data": data, "status": "0"}
+    return HttpResponse(json.dumps(output), content_type="application/json")
