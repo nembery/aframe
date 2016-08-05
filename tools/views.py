@@ -353,7 +353,7 @@ def search(request):
 def test_api(request):
     """
     Simple method for API usage example
-    :param request: HttpRequest object either application/json encoded or x-www-form-urlencode
+    :param request: HttpRequest object either application/json encoded or x-www-form-urlencoded
     :return: json encoded string with data and status members
     """
     if request.META["CONTENT_TYPE"] == "application/json":
@@ -373,3 +373,101 @@ def test_api(request):
 
     output = {"data": data, "status": "0"}
     return HttpResponse(json.dumps(output), content_type="application/json")
+
+
+def chain_template(request):
+    """
+    Populates the input_variables of one template from POSTed form data or json encoded http request body
+    This allows you to chain the output of one template to another one
+    if the input_variable of a template is in the form 'some.variable.with.periods'
+    then the input json object will be searched for that value
+    :param request: HTTPRequest either x-www-form-urlencoded or application/json
+    :return: the output of the template specified by the template_id parameter
+    """
+    print request.META["CONTENT_TYPE"]
+    if request.META["CONTENT_TYPE"] == "application/json":
+        try:
+            data = json.loads(request.body)
+            template_id = data["template_id"]
+        except ValueError:
+            error = {"output": "missing required template_id parameter", "status": 1}
+            return HttpResponse(json.dumps(error), content_type="application/json")
+
+        try:
+            config_template = ConfigTemplate.objects.get(pk=template_id)
+
+            context = Context()
+            # iterate over all the keys in the json object and set on the context
+            # the template engine is smart enough to figure out what goes where
+            for k in data:
+                context[k] = data[k]
+
+        except Exception:
+            error = {"output": "Could not get config template", "status": 1}
+            return HttpResponse(json.dumps(error), content_type="application/json")
+
+    else:
+        # this must be a x-www-form-urlencoded request
+        required_fields = set(["template_id"])
+        if not required_fields.issubset(request.POST):
+            error = {"output": "missing required template_id parameter", "status": 1}
+            return HttpResponse(json.dumps(error), content_type="application/json")
+
+        template_id = request.POST["template_id"]
+        config_template = ConfigTemplate.objects.get(pk=template_id)
+        template_api = get_input_parameters_for_template(config_template)
+
+        context = Context()
+
+        try:
+            print str(template_api["input_parameters"])
+            input_parameters = template_api["input_parameters"]
+
+            for j in input_parameters:
+                print "setting context %s" % j
+                context[j] = str(request.POST[j])
+
+        except Exception as ex:
+            print str(ex)
+            error = {"output": "missing required parameters", "status": 1}
+            return HttpResponse(json.dumps(error), content_type="application/json")
+
+    compiled_template = engines['django'].from_string(config_template.template)
+    # compiled_template = get_template_from_string(config_template.template)
+    completed_template = str(compiled_template.render(context))
+
+    print completed_template
+    action_name = config_template.action_provider
+    action_options = json.loads(config_template.action_provider_options)
+
+    print "action name is: " + action_name
+
+    action = action_provider.get_provider_instance(action_name, action_options)
+    if config_template.type == "per-endpoint":
+        required_fields = set(["af_endpoint_ip", "af_endpoint_username",
+                               "af_endpoint_password", "af_endpoint_password"]
+                              )
+
+        if not required_fields.issubset(request.POST):
+            error = {"output": "missing required authentication parameters", "status": 1}
+            return HttpResponse(json.dumps(error), content_type="application/json")
+
+        endpoint = dict()
+        endpoint["ip"] = request.POST["af_endpoint_ip"]
+        endpoint["username"] = request.POST["af_endpoint_username"]
+        endpoint["password"] = request.POST["af_endpoint_password"]
+        endpoint["type"] = request.POST["af_endpoint_type"]
+
+        action.set_endpoint(endpoint)
+
+    try:
+        results = action.execute_template(completed_template.strip().replace('\r\n', '\n'))
+        response = {"output": results, "status": 0}
+
+    except Exception as ex:
+        print str(ex)
+        response = {"output": "Error executing template", "status": 1}
+
+    return HttpResponse(json.dumps(response), content_type="application/json")
+
+

@@ -46,13 +46,9 @@ class RestAction(ActionBase):
             self.url = "/" + self.url
 
         # set up debugging output
-        handler=urllib2.HTTPHandler(debuglevel=1)
+        handler = urllib2.HTTPHandler(debuglevel=1)
         opener = urllib2.build_opener(handler)
         urllib2.install_opener(opener)
-
-        context = ssl.create_default_context()  # disables SSL cert checking!
-        context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
 
         # ensure no CRLF has snuck through
         template = template.replace('\r\n', '\n')
@@ -80,7 +76,13 @@ class RestAction(ActionBase):
 
         if self.request_type == "GET" or self.request_type == "DELETE":
             try:
-                r = urllib2.urlopen(request, context=context)
+                if hasattr(ssl, 'SSLContext'):
+                    context = ssl.create_default_context()  # disables SSL cert checking!
+                    context.check_hostname = False
+                    context.verify_mode = ssl.CERT_NONE
+                    r = urllib2.urlopen(request, context=context)
+                else:
+                    r = urllib2.urlopen(request)
                 results = r.read()
                 return self.format_results(results)
 
@@ -92,7 +94,13 @@ class RestAction(ActionBase):
             try:
                 request.add_header("Content-Type", self.content_type)
                 request.add_header("Content-Length", len(data))
-                results = urllib2.urlopen(request, data, context=context).read()
+                if hasattr(ssl, 'SSLContext'):
+                    context = ssl.create_default_context()  # disables SSL cert checking!
+                    context.check_hostname = False
+                    context.verify_mode = ssl.CERT_NONE
+                    results = urllib2.urlopen(request, data, context=context).read()
+                else:
+                    results = urllib2.urlopen(request, data).read()
                 return self.format_results(results)
             except HTTPError as he:
                 return "Error! %s" % str(he)

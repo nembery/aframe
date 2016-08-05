@@ -33,6 +33,8 @@ urlpatterns = [
         name="search"),
     url(r"^execute_template", views.execute_template,
         name="execute_template"),
+    url(r"^chain_template", views.chain_template,
+        name="chain_template"),
     url(r"^test_api", views.test_api,
         name="test_api"),
 

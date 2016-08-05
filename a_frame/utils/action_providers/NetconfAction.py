@@ -5,6 +5,7 @@ from jnpr.junos.utils.config import Config
 from jnpr.junos.exception import *
 from lxml import etree
 import re
+import json
 
 
 class NetconfAction(ActionBase):
@@ -66,7 +67,7 @@ class NetconfAction(ActionBase):
     def execute_cheat_command(self, template):
         print "Executing cheat command"
         results = self.dev.cli(template)
-        return results
+        return self.format_results(results)
 
     def assert_set_configuration(self, pattern):
 
@@ -96,13 +97,24 @@ class NetconfAction(ActionBase):
     def apply_template(self, template):
         print self.dev
         conf_string = template.strip()
+
+        print conf_string
+
+        if re.search(r"^&lt;", conf_string):
+            print "Found a encoded string"
+            conf_string = self.unescape(conf_string)
+
+        print conf_string
         # try to determine the format of our config_string
         config_format = "set"
         if re.search(r"^\s*<.*>$", conf_string, re.MULTILINE):
+            print "found xml style config"
             config_format = "xml"
         elif re.search(r"^\s*(set|delete|replace|rename)\s", conf_string):
+            print "found set style config"
             config_format = "set"
         elif re.search(r"^[a-z:]*\s*\w+\s+{", conf_string, re.I) and re.search(r".*}\s*$", conf_string):
+            print "found a text style config"
             config_format = "text"
 
         print "using format: " + config_format
@@ -153,6 +165,8 @@ class NetconfAction(ActionBase):
         else:
             # nothing to commit
             print "Nothing to commit - no diff found"
+            cu.unlock()
+            self.dev.close()
             return "Nothing to commit!"
 
         try:
@@ -168,4 +182,43 @@ class NetconfAction(ActionBase):
         self.dev.close()
         return "Completed with diff: %s" % diff
 
+    @staticmethod
+    def unescape(s):
+        s = s.replace("&lt;", "<")
+        s = s.replace("&gt;", ">")
+        s = s.replace("&amp;", "&")
+        return s
 
+    @staticmethod
+    def format_results(results):
+        """
+        detects string format (xml || json) and formats appropriately
+
+        :param results: string from urlopen
+        :return: formatted string output
+        """
+        print results
+        try:
+            if type(results) is str:
+                results = etree.fromstring(results)
+
+            print "found valid xml, formatting and returning"
+            # use pretty_print if we have an xml document returned
+            return etree.tostring(results, pretty_print=True)
+        except ValueError:
+            pass
+        except TypeError:
+            pass
+
+        # is the result valid json?
+        try:
+            json_string = json.loads(results)
+            print "Found JSON results"
+            return json.dumps(json_string, indent=4)
+        except ValueError:
+            pass
+        except TypeError:
+            pass
+
+        print "no special formatting, returning"
+        return results

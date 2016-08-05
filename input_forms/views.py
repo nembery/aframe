@@ -12,6 +12,7 @@ from input_forms.forms import ImportForm
 from tools.models import ConfigTemplate
 from a_frame.utils import action_provider
 from endpoints import endpoint_provider
+from common.lib import aframe_utils
 
 
 def index(request):
@@ -292,7 +293,6 @@ def apply_template(request):
     :return: results of the template execution
 
     """
-    print "APPLY TEMPLATE"
 
     required_fields = set(["input_form_id", "endpoint_id", "group_id"])
     if not required_fields.issubset(request.POST):
@@ -324,8 +324,13 @@ def apply_template(request):
 
     context = Context()
     for j in json_object:
-        print "setting context %s" % j["name"]
-        context[j["name"]] = str(request.POST[j["name"]])
+        if '.' in j["name"]:
+            # this is a json capable variable name
+            j_dict = aframe_utils.generate_dict(j["name"], str(request.POST[j["name"]]))
+            context.update(j_dict)
+        else:
+            print "setting context %s" % j["name"]
+            context[j["name"]] = str(request.POST[j["name"]])
 
     context["af_endpoint_ip"] = endpoint["ip"]
     context["af_endpoint_username"] = endpoint["username"]
@@ -369,8 +374,15 @@ def apply_standalone_template(request):
 
     context = Context()
     for j in json_object:
-        print "setting context %s" % j["name"]
-        context[j["name"]] = str(request.POST[j["name"]])
+        if '.' in j["name"]:
+            print j
+            # this is a fancy variable name
+            j_dict = aframe_utils.generate_dict(j["name"], str(request.POST[j["name"]]))
+            print j_dict
+            context.update(j_dict)
+        else:
+            print "setting context %s" % j["name"]
+            context[j["name"]] = str(request.POST[j["name"]])
 
     config_template = input_form.script
 
@@ -416,8 +428,13 @@ def apply_template_to_queue(request):
 
     context = Context()
     for j in json_object:
-        print "setting context %s" % j["name"]
-        context[j["name"]] = str(request.POST[j["name"]])
+        if '.' in j["name"]:
+            # this is a json capable variable name
+            j_dict = aframe_utils.generate_dict(j["name"], str(request.POST[j["name"]]))
+            context.update(j_dict)
+        else:
+            print "setting context %s" % j["name"]
+            context[j["name"]] = str(request.POST[j["name"]])
 
     print context
 

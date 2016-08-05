@@ -146,16 +146,19 @@ class JunosSpaceDeviceList(EndpointBase):
 
         print full_url
 
-        request = urllib2.Request(full_url)
-
-        context = ssl.create_default_context()  # disables SSL cert checking!
-        context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
+        r = urllib2.Request(full_url)
 
         base64string = base64.b64encode("%s:%s" % (self.username, self.password))
-        request.add_header("Authorization", "Basic %s" % base64string)
+        r.add_header("Authorization", "Basic %s" % base64string)
+        r.get_method = lambda: "GET"
 
-        request.get_method = lambda: "GET"
-        xml = urllib2.urlopen(request, context=context).read()
+        if hasattr(ssl, 'SSLContext'):
+            context = ssl.create_default_context()  # disables SSL cert checking!
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+            xml = urllib2.urlopen(r, context=context).read()
+        else:
+            xml = urllib2.urlopen(r).read()
+
         print xml
         return xml
