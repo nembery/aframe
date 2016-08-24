@@ -5,6 +5,7 @@ from django.template import Context
 from django.template import TemplateSyntaxError
 from django.core.exceptions import ObjectDoesNotExist
 import json
+import logging
 import re
 from urllib import quote, unquote
 from input_forms.models import InputForm
@@ -14,8 +15,11 @@ from a_frame.utils import action_provider
 from endpoints import endpoint_provider
 from common.lib import aframe_utils
 
+logger = logging.getLogger(__name__)
+
 
 def index(request):
+    logger.info("__ input_forms index __")
     input_form_list = InputForm.objects.all().order_by("name")
     context = {"input_form_list": input_form_list}
     return render(request, "input_forms/index.html", context)
@@ -27,6 +31,8 @@ def search(request):
     :param request:
     :return:
     """
+    logger.info("__ input_forms search __")
+
     term = request.GET["term"]
     input_form_list = InputForm.objects.filter(name__contains=term)
     results = []
@@ -38,18 +44,17 @@ def search(request):
 
 
 def edit(request, input_form_id):
+    logger.info("__ input_forms edit __")
     input_form = InputForm.objects.get(pk=input_form_id)
     config_template = input_form.script
 
     try:
         t = engines['django'].from_string(config_template.template)
     except TemplateSyntaxError as e:
-        print "Caught a template syntax error!"
+        logger.error("Caught a template syntax error!")
         return render(request, "error.html", {"error": "Invalid Template Syntax: %s" % str(e)})
 
-    print "JSON IS"
-    print input_form.json
-    print "END JSON"
+    logger.debug(input_form.json)
 
     available_tags = []
     for node in t.template.nodelist:
@@ -57,7 +62,7 @@ def edit(request, input_form_id):
         # which can be used to find the user configured variables in the template
         defined_tags = node.get_nodes_by_type(VariableNode)
         for v in defined_tags:
-            print "adding %s as an available tag" % v.filter_expression
+            logger.info("adding %s as an available tag" % v.filter_expression)
             variable_string = str(v.filter_expression)
             if variable_string not in available_tags:
                 if not variable_string.startswith("af_"):
@@ -68,8 +73,9 @@ def edit(request, input_form_id):
 
 
 def detail(request, input_form_id):
+    logger.info("__ input_forms detail __")
     input_form = InputForm.objects.get(pk=input_form_id)
-    print input_form.json
+    logger.debug(input_form.json)
     json_object = json.loads(input_form.json)
 
     config_template = input_form.script
@@ -83,24 +89,26 @@ def detail(request, input_form_id):
 
 
 def delete(request, input_form_id):
+    logger.info("__ input_forms delete __")
     input_form = get_object_or_404(InputForm, pk=input_form_id)
     input_form.delete()
     return HttpResponseRedirect("/input_forms")
 
 
 def new(request):
+    logger.info("__ input_forms new __")
     config_templates = ConfigTemplate.objects.all().order_by("name")
     context = {"config_templates": config_templates}
     return render(request, "input_forms/new.html", context)
 
 
 def new_from_template(request, template_id):
-    print "new from template called"
+    logger.info("__ input_forms new_from_template __")
     config_template = get_object_or_404(ConfigTemplate, pk=template_id)
     try:
         t = engines['django'].from_string(config_template.template)
     except TemplateSyntaxError as e:
-        print "Caught a template syntax error!"
+        logger.error("Caught a template syntax error!")
         return render(request, "error.html", {"error": "Invalid Template Syntax: %s" % str(e)})
 
     available_tags = []
@@ -108,7 +116,7 @@ def new_from_template(request, template_id):
     for node in t.template.nodelist:
         defined_tags = node.get_nodes_by_type(VariableNode)
         for v in defined_tags:
-            print "adding %s as an available tag" % v.filter_expression
+            logger.info("adding %s as an available tag" % v.filter_expression)
             variable_string = str(v.filter_expression)
             if variable_string not in available_tags:
                 if not variable_string.startswith("af_"):
@@ -119,6 +127,7 @@ def new_from_template(request, template_id):
 
 
 def create(request):
+    logger.info("__ input_forms create __")
     required_fields = set(["config_template_id", "name", "description", "json"])
     if not required_fields.issubset(request.POST):
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
@@ -142,7 +151,8 @@ def create(request):
 
 
 def export_form(request, input_form_id):
-    print "exporting %s" % input_form_id
+    logger.info("__ input_forms export_form __")
+    logger.info("exporting %s" % input_form_id)
     input_form = InputForm.objects.get(pk=input_form_id)
     config_template = input_form.script
 
@@ -164,7 +174,7 @@ def export_form(request, input_form_id):
     exported_object["template"] = template_options
     exported_object["form"] = form_options
 
-    print json.dumps(exported_object)
+    logger.debug(json.dumps(exported_object))
 
     response = HttpResponse(json.dumps(exported_object), content_type="application/json")
     response['Content-Disposition'] = 'attachment; filename=' + 'aframe-' + str(config_template.name) + '.json'
@@ -173,6 +183,7 @@ def export_form(request, input_form_id):
 
 
 def import_form(request):
+    logger.info("__ input_forms import_form __")
     if request.method == "POST":
         json_file = request.FILES['file']
         json_string = json_file.read()
@@ -208,8 +219,10 @@ def import_form(request):
 
 
 def update(request):
+    logger.info("__ input_forms update __")
     required_fields = set(["input_form_id", "config_template_id", "name", "description", "json"])
     if not required_fields.issubset(request.POST):
+        logger.error("Did no find all required fields in request")
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     input_form_id = request.POST["input_form_id"]
@@ -233,14 +246,16 @@ def update(request):
 
 
 def preview(request, input_form_id):
+    logger.info("__ input_forms preview __")
     input_form = InputForm.objects.get(pk=input_form_id)
-    print input_form.json
+    logger.debug(input_form.json)
     json_object = json.loads(input_form.json)
     context = {"input_form": input_form, "json_object": json_object}
     return render(request, "input_forms/preview.html", context)
 
 
 def configure_template_for_endpoint(request):
+    logger.info("__ input_forms confgure_template_for_endpoint __")
     required_fields = set(["input_form_name", "group_id", "endpoint_id"])
     if not required_fields.issubset(request.POST):
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
@@ -249,28 +264,30 @@ def configure_template_for_endpoint(request):
     group_id = request.POST["group_id"]
     endpoint_id = request.POST["endpoint_id"]
 
-    print endpoint_id
+    logger.debug("Configuring template for endpoint: %s" % endpoint_id)
 
     provider_instance = endpoint_provider.get_provider_instance_from_group(group_id)
     endpoint = provider_instance.get_endpoint_by_id(endpoint_id)
 
     input_form = InputForm.objects.get(name=input_form_name)
 
-    print input_form.json
+    logger.debug(input_form.json)
     json_object = json.loads(input_form.json)
 
     config_template = input_form.script
     action_options = json.loads(config_template.action_provider_options)
 
     context = {"input_form": input_form, "json_object": json_object, "endpoint": endpoint, "group_id": group_id,
-               'action_options' : action_options
+               'action_options': action_options
                }
     return render(request, "input_forms/configure_per_endpoint_template.html", context)
 
 
 def configure_template_for_queue(request):
+    logger.info("__ input_forms configure_template_for_queue __")
     required_fields = set(["input_form_name", "group_id"])
     if not required_fields.issubset(request.POST):
+        logger.error("Did no find all required fields in request")
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     input_form_name = request.POST["input_form_name"]
@@ -279,7 +296,7 @@ def configure_template_for_queue(request):
 
     input_form = InputForm.objects.get(name=input_form_name)
 
-    print input_form.json
+    logger.debug(input_form.json)
     json_object = json.loads(input_form.json)
 
     context = {"input_form": input_form, "json_object": json_object, "endpoints": endpoints, "group_id": group_id}
@@ -293,9 +310,11 @@ def apply_template(request):
     :return: results of the template execution
 
     """
+    logger.info("__ input_forms apply_template __")
 
     required_fields = set(["input_form_id", "endpoint_id", "group_id"])
     if not required_fields.issubset(request.POST):
+        logger.error("Did no find all required fields in request")
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     input_form_id = request.POST["input_form_id"]
@@ -319,7 +338,7 @@ def apply_template(request):
 
     input_form = InputForm.objects.get(pk=input_form_id)
 
-    print input_form.json
+    logger.debug(input_form.json)
     json_object = json.loads(input_form.json)
 
     context = Context()
@@ -329,7 +348,7 @@ def apply_template(request):
             j_dict = aframe_utils.generate_dict(j["name"], str(request.POST[j["name"]]))
             context.update(j_dict)
         else:
-            print "setting context %s" % j["name"]
+            logger.debug("setting context %s" % j["name"])
             context[j["name"]] = str(request.POST[j["name"]])
 
     context["af_endpoint_ip"] = endpoint["ip"]
@@ -337,7 +356,7 @@ def apply_template(request):
     context["af_endpoint_password"] = endpoint["password"]
     context["af_endpoint_type"] = endpoint["type"]
 
-    print context
+    logger.debug(context)
 
     config_template = input_form.script
 
@@ -345,15 +364,24 @@ def apply_template(request):
         compiled_template = engines['django'].from_string(config_template.template)
         completed_template = str(compiled_template.render(context))
     except TemplateSyntaxError as e:
-        print "Caught a template syntax error!"
+        logger.error("Caught a template syntax error!")
         return render(request, "error.html", {"error": "Invalid Template Syntax: %s" % str(e)})
 
-    print "TEMPLATE IS:"
-    print completed_template
+    logger.debug(completed_template)
     action_name = config_template.action_provider
-    action_options = json.loads(config_template.action_provider_options)
 
-    print "action name is: " + action_name
+    action_options = json.loads(config_template.action_provider_options)
+    logger.debug(action_options)
+
+    for ao in action_options:
+        if "action_options_" + str(ao) in request.POST:
+            logger.debug("Found a customized action option!")
+            new_val = request.POST["action_options_" + str(ao)]
+            current_value = action_options[ao]["value"]
+            action_options[ao]["value"] = re.sub("{{ .* }}", new_val, current_value)
+            logger.debug(action_options[ao]["value"])
+
+    logger.debug("action name is: " + action_name)
 
     action = action_provider.get_provider_instance(action_name, action_options)
     action.set_endpoint(endpoint)
@@ -363,7 +391,9 @@ def apply_template(request):
 
 
 def apply_standalone_template(request):
+    logger.info("__ input_forms apply_standalone_template __")
     if "input_form_id" not in request.POST:
+        logger.error("Did no find all required fields in request")
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     input_form_id = request.POST["input_form_id"]
@@ -375,13 +405,11 @@ def apply_standalone_template(request):
     context = Context()
     for j in json_object:
         if '.' in j["name"]:
-            print j
             # this is a fancy variable name
             j_dict = aframe_utils.generate_dict(j["name"], str(request.POST[j["name"]]))
-            print j_dict
             context.update(j_dict)
         else:
-            print "setting context %s" % j["name"]
+            logger.debug("setting context %s" % j["name"])
             context[j["name"]] = str(request.POST[j["name"]])
 
     config_template = input_form.script
@@ -389,25 +417,26 @@ def apply_standalone_template(request):
     try:
         compiled_template = engines['django'].from_string(config_template.template)
     except TemplateSyntaxError as e:
-        print "Caught a template syntax error!"
+        logger.error("Caught a template syntax error!")
+        logger.error(str(e))
         return render(request, "error.html", {"error": "Invalid Template Syntax: %s" % str(e)})
 
     completed_template = str(compiled_template.render(context))
 
-    print completed_template
+    logger.info(completed_template)
     action_name = config_template.action_provider
-    print action_name
+    logger.info(action_name)
 
     action_options = json.loads(config_template.action_provider_options)
-    print action_options
+    logger.info(action_options)
 
     for ao in action_options:
         if "action_options_" + str(ao) in request.POST:
-            print "Found a customized action option!"
+            logger.debug("Found a customized action option!")
             new_val = request.POST["action_options_" + str(ao)]
             current_value = action_options[ao]["value"]
             action_options[ao]["value"] = re.sub("{{ .* }}", new_val, current_value)
-            print action_options[ao]["value"]
+            logger.debug(action_options[ao]["value"])
 
     action = action_provider.get_provider_instance(action_name, action_options)
     results = action.execute_template(completed_template)
@@ -416,14 +445,16 @@ def apply_standalone_template(request):
 
 
 def apply_template_to_queue(request):
+    logger.info("__ input_forms apply_template_to_queue __")
     if "input_form_id" not in request.POST:
+        logger.error("Did no find all required fields in request")
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     input_form_id = request.POST["input_form_id"]
     endpoints = request.session["endpoint_queue"]
     input_form = InputForm.objects.get(pk=input_form_id)
 
-    print input_form.json
+    logger.debug(input_form.json)
     json_object = json.loads(input_form.json)
 
     context = Context()
@@ -433,24 +464,25 @@ def apply_template_to_queue(request):
             j_dict = aframe_utils.generate_dict(j["name"], str(request.POST[j["name"]]))
             context.update(j_dict)
         else:
-            print "setting context %s" % j["name"]
+            logger.debug("setting context %s" % j["name"])
             context[j["name"]] = str(request.POST[j["name"]])
 
-    print context
+    logger.debug(context)
 
     config_template = input_form.script
 
     try:
         compiled_template = engines['django'].from_string(config_template.template)
     except TemplateSyntaxError as e:
-        print "Caught a template syntax error!"
+        logger.error("Caught a template syntax error!")
+        logger.error(str(e))
         return render(request, "error.html", {"error": "Invalid Template Syntax: %s" % str(e)})
 
     action_name = config_template.action_provider
     action_options = json.loads(config_template.action_provider_options)
 
-    print "action name is: " + action_name
-    print "action options are: " + str(action_options)
+    logger.debug("action name is: %s" % action_name)
+    logger.debug("action options are: %s" % action_options)
 
     action = action_provider.get_provider_instance(action_name, action_options)
 
@@ -486,18 +518,22 @@ def apply_template_to_queue(request):
 
 
 def view_from_template(request, template_id):
+    logger.info("__ input_forms view_from_template __")
     config_template = get_object_or_404(ConfigTemplate, pk=template_id)
     try:
         input_form = InputForm.objects.get(script=config_template)
         return HttpResponseRedirect("/input_forms/%s" % input_form.id)
     except ObjectDoesNotExist:
+        logger.info("requested object id does not exist")
         return HttpResponseRedirect("/input_forms/new/%s" % template_id)
 
 
 def edit_from_template(request, template_id):
+    logger.info("__ input_forms edit_from_template __")
     config_template = get_object_or_404(ConfigTemplate, pk=template_id)
     try:
         input_form = InputForm.objects.get(script=config_template)
         return HttpResponseRedirect("/input_forms/edit/%s" % input_form.id)
     except ObjectDoesNotExist:
+        logger.info("requested object id does not exist")
         return HttpResponseRedirect("/input_forms/new/%s" % template_id)

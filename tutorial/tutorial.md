@@ -8,7 +8,7 @@
 Note: DJango version must be 1.9
 
 ```
-root@automation-srv:~#  apt-get install python-netaddr python-pip python-nmap nmap python-lxml python-dev libssl-dev libxslt-dev
+root@automation-srv:~#  apt-get install python-netaddr python-pip python-nmap nmap python-lxml python-dev libssl-dev libxslt-dev python-paramiko
 Reading package lists... Done
 Building dependency tree
 Reading state information... Done

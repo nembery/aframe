@@ -1,10 +1,11 @@
-import abc
-from a_frame.utils.action_providers.action_base import ActionBase
 import os
 import subprocess
 import time
 import uuid
 from subprocess import CalledProcessError
+
+from a_frame.utils.action_providers.action_base import ActionBase
+
 
 class ShellExecution(ActionBase):
     """

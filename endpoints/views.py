@@ -1,33 +1,42 @@
-from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponseRedirect, HttpResponse
-from endpoints import endpoint_provider
-from a_frame import settings
-from models import EndpointGroup
 import json
+import logging
+
+from django.http import HttpResponseRedirect, HttpResponse
+from django.shortcuts import render, get_object_or_404
+
+from a_frame import settings
+from endpoints import endpoint_provider
+from models import EndpointGroup
+
+logger = logging.getLogger(__name__)
 
 
 def index(request):
+    logger.info("__ endpoints index __")
     provider_list = EndpointGroup.objects.all().order_by("name")
     context = {"provider_list": provider_list}
     return render(request, "endpoints/index.html", context)
 
 
 def new_group(request):
+    logger.info("__ endpoints new_group __")
     provider_list = endpoint_provider.get_endpoint_discovery_provider_list()
     context = {"provider_list": provider_list}
     return render(request, "endpoints/new_group.html", context)
 
 
 def configure_group(request):
+    logger.info("__ endpoints configure_group __")
     required_fields = set(["name", "description", "provider_class"])
     if not required_fields.issubset(request.POST):
+        logger.error("not all required fields found in request")
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     provider_class = request.POST["provider_class"]
     name = request.POST["name"]
     description = request.POST["description"]
 
-    print str(provider_class)
+    logger.info("using provider class: %s" % provider_class)
 
     provider_instance = endpoint_provider.get_provider_instance(provider_class)
 
@@ -43,8 +52,10 @@ def configure_group(request):
 
 
 def create_group(request):
+    logger.info("__ endpoints create_group __")
     required_fields = set(["group_name", "group_description", "provider_class", "provider_options"])
     if not required_fields.issubset(request.POST):
+        logger.error("not all required fields found in request")
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     provider_class = request.POST["provider_class"]
@@ -52,7 +63,7 @@ def create_group(request):
     description = request.POST["group_description"]
     provider_configuration = request.POST["provider_options"]
 
-    print provider_configuration
+    logger.info(provider_configuration)
 
     group = EndpointGroup()
     group.provider_class = provider_class
@@ -66,13 +77,14 @@ def create_group(request):
 
 
 def delete_group(request, group_id):
+    logger.info("__ endpoints delete_group __")
     group = get_object_or_404(EndpointGroup, pk=group_id)
     group.delete()
     return HttpResponseRedirect("/endpoints/")
 
 
 def endpoint_list(request, group_id):
-
+    logger.info("__ endpoints endpoint_list __")
     group = get_object_or_404(EndpointGroup, pk=group_id)
     provider_instance = endpoint_provider.get_provider_instance_from_group(group_id)
 
@@ -126,7 +138,7 @@ def endpoint_list(request, group_id):
 
 
 def endpoint_details(request, group_id, endpoint_id):
-
+    logger.info("__ endpoints endpoints_details __")
     # get the right provider instance
     provider_instance = endpoint_provider.get_provider_instance_from_group(group_id)
 
@@ -137,12 +149,14 @@ def endpoint_details(request, group_id, endpoint_id):
 
 
 def provider_list_json(request):
+    logger.info("__ endpoints provider_list_json __")
     provider_list = endpoint_provider.get_endpoint_discovery_provider_list()
     response_data = {"result": provider_list}
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
 def provider_filters(request, provider_name):
+    logger.info("__ endpoints provider_filters __")
     provider_instance = endpoint_provider.get_provider_instance(provider_name)
     filters = provider_instance.available_filters()
     response_data = {"result": filters}
@@ -156,8 +170,10 @@ def add_endpoints_to_queue(request):
     language stuff to show already selected items in the queue
 
     """
+    logger.info("__ endpoints add_endpoints_to_queue __")
     required_fields = set(["endpoints", "group_id"])
     if not required_fields.issubset(request.POST):
+        logger.error("not all required fields found in request")
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     group_id = request.POST["group_id"]
@@ -185,11 +201,10 @@ def add_endpoints_to_queue(request):
 
 
 def clear_endpoint_queue(request, provider):
+    logger.info("__ endpoints clear_endpoint_queue __")
     if "endpoint_queue" in request.session:
         request.session["endpoint_queue"] = []
     if "endpoint_queue_names" in request.session:
         request.session["endpoint_queue_names"] = []
 
     return HttpResponseRedirect("/endpoints/list/%s" % provider)
-
-

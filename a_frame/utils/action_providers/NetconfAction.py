@@ -1,11 +1,13 @@
-import abc
-from a_frame.utils.action_providers.action_base import ActionBase
-from jnpr.junos import Device
-from jnpr.junos.utils.config import Config
-from jnpr.junos.exception import *
-from lxml import etree
-import re
 import json
+import re
+
+from jnpr.junos import Device
+from jnpr.junos.exception import *
+from jnpr.junos.utils.config import Config
+from lxml import etree
+from lxml.etree import XMLSyntaxError
+
+from a_frame.utils.action_providers.action_base import ActionBase
 
 
 class NetconfAction(ActionBase):
@@ -23,11 +25,11 @@ class NetconfAction(ActionBase):
     def set_endpoint(self, endpoint):
         try:
             # create the required iterator from the endpoint_list
-            self.dev = Device(user=endpoint["username"], password=endpoint["password"], host=endpoint["ip"])
+            self.dev = Device(user=endpoint["username"], password=endpoint["password"], host=endpoint["ip"], port=22)
             self.dev.open(gather_facts=False)
 
         except Exception as err:
-            print "Could not open device!"
+            print "Could not open device %s!" % endpoint["ip"]
             self.result_msg = str(err)
             self.dev = None
 
@@ -55,8 +57,10 @@ class NetconfAction(ActionBase):
             return self.execute_op_command(template)
 
     def execute_op_command(self, template):
+        # Django is so very helpful in escaping EVERYTHING, undo the madness before passing to pyez
+        s = self.unescape(template)
         try:
-            results = self.dev.execute(template)
+            results = self.dev.execute(s)
         except RpcError as e:
             print e
             return "Error executing command: %s" % str(e)
@@ -205,6 +209,8 @@ class NetconfAction(ActionBase):
             print "found valid xml, formatting and returning"
             # use pretty_print if we have an xml document returned
             return etree.tostring(results, pretty_print=True)
+        except XMLSyntaxError:
+            pass
         except ValueError:
             pass
         except TypeError:

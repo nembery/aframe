@@ -36,7 +36,7 @@
                 Username:
             </td>
             <td>
-                <input type="text" name="global_username" value="username"
+                <input type="text" name="global_username" value="{{ endpoint.username }}"
                        title="Optional. Username to apply if the endpoint provider does not provide authentication parameters"
                        style="margin-left: 0px;"/>
             </td>
@@ -46,12 +46,26 @@
                 Password:
             </td>
             <td>
-                <input type="password" name="global_password"
+                <input type="password" name="{{ endpoint.password }}"
                        title="Optional. Password to apply if the endpoint provider does not provide authentication parameters"
                        value="password" style="margin-left: 0px;"/>
             </td>
         </tr>
         </tbody>
+        {% for ao, ao_val in action_options.items %}
+        {% if ao_val.variable %}
+        <tbody>
+        <tr>
+            <td class="template_title">
+                {{ ao_val.variable }}
+            </td>
+            <td>
+                <input type="text" name="action_options_{{ ao_val.name }}" placeholder="{{ ao.name }}" style="margin-left: 0px;"/>
+            </td>
+        </tr>
+        </tbody>
+        {% endif %}
+        {% endfor %}
         {% for j in json_object %}
         <tbody>
         <tr>

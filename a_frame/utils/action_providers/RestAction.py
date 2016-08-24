@@ -1,12 +1,11 @@
-import abc
-from a_frame.utils.action_providers.action_base import ActionBase
-from lxml import etree
-import urllib2
 import base64
-import platform
 import json
+import platform
 import ssl
+import urllib2
 from urllib2 import HTTPError
+from lxml import etree
+from a_frame.utils.action_providers.action_base import ActionBase
 
 
 class RestAction(ActionBase):

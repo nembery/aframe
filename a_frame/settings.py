@@ -51,7 +51,6 @@ ROOT_URLCONF = "a_frame.urls"
 
 WSGI_APPLICATION = "a_frame.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 
@@ -75,13 +74,36 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = "/static/"
 
 CACHE_BACKEND = "file:///var/tmp/a_frame_django_cache"
+
+# setup log file at /var/log/aframe.log
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': '/var/log/aframe.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'WARN',
+            'propagate': True,
+        },
+        '': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+        },
+    },
+}
 
 # add your class name here so it will be loaded at runtime
 REGISTERED_ENDPOINT_PROVIDERS = (
@@ -138,6 +160,35 @@ ACTION_PROVIDERS = (
                         "arguments": []
                     }
                 ]
+            }
+        ]
+    },
+    {
+        "name": "SSHRemoteExecution",
+        "label": "SSH Remote Execution",
+        "options": [
+            {
+                "label": "Request Type",
+                "name": "request_type",
+                "type": "select",
+                "choices": [
+                    {
+                        "name": "cli",
+                        "label": "Execute CLI remotely",
+                        "arguments": []
+                    },
+                    {
+                        "name": "scp",
+                        "label": "Secure Copy template as file to remote host",
+                        "arguments": []
+                    }
+                ]
+            },
+            {
+                "label": "Remote File Path",
+                "name": "file_path",
+                "type": "text",
+                "default": "/var/tmp/aframe/{{ script_name }}"
             }
         ]
     },

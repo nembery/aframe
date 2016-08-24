@@ -1,10 +1,13 @@
-from django.shortcuts import render, get_object_or_404
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect, HttpResponse
+from django.shortcuts import render, get_object_or_404
 from django.template.base import VariableNode
+
 # from django.template.loader import get_template_from_string
 from django.template import Context
 from django.template import engines
 
+import logging
 import json
 import socket
 
@@ -14,6 +17,8 @@ from input_forms.models import InputForm
 from a_frame.utils import action_provider
 from a_frame import settings
 
+logger = logging.getLogger(__name__)
+
 
 def index(request):
     template_list = ConfigTemplate.objects.all().order_by("name")
@@ -22,7 +27,6 @@ def index(request):
 
 
 def choose_action(request):
-
     action_providers = action_provider.get_action_provider_select()
 
     context = {"action_providers": action_providers}
@@ -74,7 +78,6 @@ def define_template(request):
 
 
 def new_template(request):
-
     action_providers = action_provider.get_action_provider_select()
 
     template_form = ConfigTemplateForm()
@@ -274,8 +277,8 @@ def get_template_input_parameters_overlay(request):
 def execute_template(request):
     required_fields = set(["template_id"])
     if not required_fields.issubset(request.POST):
-            error = {"output": "missing required template_id parameter", "status": 1}
-            return HttpResponse(json.dumps(error), content_type="application/json")
+        error = {"output": "missing required template_id parameter", "status": 1}
+        return HttpResponse(json.dumps(error), content_type="application/json")
 
     template_id = request.POST["template_id"]
     config_template = ConfigTemplate.objects.get(pk=template_id)
@@ -402,7 +405,7 @@ def chain_template(request):
             for k in data:
                 context[k] = data[k]
 
-        except Exception:
+        except ObjectDoesNotExist:
             error = {"output": "Could not get config template", "status": 1}
             return HttpResponse(json.dumps(error), content_type="application/json")
 
@@ -469,5 +472,3 @@ def chain_template(request):
         response = {"output": "Error executing template", "status": 1}
 
     return HttpResponse(json.dumps(response), content_type="application/json")
-
-
