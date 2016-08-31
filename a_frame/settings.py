@@ -217,6 +217,10 @@ ACTION_PROVIDERS = (
                     {
                         "name": "keystone",
                         "label": "Keystone",
+                    },
+                    {
+                        "name": "oauth2",
+                        "label": "OAuth2",
                     }
                 ]
             },
