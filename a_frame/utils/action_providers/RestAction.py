@@ -75,7 +75,7 @@ class RestAction(ActionBase):
             request.add_header("Authorization", str(self._auth_token))
 
         request.get_method = lambda: self.request_type
-        # request.add_header("Accept", self.accepts_type)
+        request.add_header("Accept", self.accepts_type)
 
         print self.accepts_type
         print self.content_type
