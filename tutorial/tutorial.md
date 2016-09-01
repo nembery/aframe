@@ -176,7 +176,7 @@ Quit the server with CONTROL-C.
 
 - select the discovery method
 
-![picture4](/images/picture4.png?raw=true)
+![picture4](images/picture4.png?raw=true)
 
 <br><br>
 
