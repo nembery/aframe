@@ -82,8 +82,15 @@
                 }
                 name_label.val(t_config["label"]);
 
-                var default_value = row.find('[id $= "_default"]')
+                var default_value = row.find('[id $= "_default"]');
                 default_value.val(t_config["default"]);
+
+                var widget = row.find('[id $= "_widget"]');
+                widget.val(t_config["widget"]);
+
+                var widget_config = row.find('[id $= "_widget_config"]');
+                widget_config.val(t_config["widget_config"]);
+
             }
         );
     });
@@ -136,6 +143,7 @@
                     <th>Variable</th>
                     <th>Label</th>
                     <th>Default Value</th>
+                    <th>UI Widget</th>
                     {% for t in available_tags %}
                     <tr id="template__variable__{{ forloop.counter }}">
                         <td>
@@ -146,6 +154,19 @@
                         </td>
                         <td>
                             <input type="text" id="{{ t }}_default" name="{{ t }}_default" value="none"/>
+                        </td>
+                        <td>
+                            <select name="{{ t }}_widget" id="{{ t }}_widget"
+                                    onchange="javascript: load_widget_configs(this)">
+                                <option value="text_input">Free form text input - no validation</option>
+                                <option value="text_area">Free form text area - no validation</option>
+                                <option value="numeric_range">Text input - numeric range validation</option>
+                                <option value="text_regex">Text input - regular expression validation</option>
+                                <option value="preload_value">Bind value from another automation</option>
+                                <option value="preload_list">Bind list of values from another automation</option>
+                                <option value="static_list">Static list of values</option>
+                            </select>
+                            <input type="hidden" name="{{ t }}_widget_config" id="{{ t }}_widget_config"/>
                         </td>
                     </tr>
                     {% endfor %}

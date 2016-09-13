@@ -1,0 +1,14 @@
+{% extends "input_forms/widgets/widget_overlay.html" %}
+{% block overlay %}
+
+Numeric Range Validation. The entered value must be a numeral between lower and higher bounds
+<br/>
+Lower: <input type="text" id="numeric_range_lower" value="0" style="width: 100"/>
+&nbsp; - &nbsp;
+Higher: <input type="text" id="numeric_range_higher" value="4096" style="width: 100"/>
+<br/>
+<input type="button" onclick="javascript: set_numeric_range_config('{{ widget_id }}')" value="OK"/>
+<br/>
+{% endblock %}
+
+

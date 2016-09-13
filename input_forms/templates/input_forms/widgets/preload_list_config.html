@@ -1,0 +1,35 @@
+{% extends "input_forms/widgets/widget_overlay.html" %}
+{% block overlay %}
+
+Preload a list of values that come from the results of *another* automation. This will execute the desired automation
+and create list based on the return values. The list will have a 'display name' and a 'value'.
+
+<br/>
+<input type="text" name="input_form_name" size="25" id="template_autocomplete"
+       placeholder="search automations" value=""> &nbsp;
+
+<br/>
+Key to use as 'Display Name':
+<input type="text" id="preload_list_key_name" style="width: 75px"/>
+&nbsp;
+Key to use as 'Value':
+<input type="text" id="preload_list_value_name" style="width: 75px"/>
+
+<br/>
+<input type="button" onclick="javascript: set_preload_list_config('{{ widget_id }}')" value="OK"/>
+
+<script type="text/javascript">
+    $( "#template_autocomplete" ).autocomplete({
+        source: "/input_forms/searchStandalone",
+    });
+
+    var widget_config = jQuery('#{{ widget_id }}_config');
+    if (typeof(widget_config) != "undefined") {
+        console.log(widget_config);
+        console.log(widget_config).val();
+    }
+
+</script>
+{% endblock %}
+
+

@@ -5,8 +5,6 @@ from tools import views
 urlpatterns = [
     url(r"^$", views.index,
         name="index"),
-    url(r"^new/$", views.new_template,
-        name="new"),
     url(r"^newTemplate/$", views.choose_action,
         name="choose_action"),
     url(r"^configureAction/$", views.configure_action,

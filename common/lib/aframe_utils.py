@@ -38,3 +38,189 @@ def get_value_from_json(path, json_object):
             return get_value_from_json(new_path, new_json_object)
     else:
         return "NOT FOUND"
+
+
+def get_path_for_value_from_json(data_structure, target, path):
+    """
+    Given a JSON data structure,  find the json path notation to a given value
+    :param data_structure: json object
+    :param target: key we are looking for
+    :param path: current path to said key
+    :return: JSON path notation to the given key
+    """
+    if type(data_structure) == list:
+        for v in data_structure:
+            if type(v) == str and v == target:
+                return "%s[%s]" % (path, data_structure.index(v))
+            elif type(v) == unicode and str(v) == target:
+                return "%s[%s]" % (path, data_structure.index(v))
+            else:
+                new_path = "%s[%s]" % (path, data_structure.index(v))
+                print "recursively searching %s" % new_path
+                r = get_path_for_value_from_json(v, target, new_path)
+                if r is not None:
+                    return r
+
+    elif type(data_structure) == dict:
+        for k in data_structure:
+            v = data_structure[k]
+            if type(v) == str and v == target:
+                return "%s[%s]" % (path, k)
+            elif type(v) == unicode and str(v) == target:
+                return "%s[\"%s\"]" % (path, k)
+            else:
+                new_path = "%s[\"%s\"]" % (path, k)
+                print "recursing %s" % new_path
+                r = get_path_for_value_from_json(v, target, new_path)
+                if r is not None:
+                    return r
+
+    elif type(data_structure) == unicode:
+        if str(data_structure) == target:
+            return path
+
+    elif type(data_structure) == str:
+        if data_structure == target:
+            return path
+
+    else:
+        if str(data_structure) == target:
+            return path
+
+
+def get_path_for_key_from_json(data_structure, target, path):
+    """
+    Given a JSON data structure,  find the json path notation to a given key
+    :param data_structure: json object
+    :param target: key we are looking for
+    :param path: current path to said key
+    :return: JSON path notation to the given key
+    """
+    if type(data_structure) == list:
+        for v in data_structure:
+            new_path = "%s[%s]" % (path, data_structure.index(v))
+            print "recursively searching %s" % new_path
+            r = get_path_for_key_from_json(v, target, new_path)
+            if r is not None:
+                return r
+
+    elif type(data_structure) == dict:
+        for k in data_structure:
+            v = data_structure[k]
+            if type(k) == str and k == target:
+                return "%s[%s]" % (path, k)
+            elif type(k) == unicode and str(k) == target:
+                return "%s[\"%s\"]" % (path, k)
+            else:
+                new_path = "%s[\"%s\"]" % (path, k)
+                print "recursively searching %s" % new_path
+                r = get_path_for_key_from_json(v, target, new_path)
+                if r is not None:
+                    return r
+
+    elif type(data_structure) == unicode:
+        if str(data_structure) == target:
+            return path
+
+    elif type(data_structure) == str:
+        if data_structure == target:
+            return path
+
+    else:
+        if str(data_structure) == target:
+            return path
+
+
+def get_list_from_json(key, value, data_structure, kv_list=[], depth=0):
+    """
+    Given a data_structure look for dicts with keys that match key and value. Return a list of tuples of the values
+    of those dicts. Will search to arbitrary depth.
+    example:
+        data_structure: [ { "id": 1, "name": "name1" }, { "id": 2, "name": "name2"} ]
+        key: "id"
+        value: "name"
+        return [(1, "name1"), (2, "name2")]
+
+    :param key: key of a dict of which to return as the 'key' of our new list
+    :param value: key of a dict of which to return as the 'value' of our new dict
+    :param data_structure: python data_structure
+    :param kv_list: list to be returned
+    :return: list of tuples
+    """
+
+    if type(data_structure) == list:
+        for v in data_structure:
+            print "recursively searching %s" % str(v)
+            depth += 1
+            r = get_list_from_json(key, value, v, kv_list, depth)
+            if r is not None:
+                print "returning from list with success %s" % depth
+                return r
+
+        print "returning from list none %s" % depth
+        return None
+
+    elif type(data_structure) == dict:
+        if key in data_structure and value in data_structure:
+            print "FOUND IT"
+            d = dict()
+            d["key"] = data_structure[key]
+            d["value"] = data_structure[value]
+            print "returning %s" % depth
+            kv_list.append(d)
+            return kv_list
+        else:
+            for k in data_structure:
+                v = data_structure[k]
+                print "recursively searching %s" % str(v)
+                depth += 1
+                r = get_list_from_json(key, value, v, kv_list, depth)
+                if r is not None:
+                    print "returning from dict with success %s" % depth
+                    return r
+
+            print "returning from dict none %s" % depth
+            return None
+
+    print "finally: " + str(depth)
+    if depth == 0:
+        return kv_list
+    else:
+        return None
+
+
+def get_value_for_key_from_json(key, data_structure):
+    """
+    Given a data_structure return the *first* value of the key from the first dict
+    example:
+        data_structure: [ { "id": 1, "name": "name1" }, { "id": 2, "name": "name2"} ]
+        key: "id"
+        return 1
+
+    :param key: key of a dict of which to return the value
+    :param data_structure: python data_structure
+    :return: value of key in first dict found
+    """
+
+    if type(data_structure) == list:
+        for v in data_structure:
+            # print "recursively searching %s" % str(v)
+            r = get_value_for_key_from_json(key, v)
+            if r is not None:
+                return r
+
+        return None
+
+    elif type(data_structure) == dict:
+        if key in data_structure:
+            return data_structure[key]
+        else:
+            for k in data_structure:
+                v = data_structure[k]
+                # print "recursively searching %s" % str(v)
+                r = get_value_for_key_from_json(key, v)
+                if r is not None:
+                    return r
+
+    return None
+

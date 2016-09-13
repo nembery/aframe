@@ -1,19 +1,20 @@
-from django.shortcuts import render, get_object_or_404, HttpResponseRedirect, HttpResponse
-from django.template.base import VariableNode
-from django.template import engines
-from django.template import Context
-from django.template import TemplateSyntaxError
-from django.core.exceptions import ObjectDoesNotExist
 import json
 import logging
 import re
 from urllib import quote, unquote
-from input_forms.models import InputForm
-from input_forms.forms import ImportForm
-from tools.models import ConfigTemplate
+
+from django.core.exceptions import ObjectDoesNotExist
+from django.shortcuts import render, get_object_or_404, HttpResponseRedirect, HttpResponse
+from django.template import TemplateSyntaxError, TemplateDoesNotExist
+from django.template import engines
+from django.template.base import VariableNode
+
 from a_frame.utils import action_provider
-from endpoints import endpoint_provider
 from common.lib import aframe_utils
+from endpoints import endpoint_provider
+from input_forms.forms import ImportForm
+from input_forms.models import InputForm
+from tools.models import ConfigTemplate
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,24 @@ def search(request):
     results = []
     for input_form in input_form_list:
         if input_form.script.type == "per-endpoint":
+            results.append(input_form.name)
+
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+
+def search_standalone(request):
+    """
+    used for UI autocomplete searches. Filter out per-endpoint type templates
+    :param request:
+    :return:
+    """
+    logger.info("__ input_forms search_standalone __")
+
+    term = request.GET["term"]
+    input_form_list = InputForm.objects.filter(name__contains=term)
+    results = []
+    for input_form in input_form_list:
+        if input_form.script.type == "standalone":
             results.append(input_form.name)
 
     return HttpResponse(json.dumps(results), content_type="application/json")
@@ -77,6 +96,36 @@ def detail(request, input_form_id):
     input_form = InputForm.objects.get(pk=input_form_id)
     logger.debug(input_form.json)
     json_object = json.loads(input_form.json)
+
+    for j in json_object:
+        if "widget" in j:
+            if j["widget"] == "preload_list" and "widget_config" in j:
+                widget_config = json.loads(j["widget_config"])
+                template_name = widget_config["template_name"]
+                key = widget_config["key_name"]
+                value = widget_config["value_name"]
+                config_template = ConfigTemplate.objects.get(name=template_name)
+
+                action_name = config_template.action_provider
+                action_options = json.loads(config_template.action_provider_options)
+
+                action = action_provider.get_provider_instance(action_name, action_options)
+
+                try:
+                    results = action.execute_template(config_template.template.strip().replace('\r\n', '\n'))
+                    print results
+                    results_object = json.loads(results)
+                    print key
+                    print value
+                    d = aframe_utils.get_list_from_json(key, value, results_object, list(), 0)
+                    print d
+                    j["widget_data"] = d
+
+                except Exception as ex:
+                    print str(ex)
+
+        else:
+            j["widget"] = "text_input"
 
     config_template = input_form.script
     action_options = json.loads(config_template.action_provider_options)
@@ -205,7 +254,7 @@ def import_form(request):
         input_form = InputForm()
         input_form.name = form_options["name"]
         input_form.description = form_options["description"]
-        input_form.instuctions = form_options["instructions"]
+        input_form.instructions = form_options["instructions"]
         input_form.json = unquote(form_options["json"])
         input_form.script = template
 
@@ -214,7 +263,7 @@ def import_form(request):
         return HttpResponseRedirect("/input_forms")
     else:
         form = ImportForm()
-        context = {'form': form }
+        context = {'form': form}
         return render(request, 'input_forms/import.html', context)
 
 
@@ -303,14 +352,14 @@ def configure_template_for_queue(request):
     return render(request, "input_forms/configure_template_for_queue.html", context)
 
 
-def apply_template(request):
+def apply_per_endpoint_template(request):
     """
 
     :param request: HTTPRequest from the input form
     :return: results of the template execution
 
     """
-    logger.info("__ input_forms apply_template __")
+    logger.info("__ input_forms apply_per_endpoint_template __")
 
     required_fields = set(["input_form_id", "endpoint_id", "group_id"])
     if not required_fields.issubset(request.POST):
@@ -341,7 +390,7 @@ def apply_template(request):
     logger.debug(input_form.json)
     json_object = json.loads(input_form.json)
 
-    context = Context()
+    context = dict()
     for j in json_object:
         if '.' in j["name"]:
             # this is a json capable variable name
@@ -378,7 +427,7 @@ def apply_template(request):
             logger.debug("Found a customized action option!")
             new_val = request.POST["action_options_" + str(ao)]
             current_value = action_options[ao]["value"]
-            action_options[ao]["value"] = re.sub("{{ .* }}", new_val, current_value)
+            action_options[ao]["value"] = re.sub("{{.*}}", new_val, current_value)
             logger.debug(action_options[ao]["value"])
 
     logger.debug("action name is: " + action_name)
@@ -402,7 +451,7 @@ def apply_standalone_template(request):
 
     json_object = json.loads(input_form.json)
 
-    context = Context()
+    context = dict()
     for j in json_object:
         if '.' in j["name"]:
             # this is a fancy variable name
@@ -457,7 +506,7 @@ def apply_template_to_queue(request):
     logger.debug(input_form.json)
     json_object = json.loads(input_form.json)
 
-    context = Context()
+    context = dict()
     for j in json_object:
         if '.' in j["name"]:
             # this is a json capable variable name
@@ -537,3 +586,26 @@ def edit_from_template(request, template_id):
     except ObjectDoesNotExist:
         logger.info("requested object id does not exist")
         return HttpResponseRedirect("/input_forms/new/%s" % template_id)
+
+
+def load_widget_config(request):
+    """
+    Load the configuration for a given widget
+    :param request: http request
+    :return: html template
+    """
+    logger.info("__ input_forms load_widget_config __")
+    required_fields = set(["widget_name", "widget_id"])
+    if not required_fields.issubset(request.POST):
+        logger.error("Did no find all required fields in request")
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
+    # fixme - should I add a map here to avoid passing param directly from ui?
+    widget_name = request.POST["widget_name"]
+    widget_id = request.POST["widget_id"]
+
+    try:
+        context = {"widget_id": widget_id, "widget_name": widget_name}
+        return render(request, "input_forms/widgets/%s_config.html" % widget_name, context)
+    except TemplateDoesNotExist:
+        return render(request, "input_forms/widgets/overlay_error.html", {"error": "Invalid Parameters in POST"})

@@ -28,8 +28,8 @@
 
         // use a jquery selector to find all document elements that 'start with' "template__variable__"
         // iterate over each one
-        // for each template variable we want to know 3 things:
-        // what is the name of the variable, the human readable label, and the default value
+        // for each template variable we want to know 5 things:
+        // what is the name of the variable, the human readable label, the default value, and the widget config
         template__variable__configs.find('[id ^= "template__variable__"]').each(
             function(a,r) {
                 // these are indexed by table row below
@@ -46,13 +46,25 @@
                 // now use the 'ends with' selector to get the default value form element and value
                 var default_value = row.find('[id $= "_default"]').val();
 
+                // now use the 'ends with' selector to get the widget_config value form element and value
+                var widget = row.find('[id $= "_widget"]').val();
+
+                // now use the 'ends with' selector to get the widget_config value form element and value
+                var widget_config = row.find('[id $= "_widget_config"]').val();
+
                 // let's log it here for the dev again
                 console.log("name is: " + name);
                 console.log("default is: " + default_value);
                 console.log("label is: " + label);
 
                 // construct a simple object and add to the 'template_variables' array
-                t = { "name" : name, "label" : label, "default": default_value };
+                t = {
+                        "name" : name,
+                        "label" : label,
+                        "default": default_value,
+                        "widget": widget,
+                        "widget_config": widget_config
+                    };
                 template_variables.push(t);
             }
         );
@@ -63,6 +75,13 @@
         // submit the form here after we are all done
         $("#create_form").submit();
     }
+
+    $(window).load(function() {
+        $( "#template_autocomplete" ).autocomplete({
+            source: "/tools/search",
+        });
+    });
+
 </script>
 {% endblock%}
 {% block content %}
@@ -112,16 +131,34 @@
                     <th>Variable</th>
                     <th>Label</th>
                     <th>Default Value</th>
+                    <th>Widget</th>
                     {% for t in available_tags %}
                     <tr id="template__variable__{{ forloop.counter }}">
                         <td>
                             {{ t }}
                         </td>
                         <td>
-                            <input type="text" id="{{ t }}_label" name="{{ t }}_label" value="{{ t }}"/>
+                            <input type="text" id="{{ t }}_label" name="{{ t }}_label" value="{{ t }}"
+                                   style="width: 150px"
+                            />
                         </td>
                         <td>
-                            <input type="text" id="{{ t }}_default" name="{{ t }}_default" value="none"/>
+                            <input type="text" id="{{ t }}_default" name="{{ t }}_default" value="none"
+                                   style="width: 150px"
+                            />
+                        </td>
+                        <td>
+                            <select name="{{ t }}_widget" id="{{ t }}_widget"
+                                    onchange="javascript: load_widget_configs(this)">
+                                <option value="text_input">Free form text input - no validation</option>
+                                <option value="text_area">Free form text area - no validation</option>
+                                <option value="numeric_range">Text input - numeric range validation</option>
+                                <option value="text_regex">Text input - regular expression validation</option>
+                                <option value="preload_value">Bind value from another automation</option>
+                                <option value="preload_list">Bind list of values from another automation</option>
+                                <option value="static_list">Static list of values</option>
+                            </select>
+                            <input type="hidden" name="{{ t }}_widget_config" id="{{ t }}_widget_config" value=""/>
                         </td>
                     </tr>
                     {% endfor %}

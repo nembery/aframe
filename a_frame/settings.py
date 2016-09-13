@@ -221,6 +221,10 @@ ACTION_PROVIDERS = (
                     {
                         "name": "oauth2",
                         "label": "OAuth2",
+                    },
+                    {
+                        "name": "ruckus",
+                        "label": "Ruckus REST Cookie",
                     }
                 ]
             },

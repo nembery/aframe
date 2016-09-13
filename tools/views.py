@@ -4,7 +4,6 @@ from django.shortcuts import render, get_object_or_404
 from django.template.base import VariableNode
 
 # from django.template.loader import get_template_from_string
-from django.template import Context
 from django.template import engines
 
 import logging
@@ -12,7 +11,6 @@ import json
 import socket
 
 from tools.models import ConfigTemplate
-from tools.models import ConfigTemplateForm
 from input_forms.models import InputForm
 from a_frame.utils import action_provider
 from a_frame import settings
@@ -75,15 +73,6 @@ def define_template(request):
     request.session["new_template_action_options"] = configured_options
     context = {"options": configured_options, "action_provider": action_provider_name}
     return render(request, "configTemplates/define_template.html", context)
-
-
-def new_template(request):
-    action_providers = action_provider.get_action_provider_select()
-
-    template_form = ConfigTemplateForm()
-    template_form.fields["action_provider"].choices = action_providers
-    context = {"template_form": template_form, "action_providers": action_providers}
-    return render(request, "configTemplates/new.html", context)
 
 
 def get_options_for_action(request):
@@ -284,7 +273,7 @@ def execute_template(request):
     config_template = ConfigTemplate.objects.get(pk=template_id)
     template_api = get_input_parameters_for_template(config_template)
 
-    context = Context()
+    context = dict()
 
     try:
         print str(template_api["input_parameters"])
@@ -399,7 +388,7 @@ def chain_template(request):
         try:
             config_template = ConfigTemplate.objects.get(pk=template_id)
 
-            context = Context()
+            context = dict()
             # iterate over all the keys in the json object and set on the context
             # the template engine is smart enough to figure out what goes where
             for k in data:
@@ -420,7 +409,7 @@ def chain_template(request):
         config_template = ConfigTemplate.objects.get(pk=template_id)
         template_api = get_input_parameters_for_template(config_template)
 
-        context = Context()
+        context = dict()
 
         try:
             print str(template_api["input_parameters"])
@@ -472,3 +461,7 @@ def chain_template(request):
         response = {"output": "Error executing template", "status": 1}
 
     return HttpResponse(json.dumps(response), content_type="application/json")
+
+
+def bind_automation(request):
+    return render(request, "configTemplates/bind_automation.html")

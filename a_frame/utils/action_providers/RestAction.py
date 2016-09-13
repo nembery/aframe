@@ -32,6 +32,7 @@ class RestAction(ActionBase):
     _keystone_auth_path = ":5000/v3/auth/tokens"
     _oauth2_auth_path = "/oauth2/token"
     _auth_token = ""
+    _ruckus_auth_path = "/v3_1/session"
 
     def execute_template(self, template):
         """
@@ -57,16 +58,19 @@ class RestAction(ActionBase):
         print full_url
 
         request = urllib2.Request(full_url)
+        
         if self.auth_type == "basic":
             print "using username: %s" % self.username
             base64string = base64.b64encode("%s:%s" % (self.username, self.password))
             request.add_header("Authorization", "Basic %s" % base64string)
+
         elif self.auth_type == "keystone":
             if not self.connect_to_keystone():
                 return "Authentication error connecting to Keystone!"
 
             print "Connected to Keystone!"
             request.add_header("X-Auth-Token", self._auth_token)
+
         elif self.auth_type == "oauth2":
             if not self.connect_to_oauth2():
                 return "Authentication error!"
@@ -74,11 +78,17 @@ class RestAction(ActionBase):
             print "OAuth2 authentication succeeded!"
             request.add_header("Authorization", str(self._auth_token))
 
-        request.get_method = lambda: self.request_type
-        request.add_header("Accept", self.accepts_type)
+        elif self.auth_type == "ruckus":
+            if not self.connect_to_ruckus():
+                return "Authentication error!"
 
-        print self.accepts_type
-        print self.content_type
+            print "Ruckus authentication succeeded!"
+            request.add_header("Cookie", "JSESSIONID=" + str(self._auth_token))
+
+        request.get_method = lambda: self.request_type
+
+        if self.accepts_type != "":
+            request.add_header("Accept", self.accepts_type)
 
         data = str(template + "\n\n")
         print "Request type: %s" % self.request_type
@@ -226,5 +236,40 @@ class RestAction(ActionBase):
             return False
 
         self._auth_token = json_string["token_type"] + " " + json_string["access_token"]
+        return True
+
+    def connect_to_ruckus(self):
+        """
+        connects to Ruckus REST server to get a Cookie with the specified user and password
+
+        :return: boolean if successful
+
+        """
+
+        _auth_json = """
+           {
+            "username" : "%s",
+            "password" : "%s"
+            }
+            """ % (self.username, self.password)
+
+        full_url = self.protocol + "://" + self.host + self._ruckus_auth_path
+        print full_url
+        request = urllib2.Request(full_url)
+
+        print "Ruckus Rest Cookie using username/password: %s %s" % (self.username, self.password)
+        request.add_header("Content-Type", "application/json")
+
+        if hasattr(ssl, 'SSLContext'):
+            context = ssl.create_default_context()  # disables SSL cert checking!
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+            result = urllib2.urlopen(request, _auth_json, context=context).read()
+        else:
+            result = urllib2.urlopen(request, _auth_json).read()
+
+        auth_token_string = result.info().getheader('Set-cookie')
+        self._auth_token = auth_token_string.split(';')[0]
+
         return True
 

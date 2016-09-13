@@ -34,9 +34,19 @@
             <td class="template_title">
                 {{ j.label }}
             </td>
+            {% if j.widget == "preload_list" %}
             <td>
-                <input type="text" name="{{ j.name }}" placeholder="{{ j.default }}">
+                <select name="{{ j.name }}">
+                    {% for w in j.widget_data %}
+                        <option value="{{ w.value }}">{{ w.key }}</option>
+                    {% endfor %}
+                </select>
             </td>
+            {% else %}
+            <td>
+                <input type="text" name="{{ j.name }}" id="{{ j.name }}" value="{{ j.default }}">
+            </td>
+            {% endif %}
         </tr>
         </tbody>
         {% endfor %}
