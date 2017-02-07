@@ -1,0 +1,22 @@
+{% load staticfiles %}
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{% static 'css/dark.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/jquery-ui.css' %}" />
+    <title>{% block title %}Custom App{% endblock %}</title>
+    <script type="text/javascript" src="{% static 'js/jquery-1.12.4.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery-ui.min.js' %}"></script>
+    <link href="{% static 'images/a-frame-logo.png' %}" rel="shortcut icon">
+
+    <script type="text/javascript" src="{% static 'js/a_frame_utils.js' %}"></script>
+    {% block scripts %}{% endblock %}
+</head>
+<body>
+<div id="header">
+    <h1>Custom Application</h1>
+</div>
+
+        {% block content %}{% endblock %}
+
+</body>
+</html>

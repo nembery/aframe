@@ -3,7 +3,10 @@
 {% block title %}A-Frame{% endblock %}
 {% block scripts %}
 <script type="text/javascript">
-
+ function preview_template() {
+    $("#preview").val('yes_please');
+    $("#apply_form").submit();
+ }
 </script>
 {% endblock%}
 {% block content %}
@@ -12,50 +15,18 @@
 <br/>
 {{ input_form.instructions }}
 <br/>
-<form method="POST" action="/input_forms/applyStandalone">
+<form method="POST" id="apply_form" action="/input_forms/applyStandalone">
     <table>
-        {% for ao, ao_val in action_options.items %}
-        {% if ao_val.variable %}
-        <tbody>
+        {% include "./input_form_body.html" %}
         <tr>
-            <td class="template_title">
-                {{ ao_val.variable }}
-            </td>
-            <td>
-                <input type="text" name="action_options_{{ ao_val.name }}" placeholder="{{ ao.name }}"/>
-            </td>
-        </tr>
-        </tbody>
-        {% endif %}
-        {% endfor %}
-        {% for j in json_object %}
-        <tbody>
-        <tr>
-            <td class="template_title">
-                {{ j.label }}
-            </td>
-            {% if j.widget == "preload_list" %}
-            <td>
-                <select name="{{ j.name }}">
-                    {% for w in j.widget_data %}
-                        <option value="{{ w.value }}">{{ w.key }}</option>
-                    {% endfor %}
-                </select>
-            </td>
-            {% else %}
-            <td>
-                <input type="text" name="{{ j.name }}" id="{{ j.name }}" value="{{ j.default }}">
-            </td>
-            {% endif %}
-        </tr>
-        </tbody>
-        {% endfor %}
-        <r>
             <td colspan="2">
                 <input type="hidden" name="input_form_id" value="{{ input_form.id }}"/>
+                <input type="hidden" name="preview" id="preview" value=""/>
                 <input type="submit" value="Apply Template"/>
+                &nbsp;
+                <input type="button" onclick="javascript: preview_template()" value="Preview Template"/>
             </td>
-        </r>
+        </tr>
     </table>
 </form>
 {% endblock %}

@@ -1,0 +1,7 @@
+<td>
+    <select name="{{ j.name }}" id="{{ j.name }}" title="{{ j.widget_config }}">
+        {% for o in j.widget_config.select_list_options %}
+        <option value="{{ o.value }}">{{ o.name }}</option>
+        {% endfor %}
+    </select>
+</td>

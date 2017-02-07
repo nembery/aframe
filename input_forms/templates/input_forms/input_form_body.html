@@ -1,0 +1,25 @@
+{% for ao, ao_val in action_options.items %}
+{% if ao_val.variable %}
+<tbody>
+    <tr>
+        <td class="template_title">
+            {{ ao_val.variable }}
+        </td>
+        <td>
+            <input type="text" name="action_options_{{ ao_val.name }}" placeholder="{{ ao.name }}"
+                   style="margin-left: 0px;"/>
+        </td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+    {% for j in json_object %}
+    <tr>
+        <td class="template_title">
+            {{ j.label }}
+        </td>
+        {% with template_name='input_forms/widgets/'|add:j.widget|add:".html" %}
+            {% include ""|add:template_name %}
+        {% endwith %}
+    </tr>
+{% endfor %}
+</tbody>

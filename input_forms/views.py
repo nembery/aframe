@@ -9,6 +9,7 @@ from django.template import TemplateSyntaxError, TemplateDoesNotExist
 from django.template import engines
 from django.template.base import VariableNode
 
+from a_frame import settings
 from a_frame.utils import action_provider
 from common.lib import aframe_utils
 from endpoints import endpoint_provider
@@ -40,6 +41,23 @@ def search(request):
     for input_form in input_form_list:
         if input_form.script.type == "per-endpoint":
             results.append(input_form.name)
+
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+
+def search_all(request):
+    """
+    used for UI autocomplete searches. No filtering is applied, also returns dicts instead of a simple list of names
+    :param request: term
+    :return: json list of dicts
+    """
+    logger.info("__ input_forms search __")
+
+    term = request.GET["term"]
+    input_form_list = InputForm.objects.filter(name__contains=term)
+    results = []
+    for input_form in input_form_list:
+        results.append(input_form.name)
 
     return HttpResponse(json.dumps(results), content_type="application/json")
 
@@ -87,7 +105,15 @@ def edit(request, input_form_id):
                 if not variable_string.startswith("af_"):
                     available_tags.append(variable_string)
 
-    context = {"input_form": input_form, "config_template": config_template, "available_tags": available_tags}
+    widgets = settings.WIDGETS
+    widgets_json = json.dumps(widgets)
+    context = {
+        "input_form": input_form,
+        "config_template": config_template,
+        "available_tags": available_tags,
+        "widgets": widgets,
+        "widgets_json": widgets_json
+    }
     return render(request, "input_forms/edit.html", context)
 
 
@@ -171,7 +197,14 @@ def new_from_template(request, template_id):
                 if not variable_string.startswith("af_"):
                     available_tags.append(variable_string)
 
-    context = {"config_template": config_template, "available_tags": available_tags}
+    widgets = settings.WIDGETS
+    widgets_json = json.dumps(widgets)
+    context = {
+        "config_template": config_template,
+        "available_tags": available_tags,
+        "widgets": widgets,
+        "widgets_json": widgets_json
+    }
     return render(request, "input_forms/new.html", context)
 
 
@@ -301,6 +334,16 @@ def preview(request, input_form_id):
     json_object = json.loads(input_form.json)
     context = {"input_form": input_form, "json_object": json_object}
     return render(request, "input_forms/preview.html", context)
+
+
+def configure_template_for_screen(request, input_form_id):
+    logger.info("__ input_forms configure_template_for_screen __")
+    input_form = InputForm.objects.get(pk=input_form_id)
+    logger.debug(input_form.json)
+    json_object = list()
+    json_object = json.loads(input_form.json)
+    context = {"input_form": input_form, "json_object": json_object, 'action_options': []}
+    return render(request, "input_forms/configure_template_for_inline.html", context)
 
 
 def configure_template_for_endpoint(request):
@@ -472,6 +515,12 @@ def apply_standalone_template(request):
 
     completed_template = str(compiled_template.render(context))
 
+    if "preview" in request.POST:
+        logger.info("Returning template Preview")
+        pre_tags = "<html><body><pre>"
+        post_tags = "</pre></body</html>"
+        return HttpResponse(pre_tags + completed_template + post_tags)
+
     logger.info(completed_template)
     action_name = config_template.action_provider
     logger.info(action_name)
@@ -595,17 +644,36 @@ def load_widget_config(request):
     :return: html template
     """
     logger.info("__ input_forms load_widget_config __")
-    required_fields = set(["widget_name", "widget_id"])
+    required_fields = set(["widget_id", "target_id"])
     if not required_fields.issubset(request.POST):
         logger.error("Did no find all required fields in request")
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
-    # fixme - should I add a map here to avoid passing param directly from ui?
-    widget_name = request.POST["widget_name"]
     widget_id = request.POST["widget_id"]
+    target_id = request.POST["target_id"]
+
+    widgets = settings.WIDGETS
+    widget_name = ""
+    widget_configuration_template = ""
+
+    found = False
+    for w in widgets:
+        logger.debug(w["id"] + " == " + widget_id)
+
+        if w["id"] == widget_id:
+            widget_name = w["label"]
+            widget_configuration_template = w["configuration_template"]
+            logger.debug(widget_configuration_template)
+            found = True
+            break
+
+    if not found:
+        return render(request, "input_forms/widgets/overlay_error.html",
+                      {"error": "Could not find widget configuration"})
 
     try:
-        context = {"widget_id": widget_id, "widget_name": widget_name}
-        return render(request, "input_forms/widgets/%s_config.html" % widget_name, context)
+        context = {"widget_id": widget_id, "widget_name": widget_name, "target_id": target_id}
+        return render(request, "input_forms/widgets/%s" % widget_configuration_template, context)
     except TemplateDoesNotExist:
-        return render(request, "input_forms/widgets/overlay_error.html", {"error": "Invalid Parameters in POST"})
+        return render(request, "input_forms/widgets/overlay_error.html",
+                      {"error": "Could not load widget configuration"})

@@ -1,0 +1,76 @@
+* {
+	margin:0;
+	padding:0;
+}
+html {
+    height: 100%;
+}
+/** General Style Info **/
+body {
+	background: #000;
+	color: grey;
+	font-family:"lucida grande",verdana,helvetica,arial,sans-serif;
+	font-size:100%;
+	margin: 0px;
+    height: 100%;
+    color: #fff;
+}
+pre {
+    font-family: monospace;
+    font-size: 12px;
+}
+a {
+	color: grey;
+	text-decoration: underline;
+	font-weight: bold;
+}
+a:hover {
+	color: grey;
+	text-decoration:none;
+}
+a img {
+	border:none;
+}
+
+h1 {
+    color: darkblue;
+    padding: 20px;
+}
+
+h2 {
+    color: darkblue;
+    padding-left: 50px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+h3 {
+    color: darkblue;
+}
+
+.screen_box {
+
+    display: none;
+    background: #eee;
+    border: 1px solid #ddd;
+    width: 350px;
+    font-size: 75%;
+    position: absolute;
+    margin: 5px;
+}
+
+.screen_box table {
+    margin: 0px;
+    padding: 0px;
+}
+
+.screen_box input[type=text] {
+    width: 175px;
+    margin: 0px;
+    padding: 2px;
+}
+
+.screen_box_header tr td {
+    font-weight: bold;
+    border-bottom: 1px solid #666;
+}

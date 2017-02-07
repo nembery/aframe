@@ -7,6 +7,8 @@
     var tags = [];
     var j;
 
+    var widgets = $.parseJSON('{{ widgets_json|safe }}');
+
     function submit_form() {
         var json = $("#json");
         var template__variable__configs = $("#tag_configurator");
@@ -30,18 +32,42 @@
 
                 var default_value = row.find('[id $= "_default"]').val();
 
+                // now use the 'ends with' selector to get the widget_config value form element and value
+                var widget = row.find('[id $= "_widget"]').val();
+
+                // now use the 'ends with' selector to get the widget_config value form element and value
+                var widget_config = row.find('[id $= "_widget_config"]').val();
+
+                // verify we have something to work with
+                if (widget_config == "") {
+                    widget_config = "{}";
+                }
+
+                // widget_config is a JSON string stored on the DOM
+                // convert it back to a data structure here before serializing the whole thing back to a string
+                // FIXME - should this be surrounded with try/catch?
+                var widget_config_object = JSON.parse(widget_config);
+
+                // let's log it here for the dev again
                 console.log("name is: " + name);
                 console.log("default is: " + default_value);
                 console.log("label is: " + label);
 
-                t = { "name" : name, "label" : label, "default": default_value };
+                // construct a simple object and add to the 'template_variables' array
+                t = {
+                        "name" : name,
+                        "label" : label,
+                        "default": default_value,
+                        "widget": widget,
+                        "widget_config": widget_config_object
+                };
                 tags.push(t);
             }
         );
         var json_text = JSON.stringify(tags, null, 2);
 
         $("#json").val(json_text);
-
+        console.log(json_text);
         $("#update_form").submit();
     }
 
@@ -86,11 +112,25 @@
                 default_value.val(t_config["default"]);
 
                 var widget = row.find('[id $= "_widget"]');
-                widget.val(t_config["widget"]);
-
                 var widget_config = row.find('[id $= "_widget_config"]');
-                widget_config.val(t_config["widget_config"]);
 
+                if(t_config.hasOwnProperty("widget")) {
+                    widget.val(t_config["widget"]);
+
+
+                    var widget_config_string = JSON.stringify(t_config["widget_config"], null, 0);
+
+                    widget_config.val(widget_config_string);
+
+                    console.log(t_config["widget_config"]);
+                    if (t_config["widget_config"] != "{}") {
+                        var widget_config_button = row.find('[id $= "_widget_config_button"]');
+                        widget_config_button.css("display", "");
+                    }
+                } else {
+                    widget.val("text_input");
+                    widget_config.val("{}");
+                }
             }
         );
     });
@@ -157,16 +197,15 @@
                         </td>
                         <td>
                             <select name="{{ t }}_widget" id="{{ t }}_widget"
-                                    onchange="javascript: load_widget_configs(this)">
-                                <option value="text_input">Free form text input - no validation</option>
-                                <option value="text_area">Free form text area - no validation</option>
-                                <option value="numeric_range">Text input - numeric range validation</option>
-                                <option value="text_regex">Text input - regular expression validation</option>
-                                <option value="preload_value">Bind value from another automation</option>
-                                <option value="preload_list">Bind list of values from another automation</option>
-                                <option value="static_list">Static list of values</option>
+                                    onchange="javascript: load_widget_configs('{{ t }}_widget')">
+                                {% for w in widgets %}
+                                <option value="{{ w.id }}">{{ w.label }}</option>
+                                {% endfor %}
                             </select>
                             <input type="hidden" name="{{ t }}_widget_config" id="{{ t }}_widget_config"/>
+                            <input type="button" id="{{ t }}_widget_config_button" value="Configure"
+                                   onclick="javascript: load_widget_configs('{{ t }}_widget')"
+                                   style="display: none; width: 75px;"/>
                         </td>
                     </tr>
                     {% endfor %}

@@ -51,7 +51,7 @@ class FileDiscovery(EndpointBase):
             endpoint_array = map(lambda x: x.replace("\"", ""), endpoint_array)
             if len(endpoint_array) == 6:
                 # use the splat operator to unpack the resulting line array
-                # create_endpoint is a convience function in the base class
+                # create_endpoint is a convenience function in the base class
                 # feel free to modify this if your file format differs
                 # expected argument ordering:
                 # create_endpoint(endpoint_id, endpoint_name, ip, username, password, endpoint_type)

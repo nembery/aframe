@@ -43,18 +43,7 @@
             </td>
         </tr>
         </tbody>
-        {% for j in json_object %}
-        <tbody>
-        <tr>
-            <td class="template_title">
-                {{ j.label }}
-            </td>
-            <td>
-                <input type="text" name="{{ j.name }}" value="{{ j.default }}" style="margin-left: 0px;"/>
-            </td>
-        </tr>
-        </tbody>
-        {% endfor %}
+        {% include "./input_form_body.html" %}
         <tbody>
         <tr>
             <td colspan="2" style="text-align: right;">

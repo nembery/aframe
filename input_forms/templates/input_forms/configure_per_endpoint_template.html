@@ -52,42 +52,7 @@
             </td>
         </tr>
         </tbody>
-        {% for ao, ao_val in action_options.items %}
-        {% if ao_val.variable %}
-        <tbody>
-        <tr>
-            <td class="template_title">
-                {{ ao_val.variable }}
-            </td>
-            <td>
-                <input type="text" name="action_options_{{ ao_val.name }}" placeholder="{{ ao.name }}" style="margin-left: 0px;"/>
-            </td>
-        </tr>
-        </tbody>
-        {% endif %}
-        {% endfor %}
-        {% for j in json_object %}
-        <tbody>
-        <tr>
-            <td class="template_title">
-                {{ j.label }}
-            </td>
-            {% if j.widget == "preload_list" %}
-            <td>
-                <select name="{{ j.name }}">
-                    {% for w in j.widget_data %}
-                        <option value="w.value">w.key</option>
-                    {% endfor %}
-                </select>
-            </td>
-            {% else %}
-            <td>
-                <input type="text" name="{{ j.name }}" placeholder="{{ j.default }}">
-            </td>
-            {% endif %}
-        </tr>
-        </tbody>
-        {% endfor %}
+        {% include "./input_form_body.html" %}
         <tbody>
         <tr>
             <td colspan="2" style="text-align: right;">

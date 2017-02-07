@@ -100,6 +100,11 @@ class NetconfAction(ActionBase):
 
     def apply_template(self, template):
         print self.dev
+
+        # let's ensure we don't have silly dos style line breaks
+        template = template.replace("\r\n", "\n")
+        template = template.replace("\r", "\n")
+
         conf_string = template.strip()
 
         print conf_string

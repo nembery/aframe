@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/jquery-ui.css' %}" />
     <title>{% block title %}A-Frame{% endblock %}</title>
-    <script type="text/javascript" src="{% static 'js/jquery-1.8.1.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery-1.12.4.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/jquery-ui.min.js' %}"></script>
     <link href="{% static 'images/a-frame-logo.png' %}" rel="shortcut icon">
 
@@ -23,11 +24,14 @@
             <td>
                 <a href="/input_forms/">Automations</a>
             </td>
+            <td>
+                <a href="/screens/" title="I need a better name for these than screens/views">Screens</a>
+            </td>
         </tr>
     </table>
 </div>
 <div id="content">
-    <div class="centered_box">
+    <div class="centered_box" id="centered_box">
         {% block content %}{% endblock %}
     </div>
 </div>

@@ -1,0 +1,130 @@
+
+{% extends screen.theme  %}
+{% block title %}A-Frame{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+
+    var input_form_ids = $.parseJSON('{{ input_form_ids|safe }}');
+
+    var input_forms = $.parseJSON('{{ input_forms_json|safe }}');
+
+    var layout = $.parseJSON('{{ layout|safe }}');
+
+    function load_input_form(input_form_id) {
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
+
+        var url = '/input_forms/configureTemplateForScreen/' + input_form_id;
+
+        var post = jQuery.get(url, function(response) {
+            var content = jQuery(response);
+            var base_window = "";
+            var new_window = "";
+
+            base_window = $(" #input_form_box_base" );
+            new_window = base_window.clone();
+
+            var new_window_id = "input_form_box_" + input_form_id;
+            new_window.prop("id", new_window_id);
+            new_window.draggable();
+
+            $( "body" ).append(new_window);
+
+            var new_window_table = $("#" + new_window_id + " table tbody.screen_box_menu");
+            var new_window_header = $("#" + new_window_id + " table tbody.screen_box_header tr td");
+
+            var input_form_name = input_forms[input_form_id];
+            new_window_header.empty().append(input_form_name);
+            new_window_table.prepend(content);
+
+            new_window.css("display", "inline-block");
+
+            new_window.css("position", "absolute");
+            this_layout = layout[input_form_id]
+            console.log(this_layout)
+
+            new_window.css("left", this_layout["x"]);
+            new_window.css("top", this_layout["y"]);
+
+        });
+
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.css('cursor', '');
+        });
+    }
+
+    function update_layout() {
+        for(i=0;i<input_form_ids.length;i++) {
+            var input_form_id = input_form_ids[i]
+            var input_form_box = $("#input_form_box_" + input_form_id);
+            var current_y = input_form_box.css("top");
+            var current_x = input_form_box.css("left");
+
+            this_layout = layout[input_form_id]
+            this_layout["x"] = current_x;
+            this_layout["y"] = current_y;
+
+            console.log(this_layout);
+        }
+
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
+
+        var url = "/screens/updateLayout/"
+
+        var params = {
+            "screen_id": {{ screen.id }},
+            "layout": JSON.stringify(layout)
+        }
+
+        var post = jQuery.post(url, params, function(response) {
+            alert(response);
+        });
+
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+
+        post.always(function() {
+            doc.css('cursor', '');
+        });
+    }
+
+    $(window).load(function() {
+        for(i=0;i<input_form_ids.length;i++) {
+            var ifi = input_form_ids[i];
+            console.log(ifi);
+            load_input_form(ifi);
+        }
+        $('#centered_box').css("height", "1000px");
+    });
+
+
+
+</script>
+{% endblock %}
+
+{% block content %}
+<h2>{{ screen.name }} / {{ screen.theme }}</h2>
+<h4>{{ screen.description }}</h4>
+
+<div class="screen_box" id="input_form_box_base">
+<table>
+    <tbody class="screen_box_header">
+        <tr>
+            <td colspan="2">No Name</td>
+        </tr>
+    </tbody>
+    <tbody class="screen_box_menu">
+        <tr>
+            <td>
+                <input type="button" value="Apply">
+            </td>
+        </tr>
+    </tbody>
+</table>
+</div>
+{% endblock %}

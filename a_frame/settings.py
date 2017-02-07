@@ -37,6 +37,7 @@ INSTALLED_APPS = (
     "tools",
     "endpoints",
     "input_forms",
+    "screens",
 )
 
 MIDDLEWARE_CLASSES = (
@@ -104,6 +105,31 @@ LOGGING = {
         },
     },
 }
+
+DEVICE_LIST_PAGING_SIZE = 10
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            # insert your TEMPLATE_DIRS here
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                # Insert your TEMPLATE_CONTEXT_PROCESSORS here or use this
+                # list if you haven't customized them:
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
 # add your class name here so it will be loaded at runtime
 REGISTERED_ENDPOINT_PROVIDERS = (
@@ -174,12 +200,17 @@ ACTION_PROVIDERS = (
                 "choices": [
                     {
                         "name": "cli",
-                        "label": "Execute CLI remotely",
+                        "label": "Execute CLI remotely via SSH",
                         "arguments": []
                     },
                     {
                         "name": "scp",
-                        "label": "Secure Copy template as file to remote host",
+                        "label": "SCP template to remote path",
+                        "arguments": []
+                    },
+                    {
+                        "name": "scp_and_execute",
+                        "label": "SCP and Execute template on remote host",
                         "arguments": []
                     }
                 ]
@@ -304,7 +335,7 @@ ACTION_PROVIDERS = (
                 "type": "text",
                 "default": "application/json",
             },
-                        {
+            {
                 "label": "Accepts Content Type",
                 "name": "accepts_type",
                 "type": "text",
@@ -314,27 +345,99 @@ ACTION_PROVIDERS = (
     }
 )
 
-DEVICE_LIST_PAGING_SIZE = 10
-
-TEMPLATES = [
+REGISTERED_APP_THEMES = (
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            # insert your TEMPLATE_DIRS here
-        ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                # Insert your TEMPLATE_CONTEXT_PROCESSORS here or use this
-                # list if you haven't customized them:
-                'django.contrib.auth.context_processors.auth',
-                'django.template.context_processors.debug',
-                'django.template.context_processors.i18n',
-                'django.template.context_processors.media',
-                'django.template.context_processors.static',
-                'django.template.context_processors.tz',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
+        "label": "Default Theme",
+        "base_template": "base.html",
     },
-]
+    {
+        "label": "Dark",
+        "base_template": "themes/dark.html",
+    }
+)
+
+WIDGETS = (
+    {
+        "label": "Simple Text Input",
+        "configurable": False,
+        "id": "text_input",
+        "configuration_template": None,
+        "render_template": "text_input.html"
+    },
+    {
+        "label": "Text Input with Regex Validation",
+        "configurable": True,
+        "id": "text_input_regex",
+        "configuration_template": "text_input_regex_config.html",
+        "render_template": "text_input_regex.html"
+    },
+    {
+        "label": "Text Input with Numeric Validation",
+        "configurable": True,
+        "id": "text_input_numeric",
+        "configuration_template": "text_input_numeric_config.html",
+        "render_template": "text_input_numeric.html"
+    },
+    {
+        "label": "IPv4 Address",
+        "configurable": False,
+        "id": "ipv4_input",
+        "configuration_template": None,
+        "render_template": "ipv4_input.html"
+    },
+    {
+        "label": "Password Input",
+        "configurable": False,
+        "id": "password_input",
+        "configuration_template": None,
+        "render_template": "password_input.html"
+    },
+    {
+        "label": "Complex Password Input",
+        "configurable": True,
+        "id": "complex_password_input",
+        "configuration_template": "complex_password_input_config.html",
+        "render_template": "complex_password_input.html"
+    },
+    {
+        "label": "Text Area Input",
+        "configurable": False,
+        "id": "text_area_input",
+        "configuration_template": None,
+        "render_template": "text_area_input.html"
+    },
+    {
+        "label": "Configurable Select List",
+        "configurable": True,
+        "id": "select_input",
+        "configuration_template": "select_input_config.html",
+        "render_template": "select_input.html"
+    },
+    {
+        "label": "Preloaded Value from Automation",
+        "configurable": True,
+        "id": "preload_value",
+        "configuration_template": "preload_value_config.html",
+        "render_template": "preload_value.html"
+    },
+    {
+        "label": "Preloaded List from Automation",
+        "configurable": True,
+        "id": "preload_list",
+        "configuration_template": "preload_list_config.html",
+        "render_template": "preload_list.html"
+    },
+)
+"""
+<option value="text_input">Free form text input - no validation</option>
+<option value="password_input">Password - no validation</option>
+<option value="password_complex">Password - Complex</option>
+<option value="text_area">Free form text area - no validation</option>
+<option value="numeric_range">Text input - numeric range validation</option>
+<option value="text_regex">Text input - regular expression validation</option>
+<option value="preload_value">Bind value from another automation</option>
+<option value="preload_list">Bind list of values from another automation</option>
+<option value="static_list">Static list of values</option>
+
+"""
+
