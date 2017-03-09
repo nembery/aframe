@@ -342,6 +342,11 @@ def configure_template_for_screen(request, input_form_id):
     logger.debug(input_form.json)
     json_object = list()
     json_object = json.loads(input_form.json)
+    for jo in json_object:
+        if "widget" not in jo:
+            jo["widget"] = "text_input"
+
+    print json_object
     context = {"input_form": input_form, "json_object": json_object, 'action_options': []}
     return render(request, "input_forms/configure_template_for_inline.html", context)
 
@@ -516,10 +521,11 @@ def apply_standalone_template(request):
     completed_template = str(compiled_template.render(context))
 
     if "preview" in request.POST:
-        logger.info("Returning template Preview")
-        pre_tags = "<html><body><pre>"
-        post_tags = "</pre></body</html>"
-        return HttpResponse(pre_tags + completed_template + post_tags)
+        if request.POST["preview"] == "yes_please":
+            logger.info("Returning template Preview")
+            pre_tags = "<html><body><pre>"
+            post_tags = "</pre></body</html>"
+            return HttpResponse(pre_tags + completed_template + post_tags)
 
     logger.info(completed_template)
     action_name = config_template.action_provider
@@ -539,7 +545,15 @@ def apply_standalone_template(request):
     action = action_provider.get_provider_instance(action_name, action_options)
     results = action.execute_template(completed_template)
     context = {"results": results}
-    return render(request, "input_forms/results.html", context)
+
+    if "inline" in request.POST and request.POST["inline"] == 'yes_please':
+        print "returning INLINE"
+        context["input_form_name"] = input_form.name
+        context["input_form_id"] = input_form_id
+        return render(request, "overlay_results.html", context)
+    else:
+        print "returning full results"
+        return render(request, "input_forms/results.html", context)
 
 
 def apply_template_to_queue(request):

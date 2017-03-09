@@ -13,6 +13,8 @@ urlpatterns = [
         name="update_layout"),
     url(r"^delete/(?P<screen_id>[0-9]+)/$", views.delete,
         name="delete"),
+    url(r"^edit/(?P<screen_id>[0-9]+)/$", views.edit,
+        name="edit"),
     url(r"^(?P<screen_id>[0-9]+)$", views.detail,
         name="detail"),
 

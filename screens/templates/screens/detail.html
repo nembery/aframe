@@ -28,6 +28,9 @@
             new_window.prop("id", new_window_id);
             new_window.draggable();
 
+            var input_form_hidden_field = new_window.find('[name = input_form_id]');
+            input_form_hidden_field.val(input_form_id);
+
             $( "body" ).append(new_window);
 
             var new_window_table = $("#" + new_window_id + " table tbody.screen_box_menu");
@@ -40,11 +43,19 @@
             new_window.css("display", "inline-block");
 
             new_window.css("position", "absolute");
-            this_layout = layout[input_form_id]
-            console.log(this_layout)
 
-            new_window.css("left", this_layout["x"]);
-            new_window.css("top", this_layout["y"]);
+            if (input_form_id in layout) {
+                this_layout = layout[input_form_id]
+                console.log(this_layout)
+
+                new_window.css("left", this_layout["x"]);
+                new_window.css("top", this_layout["y"]);
+            } else {
+                // unknown or new window being added
+                new_window.css("left", 25);
+                new_window.css("top", 50);
+
+            }
 
         });
 
@@ -81,7 +92,8 @@
         }
 
         var post = jQuery.post(url, params, function(response) {
-            alert(response);
+            console.log(response);
+            load_overlay(response);
         });
 
         post.fail(function() {
@@ -91,6 +103,26 @@
         post.always(function() {
             doc.css('cursor', '');
         });
+    }
+
+    function apply_inline(obj) {
+        // where were we clicked from?
+        var j = $(obj);
+        console.log(j);
+
+        var parent_form = j.parents('form');
+        console.log(parent_form);
+        console.log('the parent form was ^^');
+
+        console.log(parent_form.serialize());
+        var url = '/input_forms/applyStandalone';
+
+        var post = jQuery.post(url, parent_form.serialize(), function(response) {
+            console.log(response);
+            load_overlay(response);
+
+        });
+
     }
 
     $(window).load(function() {
@@ -108,23 +140,33 @@
 {% endblock %}
 
 {% block content %}
-<h2>{{ screen.name }} / {{ screen.theme }}</h2>
-<h4>{{ screen.description }}</h4>
+
+<h2>{{ screen.description }}</h2>
 
 <div class="screen_box" id="input_form_box_base">
-<table>
-    <tbody class="screen_box_header">
-        <tr>
-            <td colspan="2">No Name</td>
-        </tr>
-    </tbody>
-    <tbody class="screen_box_menu">
-        <tr>
-            <td>
-                <input type="button" value="Apply">
-            </td>
-        </tr>
-    </tbody>
-</table>
+    <form action="/input_forms/applyStandalone">
+        <table style="width: 100%">
+            <tbody class="screen_box_header">
+                <tr>
+                    <td colspan="2">No Name</td>
+                </tr>
+            </tbody>
+            <tbody class="screen_box_menu">
+                <tr>
+                    <td>
+                        <input type="hidden" name="input_form_id"/>
+                        <input type="hidden" name="inline" value="yes_please"/>
+                        <input type="button" value="Apply" onclick="apply_inline(this)">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+<div id="footer" style="position: absolute; bottom: 5px; left: 0; right: 0; text-align: center;">
+    <a href="/">A-Frame</a> -
+    <a href="#" onclick="javascript: update_layout();" title="Update Screen Layout">
+        Update Layout
+    </a>
 </div>
 {% endblock %}

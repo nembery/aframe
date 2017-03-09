@@ -47,12 +47,12 @@ h3 {
     color: orange;
 }
 
-#overlay_menu {
+.overlay_menu {
     size: 8px;
     text-align: right;
 }
 
-#overlay_menu a:hover {
+.overlay_menu a:hover {
     text-decoration: none;
 }
 

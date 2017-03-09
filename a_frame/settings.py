@@ -353,6 +353,38 @@ REGISTERED_APP_THEMES = (
     {
         "label": "Dark",
         "base_template": "themes/dark.html",
+    },
+    {
+        "label": "Grey/Blue",
+        "base_template": "themes/grey_blue.html",
+    },
+    {
+        "label": "Grey/Red",
+        "base_template": "themes/grey_red.html",
+    },
+{
+        "label": "Grey/Green",
+        "base_template": "themes/grey_green.html",
+    },
+    {
+        "label": "Grey/Orange",
+        "base_template": "themes/grey_orange.html",
+    },
+    {
+        "label": "White/Blue",
+        "base_template": "themes/white_blue.html",
+    },
+    {
+        "label": "White/Red",
+        "base_template": "themes/white_red.html",
+    },
+{
+        "label": "White/Green",
+        "base_template": "themes/white_green.html",
+    },
+    {
+        "label": "White/Orange",
+        "base_template": "themes/white_orange.html",
     }
 )
 
@@ -428,16 +460,4 @@ WIDGETS = (
         "render_template": "preload_list.html"
     },
 )
-"""
-<option value="text_input">Free form text input - no validation</option>
-<option value="password_input">Password - no validation</option>
-<option value="password_complex">Password - Complex</option>
-<option value="text_area">Free form text area - no validation</option>
-<option value="numeric_range">Text input - numeric range validation</option>
-<option value="text_regex">Text input - regular expression validation</option>
-<option value="preload_value">Bind value from another automation</option>
-<option value="preload_list">Bind list of values from another automation</option>
-<option value="static_list">Static list of values</option>
-
-"""
 

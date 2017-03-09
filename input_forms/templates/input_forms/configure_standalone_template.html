@@ -7,6 +7,10 @@
     $("#preview").val('yes_please');
     $("#apply_form").submit();
  }
+  function apply_template() {
+    $("#preview").val('');
+    $("#apply_form").submit();
+ }
 </script>
 {% endblock%}
 {% block content %}
@@ -22,8 +26,7 @@
             <td colspan="2">
                 <input type="hidden" name="input_form_id" value="{{ input_form.id }}"/>
                 <input type="hidden" name="preview" id="preview" value=""/>
-                <input type="submit" value="Apply Template"/>
-                &nbsp;
+                <input type="button" onclick="javascript: apply_template()" value="Apply Template"/>
                 <input type="button" onclick="javascript: preview_template()" value="Preview Template"/>
             </td>
         </tr>

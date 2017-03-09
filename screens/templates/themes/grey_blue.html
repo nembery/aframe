@@ -1,7 +1,6 @@
 {% load staticfiles %}
 <html lang="en">
 <head>
-
     <link rel="stylesheet" href="{% static 'css/jquery-ui.css' %}" />
     <title>{% block title %}Custom App{% endblock %}</title>
     <script type="text/javascript" src="{% static 'js/jquery-1.12.4.js' %}"></script>
@@ -70,6 +69,8 @@
             font-size: 75%;
             position: absolute;
             margin: 5px;
+            box-shadow: 5px 5px 20px 0px black;
+
         }
 
         .screen_box table {
@@ -128,16 +129,17 @@
         .overlay_box input[type=text] {
             width: 250px;
         }
+
         .overlay_menu {
             size: 8px;
             text-align: right;
         }
 
-        .overlay_menu a:hover {
+        .overlay_menu a:hover, .overlay_menu a, .overlay_menu a:visited {
             text-decoration: none;
+            color: darkblue;
         }
-
-        #footer, #footer a {
+         #footer, #footer a {
             color: #ccc;
         }
     </style>

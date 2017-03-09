@@ -98,6 +98,10 @@ def create(request):
     return HttpResponseRedirect("/screens/" + str(screen_id))
 
 
+def edit(request):
+    return HttpResponseRedirect("/screens")
+
+
 def update(request):
     logger.info("__ screens update __")
     required_fields = set(["screen_id", "screen_id", "name", "description", "json"])
@@ -106,7 +110,6 @@ def update(request):
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     screen_id = request.POST["screen_id"]
-    template_id = request.POST["screen_id"]
     name = request.POST["name"]
     description = request.POST["description"]
     json_data = request.POST["json"]
@@ -126,12 +129,10 @@ def update(request):
 
 def update_layout(request):
     logger.info("__ screens update_layout __")
-    results = dict()
     required_fields = set(["screen_id", "layout"])
     if not required_fields.issubset(request.POST):
         logger.error("Did no find all required fields in request")
-        results["status"] = "FAIL"
-        return HttpResponse(json.dumps(results), content_type="application/json")
+        return render(request, "overlay_basic.html", {"message": "Layout Could not be updated!"})
 
     screen_id = request.POST["screen_id"]
     layout = request.POST["layout"]
@@ -142,6 +143,5 @@ def update_layout(request):
     screen.layout = layout
     screen.save()
 
-    results["status"] = "OK"
-    return HttpResponse(json.dumps(results), content_type="application/json")
+    return render(request, "overlay_basic.html", {"message": "Layout Updated successfully!"})
 
