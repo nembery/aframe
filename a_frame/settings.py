@@ -362,7 +362,7 @@ REGISTERED_APP_THEMES = (
         "label": "Grey/Red",
         "base_template": "themes/grey_red.html",
     },
-{
+    {
         "label": "Grey/Green",
         "base_template": "themes/grey_green.html",
     },
