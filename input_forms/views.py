@@ -346,8 +346,11 @@ def configure_template_for_screen(request, input_form_id):
         if "widget" not in jo:
             jo["widget"] = "text_input"
 
+    config_template = input_form.script
+
+    action_options = json.loads(config_template.action_provider_options)
     print json_object
-    context = {"input_form": input_form, "json_object": json_object, 'action_options': []}
+    context = {"input_form": input_form, "json_object": json_object, 'action_options': action_options}
     return render(request, "input_forms/configure_template_for_inline.html", context)
 
 
