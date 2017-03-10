@@ -10,6 +10,8 @@
 
     var layout = $.parseJSON('{{ layout|safe }}');
 
+    var config_window_moved = false;
+
     function load_input_form(input_form_id) {
         var doc = jQuery(document.documentElement);
         doc.css('cursor', 'progress');
@@ -26,7 +28,13 @@
 
             var new_window_id = "input_form_box_" + input_form_id;
             new_window.prop("id", new_window_id);
-            new_window.draggable();
+            new_window.draggable({
+                grid: [ 10, 10 ],
+                stop: function (event, ui ) {
+                    console.log(ui);
+
+                }
+            });
 
             var input_form_hidden_field = new_window.find('[name = input_form_id]');
             input_form_hidden_field.val(input_form_id);
@@ -36,7 +44,13 @@
             var new_window_table = $("#" + new_window_id + " table tbody.screen_box_menu");
             var new_window_header = $("#" + new_window_id + " table tbody.screen_box_header tr td");
 
-            var input_form_name = input_forms[input_form_id];
+            if (input_form_id in input_forms) {
+                var input_form_name = input_forms[input_form_id];
+            } else {
+                var input_form_name = $("#template_autocomplete").val();
+                console.log(input_form_name);
+            }
+
             new_window_header.empty().append(input_form_name);
             new_window_table.prepend(content);
 
@@ -52,9 +66,15 @@
                 new_window.css("top", this_layout["y"]);
             } else {
                 // unknown or new window being added
-                new_window.css("left", 25);
-                new_window.css("top", 50);
+                new_window.css("left", 30);
+                new_window.css("top", 150);
 
+                // make sure we have some values for it in the layout object
+                this_layout = {}
+                this_layout["x"] = 30;
+                this_layout["y"] = 150;
+
+                layout[input_form_id] = this_layout;
             }
 
         });
@@ -65,6 +85,28 @@
         post.always(function() {
             doc.css('cursor', '');
         });
+    }
+
+    function show_config_window() {
+            var config_window = $( "#configuration_box" );
+
+            config_window.draggable({
+                grid: [ 10, 10 ]
+            });
+
+            config_window.css("display", "inline-block");
+            config_window.css("position", "absolute");
+
+            if (config_window_moved == false) {
+                config_window.css("top", 140);
+                config_window.css("left", 60);
+                config_window_moved = true;
+            }
+    }
+
+    function close_config_window() {
+        var config_window = $( "#configuration_box" );
+        config_window.css("display", "");
     }
 
     function update_layout() {
@@ -125,6 +167,25 @@
 
     }
 
+    function add_automation() {
+        var input_form_id = $( "#template_autocomplete_id" ).val();
+        var input_form_name = $( "#template_autocomplete" ).val();
+
+        if (input_form_id in layout) {
+            console.log('Already added to this screen');
+        } else {
+            input_forms[input_form_id] = input_form_name;
+            input_form_ids.push(input_form_id);
+            load_input_form(input_form_id);
+
+        }
+
+        $( "#template_autocomplete_id" ).val("");
+        $( "#template_autocomplete" ).val("");
+
+        $( "#template_autocomplete" ).focus();
+    }
+
     $(window).load(function() {
         for(i=0;i<input_form_ids.length;i++) {
             var ifi = input_form_ids[i];
@@ -132,10 +193,21 @@
             load_input_form(ifi);
         }
         $('#centered_box').css("height", "1000px");
+
+        $( "#template_autocomplete" ).autocomplete({
+            source: "/input_forms/searchAll",
+            focus: function(event, ui) {
+				event.preventDefault();
+		        $("#template_autocomplete").val(ui.item.label);
+			},
+            select: function (event, ui) {
+                $("#template_autocomplete").val(ui.item.label);
+                $("#template_autocomplete_id").val(ui.item.value);
+                return false;
+            }
+        });
+
     });
-
-
-
 </script>
 {% endblock %}
 
@@ -163,10 +235,48 @@
         </table>
     </form>
 </div>
+
+<div class="screen_box" id="configuration_box">
+    <form action="/input_forms/applyStandalone">
+        <table style="width: 100%; margin-top: 0px; padding-top: 0px; padding: 5px; ">
+            <tbody class="screen_box_header">
+                <tr>
+                    <td colspan="2" style="text-align: right; border: 0px; padding: 0px; font-size: 50%; a: text-decoration: none">
+                        <a href="#" onclick="javascript: close_config_window()">
+                            X
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">Screen Configuration Controls</td>
+                </tr>
+            </tbody>
+            <tbody class="screen_box_menu">
+                <tr>
+                    <td>
+                         <input type="text" size="25" id="template_autocomplete"
+                                            placeholder="Add Automation to Screen"/>
+                        <input type="hidden" id="template_autocomplete_id"/>
+                        <input type="button" onclick="javascript: add_automation()" value="Add"/>
+                    </td>
+                </tr>
+            <tr>
+                <td>
+                    <a href="#" onclick="javascript: update_layout();" title="Update Screen Layout">
+                        Save Current Layout
+                    </a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+
 <div id="footer" style="position: absolute; bottom: 5px; left: 0; right: 0; text-align: center;">
     <a href="/">A-Frame</a> -
-    <a href="#" onclick="javascript: update_layout();" title="Update Screen Layout">
-        Update Layout
+    <a href="#" onclick="javascript: show_config_window();" title="Configure Screen">
+        &#9881; Configure Screen
     </a>
+
 </div>
 {% endblock %}

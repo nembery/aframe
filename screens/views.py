@@ -75,7 +75,7 @@ def create(request):
     print input_forms_data
 
     layout = dict()
-    xcounter = 155
+    xcounter = 140
     ycounter = 240
     for name in input_forms_data:
         input_form = InputForm.objects.filter(name=name)[0]
@@ -88,7 +88,7 @@ def create(request):
             xcounter += 360
         else:
             ycounter += 500
-            xcounter = 155
+            xcounter = 160
 
         screen.input_forms.add(input_form)
 
@@ -141,6 +141,22 @@ def update_layout(request):
 
     screen = get_object_or_404(Screen, pk=screen_id)
     screen.layout = layout
+    layout_obj = json.loads(layout)
+
+    input_forms_list = screen.input_forms.all().order_by("id")
+
+    for input_form_id in layout_obj.keys():
+        print input_form_id
+        found = False
+        for inf in input_forms_list:
+            if inf.id == input_form_id:
+                found = True
+                break
+
+        if not found:
+            input_form = InputForm.objects.get(pk=input_form_id)
+            screen.input_forms.add(input_form)
+
     screen.save()
 
     return render(request, "overlay_basic.html", {"message": "Layout Updated successfully!"})

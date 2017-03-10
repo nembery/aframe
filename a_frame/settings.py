@@ -224,6 +224,42 @@ ACTION_PROVIDERS = (
         ]
     },
     {
+        "name": "GitAction",
+        "label": "Git Repository Manipulation",
+        "options": [
+            {
+                "label": "Remote URL",
+                "name": "remote_url",
+                "type": "text",
+                "default": "https://user:pass@github.com/nembery/aframe.git"
+            },
+            {
+                "label": "Target Branch",
+                "name": "target_branch",
+                "type": "text",
+                "default": "master"
+            },
+            {
+                "label": "Target Directory",
+                "name": "target_directory",
+                "type": "text",
+                "default": "/"
+            },
+            {
+                "label": "Target Filename",
+                "name": "target_filename",
+                "type": "text",
+                "default": "README.md"
+            },
+            {
+                "label": "Commit Message",
+                "name": "commit_message",
+                "type": "text",
+                "default": "Committed from AFrame"
+            }
+        ]
+    },
+    {
         "name": "ShellExecution",
         "label": "Executes Template in a Shell on the local server",
         "options": []

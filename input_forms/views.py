@@ -40,7 +40,10 @@ def search(request):
     results = []
     for input_form in input_form_list:
         if input_form.script.type == "per-endpoint":
-            results.append(input_form.name)
+            r = dict()
+            r["value"] = input_form.id
+            r["label"] = input_form.name
+            results.append(r)
 
     return HttpResponse(json.dumps(results), content_type="application/json")
 
@@ -57,7 +60,10 @@ def search_all(request):
     input_form_list = InputForm.objects.filter(name__contains=term)
     results = []
     for input_form in input_form_list:
-        results.append(input_form.name)
+        r = dict()
+        r["value"] = input_form.id
+        r["label"] = input_form.name
+        results.append(r)
 
     return HttpResponse(json.dumps(results), content_type="application/json")
 
@@ -75,7 +81,10 @@ def search_standalone(request):
     results = []
     for input_form in input_form_list:
         if input_form.script.type == "standalone":
-            results.append(input_form.name)
+            r = dict()
+            r["value"] = input_form.id
+            r["label"] = input_form.name
+            results.append(r)
 
     return HttpResponse(json.dumps(results), content_type="application/json")
 

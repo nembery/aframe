@@ -7,32 +7,24 @@ from urllib2 import HTTPError
 from lxml import etree
 from a_frame.utils.action_providers.action_base import ActionBase
 
+import git
+import os
 
-class RestAction(ActionBase):
+
+class GitAction(ActionBase):
     """
-        Simple REST action provider
+        Simple Git action provider
 
         This is a "standalone" action, meaning it will be executed without an endpoint being passed in
     """
-
-    # inherited set_global_options from action_base.py will overwrite all of these automatically from the
-    # "create_template" selections
-    auth_type = "none"
-    keystone_host = "127.0.0.1"
-    keystone_project = "admin"
-    username = "demo"
-    password = "demo"
-    url = "/api/space/device-management/devices"
-    protocol = "https"
-    host = "127.0.0.1:8080"
-    request_type = "GET"
-    content_type = "application/json"
-    accepts_type = "application/json"
-
-    _keystone_auth_path = ":5000/v3/auth/tokens"
-    _oauth2_auth_path = "/oauth2/token"
-    _auth_token = ""
-    _ruckus_auth_path = "/v3_1/session"
+    
+    remote_url = ''
+    repository_name = 'git_action'
+    local_directory = '/var/cache/aframe/'
+    target_branch = 'master'
+    target_directory = '/'
+    target_filename = 'test'
+    commit_message = 'Committed From Aframe'
 
     def execute_template(self, template):
         """
@@ -41,97 +33,63 @@ class RestAction(ActionBase):
         :param template: the completed template from the user or API
         :return Boolean based on execution outcome.
         """
-        # print "executing %s" % template
+        print "executing %s" % template
 
-        if not self.url.startswith(':') and not self.url.startswith('/'):
-            self.url = "/" + self.url
+        local_directory = '/var/cache/aframe/' + self.repository_name
 
-        # set up debugging output
-        handler = urllib2.HTTPHandler(debuglevel=1)
-        opener = urllib2.build_opener(handler)
-        urllib2.install_opener(opener)
+        if not os.path.exists(self.local_directory):
+            os.makedirs(self.local_directory)
 
-        # ensure no CRLF has snuck through
-        template = template.replace('\r\n', '\n')
+        try:
+            repo = git.Repo(self.local_directory)
 
-        full_url = self.protocol + "://" + self.host + self.url
-        print full_url
+        except git.exc.InvalidGitRepositoryError:
+            repo = git.Repo.init(self.local_directory, bare=False)
 
-        request = urllib2.Request(full_url)
-        
-        if self.auth_type == "basic":
-            print "using username: %s" % self.username
-            base64string = base64.b64encode("%s:%s" % (self.username, self.password))
-            request.add_header("Authorization", "Basic %s" % base64string)
-
-        elif self.auth_type == "keystone":
-            if not self.connect_to_keystone():
-                return "Authentication error connecting to Keystone!"
-
-            print "Connected to Keystone!"
-            request.add_header("X-Auth-Token", self._auth_token)
-
-        elif self.auth_type == "oauth2":
-            if not self.connect_to_oauth2():
-                return "Authentication error!"
-
-            print "OAuth2 authentication succeeded!"
-            request.add_header("Authorization", str(self._auth_token))
-
-        elif self.auth_type == "ruckus":
-            if not self.connect_to_ruckus():
-                return "Authentication error!"
-
-            print "Ruckus authentication succeeded!"
-            request.add_header("Cookie", "JSESSIONID=" + str(self._auth_token))
-
-        request.get_method = lambda: self.request_type
-
-        if self.accepts_type != "":
-            request.add_header("Accept", self.accepts_type)
-
-        data = str(template + "\n\n")
-        print "Request type: %s" % self.request_type
-
-        if self.request_type == "GET" or self.request_type == "DELETE":
-            try:
-                if hasattr(ssl, 'SSLContext'):
-                    context = ssl.create_default_context()  # disables SSL cert checking!
-                    context.check_hostname = False
-                    context.verify_mode = ssl.CERT_NONE
-                    r = urllib2.urlopen(request, context=context)
-                else:
-                    r = urllib2.urlopen(request)
-                results = r.read()
-                if results != "":
-                    return self.format_results(results)
-                else:
-                    return "Successful REST Operation"
-
-            except Exception as ex:
-                print str(ex)
-                return "Error! %s" % str(ex)
+        if len(repo.remotes) == 0:
+            # this shouldn't happen
+            # but if we happen to get a local repo that's already been
+            # defined but no remotes
+            origin = repo.create_remote('origin', url=self.remote_url)
         else:
-            # this is a POST attempt
-            try:
-                request.add_header("Content-Type", self.content_type)
-                request.add_header("Content-Length", len(data))
+            origin = repo.remotes.origin
 
-                if hasattr(ssl, 'SSLContext'):
-                    context = ssl.create_default_context()  # disables SSL cert checking!
-                    context.check_hostname = False
-                    context.verify_mode = ssl.CERT_NONE
-                    results = urllib2.urlopen(request, data, context=context).read()
-                else:
-                    results = urllib2.urlopen(request, data).read()
+        try:
+            origin.fetch()
+        except git.exc.GitCommandError as gec:
+            print gec
+            return "Could not init remote git repo"
 
-                if results != "":
-                    return self.format_results(results)
-                else:
-                    return "Successful POST Operation"
+        try:
+            # let's ensure we have the latest and greatest
+            origin.pull()
+            # in this case we don't actually need to set tracking or
+            # to push configs back upstream
+            if self.target_branch in origin.refs:
+                repo.create_head(self.target_branch, origin.refs[self.target_branch])
+                this_repo_head = repo.heads[self.target_branch]
+                this_repo_head.set_tracking_branch(origin.refs[self.target_branch])
+                this_repo_head.checkout()
 
-            except HTTPError as he:
-                return "Error! %s" % str(he)
+            target_directory_path = self.local_directory + self.target_directory
+            if not os.path.exists(target_directory_path):
+                os.makedirs(target_directory_path)
+
+            if not target_directory_path.endswith('/'):
+                target_directory_path += '/'
+
+            target_file_path = target_directory_path + self.target_filename
+
+            with open(target_file_path, 'wb') as tfp:
+                tfp.write(template)
+
+            repo.git.add(A=True)
+            repo.index.commit(self.commit_message)
+            origin.push()
+
+        except Exception as e:
+            print str(e)
+            return "Error committing to remote git repo"
 
     @staticmethod
     def format_results(results):
