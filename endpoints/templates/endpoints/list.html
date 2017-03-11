@@ -40,7 +40,8 @@
             <form method="GET" action="/endpoints/list/{{ endpoint_group.id }}/">
                 <select name="filter">
                     {% for f in filters %}
-                    <option value="{{ f.name }}" title="{{ f.description }}" {% if f.name == filter %} selected {% endif %}>
+                    <option value="{{ f.name }}"
+                            title="{{ f.description }}" {% if f.name == filter %} selected {% endif %}>
                         {{ f.name }}
                     </option>
                     {% endfor %}
@@ -50,7 +51,8 @@
                 &nbsp;
                 <input type="submit" value="Apply">
                 &nbsp;
-                <input type="button" value="Clear" onclick="javascript: window.location="/endpoints/list/{{ endpoint_group.id }}""/>
+                <input type="button" value="Clear"
+                       onclick="javascript: window.location='/endpoints/list/{{ endpoint_group.id }}'"/>
             </form>
         </td>
     </tr>

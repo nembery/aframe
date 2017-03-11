@@ -208,3 +208,31 @@ def clear_endpoint_queue(request, provider):
         request.session["endpoint_queue_names"] = []
 
     return HttpResponseRedirect("/endpoints/list/%s" % provider)
+
+
+def search(request):
+    """
+    used for UI autocomplete searches. Will search all configured endpoint groups! Be careful with nmap based
+    groups as this will take a long time!
+    :param request: term
+    :return: json list of dicts
+    """
+    logger.info("__ input_forms search __")
+
+    term = request.GET["term"]
+    results = []
+
+    provider_list = EndpointGroup.objects.all().order_by("name")
+    for provider in provider_list:
+
+        provider_instance = endpoint_provider.get_provider_instance_from_group(provider.id)
+        provider_instance.apply_filter("Name", term)
+        endpoints_list = provider_instance.get_page(0, 128)
+
+        for endpoint in endpoints_list:
+            r = dict()
+            r["value"] = str(provider.id) + ":" + str(endpoint.get('id', 0))
+            r["label"] = provider.name + "/" + endpoint.get('name', 'unknown')
+            results.append(r)
+
+    return HttpResponse(json.dumps(results), content_type="application/json")

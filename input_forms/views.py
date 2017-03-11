@@ -356,10 +356,15 @@ def configure_template_for_screen(request, input_form_id):
             jo["widget"] = "text_input"
 
     config_template = input_form.script
-
     action_options = json.loads(config_template.action_provider_options)
-    print json_object
-    context = {"input_form": input_form, "json_object": json_object, 'action_options': action_options}
+
+    inline_per_endpoint = False
+    if config_template.type == 'per-endpoint':
+        inline_per_endpoint = True
+
+    context = {"input_form": input_form, "json_object": json_object, 'action_options': action_options,
+               'inline_per_endpoint': inline_per_endpoint}
+
     return render(request, "input_forms/configure_template_for_inline.html", context)
 
 
@@ -496,6 +501,13 @@ def apply_per_endpoint_template(request):
     action.set_endpoint(endpoint)
     results = action.execute_template(completed_template)
     context = {"results": results}
+
+    if "inline" in request.POST and request.POST["inline"] == 'yes_please':
+        print "returning INLINE"
+        context["input_form_name"] = input_form.name
+        context["input_form_id"] = input_form_id
+        return render(request, "overlay_results.html", context)
+
     return render(request, "input_forms/results.html", context)
 
 

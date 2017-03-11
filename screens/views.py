@@ -45,10 +45,13 @@ def detail(request, screen_id):
     ifi_json = json.dumps(input_form_ids)
     input_forms_json = json.dumps(input_forms)
 
+    themes = settings.REGISTERED_APP_THEMES
+
     context = {"screen": screen,
                "input_forms_json": input_forms_json,
                "input_form_ids": ifi_json,
-               "layout": screen.layout}
+               "layout": screen.layout,
+               'themes': themes}
 
     return render(request, "screens/detail.html", context)
 
@@ -129,22 +132,38 @@ def update(request):
 
 def update_layout(request):
     logger.info("__ screens update_layout __")
-    required_fields = set(["screen_id", "layout"])
+    required_fields = set(["screen_id", "layout", "theme"])
     if not required_fields.issubset(request.POST):
         logger.error("Did no find all required fields in request")
         return render(request, "overlay_basic.html", {"message": "Layout Could not be updated!"})
 
     screen_id = request.POST["screen_id"]
     layout = request.POST["layout"]
+    theme = request.POST["theme"]
 
     print layout
 
     screen = get_object_or_404(Screen, pk=screen_id)
     screen.layout = layout
+    screen.theme = theme
     layout_obj = json.loads(layout)
 
     input_forms_list = screen.input_forms.all().order_by("id")
 
+    # first let's find any input forms that have been deleted
+    for inf in input_forms_list:
+        found = False
+        for input_form_id in layout_obj.keys():
+            if str(inf.id) == str(input_form_id):
+                found = True
+                break
+
+        if not found:
+            print "Removing: " + str(inf.id)
+            input_form = InputForm.objects.get(pk=inf.id)
+            screen.input_forms.remove(input_form)
+
+    # now let's add any news ones that have been configured
     for input_form_id in layout_obj.keys():
         print input_form_id
         found = False
