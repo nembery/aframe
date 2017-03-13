@@ -1,0 +1,34 @@
+<td>
+     <input type="text" size="25" id="endpoint_search_{{ j.name }}_{{ input_form.id }}"
+            placeholder="Search Endpoints"/>
+
+    <input type="hidden" id="endpoint_val_{{ j.name }}_{{ input_form.id }}" name="{{ j.name }}"/>
+
+    <script type="text/javascript">
+        $( "#endpoint_search_{{ j.name }}_{{ input_form.id }}" ).autocomplete({
+            source: "/endpoints/search",
+            focus: function(event, ui) {
+                event.preventDefault();
+                $("#endpoint_search_{{ j.name }}_{{ input_form.id }}").val(ui.item.label);
+            },
+            select: function (event, ui) {
+                var return_label = ui.item.label;
+
+                // The only thing we care about is the actual endpoint name
+                // split off the group_name if it exists and only set the name
+
+                if (return_label.indexOf('/') > 0) {
+                    var rl_array = return_label.split('/');
+                    var group_name = rl_array[0];
+                    var endpoint_name = rl_array[1];
+                    $("#endpoint_val_{{ j.name }}_{{ input_form.id }}").val(endpoint_name);
+                    $("#endpoint_search_{{ j.name }}_{{ input_form.id }}").val(endpoint_name);
+
+                } else {
+                    $("#endpoint_val_{{ j.name }}_{{ input_form.id }}").val(return_label);
+                }
+                return false;
+            }
+        });
+    </script>
+</td>

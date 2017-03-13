@@ -495,5 +495,17 @@ WIDGETS = (
         "configuration_template": "preload_list_config.html",
         "render_template": "preload_list.html"
     },
+    {
+        "label": "Endpoint Name Search",
+        "configurable": False,
+        "id": "endpoint_name_search_input",
+        "render_template": "endpoint_name_search_input.html"
+    },
+    {
+        "label": "Endpoint ID Search",
+        "configurable": False,
+        "id": "endpoint_id_search_input",
+        "render_template": "endpoint_id_search_input.html"
+    },
 )
 

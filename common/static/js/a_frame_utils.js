@@ -185,5 +185,9 @@ function check_ipv4_input(obj) {
         obj.focus();
         return false;
     }
+}
+
+function check_numeric_range(obj, config) {
+    alert(config);
 
 }
