@@ -175,7 +175,11 @@ def detail(request, input_form_id):
     config_template = input_form.script
     action_options = json.loads(config_template.action_provider_options)
 
-    context = {"input_form": input_form, "json_object": json_object, 'action_options': action_options}
+    inline_per_endpoint = False
+
+    context = {"input_form": input_form, "json_object": json_object, 'action_options': action_options,
+               'inline_per_endpoint': inline_per_endpoint}
+
     if input_form.script.type == "standalone":
         return render(request, "input_forms/configure_standalone_template.html", context)
     else:
