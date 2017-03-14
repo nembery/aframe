@@ -215,7 +215,7 @@ def search(request):
     used for UI autocomplete searches. Will search all configured endpoint groups! Be careful with nmap based
     groups as this will take a long time!
     :param request: term
-    :return: json list of dicts
+    :return: json list of dicts of type {'value': 'provider.id:endpoint.id', 'label': 'group_name/endpoint_name'}
     """
     logger.info("__ input_forms search __")
 
@@ -232,6 +232,35 @@ def search(request):
         for endpoint in endpoints_list:
             r = dict()
             r["value"] = str(provider.id) + ":" + str(endpoint.get('id', 0))
+            r["label"] = provider.name + "/" + endpoint.get('name', 'unknown')
+            results.append(r)
+
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+
+def search_ip(request):
+    """
+    used for UI autocomplete searches. Will search all configured endpoint groups! Be careful with nmap based
+    groups as this will take a long time!
+    :param request: term
+    :return: json list of dicts of type {'value': 'provider.id:endpoint.ip', 'label': 'group_name/endpoint_name'}
+    """
+    logger.info("__ input_forms search_ip __")
+
+    term = request.GET["term"]
+    results = []
+
+    provider_list = EndpointGroup.objects.all().order_by("name")
+    for provider in provider_list:
+
+        provider_instance = endpoint_provider.get_provider_instance_from_group(provider.id)
+        provider_instance.apply_filter("Name", term)
+        endpoints_list = provider_instance.get_page(0, 128)
+
+        for endpoint in endpoints_list:
+            r = dict()
+            print "ENDPOINT IS: " + str(endpoint)
+            r["value"] = str(provider.id) + ":" + str(endpoint.get('ip', '0.0.0.0'))
             r["label"] = provider.name + "/" + endpoint.get('name', 'unknown')
             results.append(r)
 

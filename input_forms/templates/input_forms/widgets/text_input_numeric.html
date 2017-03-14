@@ -11,12 +11,15 @@
             if (num < lower) {
                 alert('Number is too low!');
                 obj.value = config["lower"];
+                obj.focus();
             }
 
             if (num > higher) {
                 alert('Number is too high!');
                 obj.value = config["higher"];
+                obj.focus();
             }
+            return true;
 
         }
     </script>

@@ -128,7 +128,13 @@ def edit(request, input_form_id):
 
 def detail(request, input_form_id):
     logger.info("__ input_forms detail __")
-    input_form = InputForm.objects.get(pk=input_form_id)
+    try:
+        input_form = InputForm.objects.get(pk=input_form_id)
+
+    except ObjectDoesNotExist as odne:
+        logger.error("Input form with id %s could not be found!" % input_form_id)
+        return HttpResponseRedirect("/input_forms")
+
     logger.debug(input_form.json)
     json_object = json.loads(input_form.json)
 

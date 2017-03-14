@@ -507,5 +507,11 @@ WIDGETS = (
         "id": "endpoint_id_search_input",
         "render_template": "endpoint_id_search_input.html"
     },
+    {
+        "label": "Endpoint IP Search",
+        "configurable": False,
+        "id": "endpoint_ip_search_input",
+        "render_template": "endpoint_ip_search_input.html"
+    },
 )
 

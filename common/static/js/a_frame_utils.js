@@ -182,12 +182,7 @@ function check_ipv4_input(obj) {
     ip = obj.value;
     if (! ip.match('^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')) {
         alert('IP format is not valid!');
-        obj.focus();
-        return false;
+        obj.value = '0.0.0.0';
+        return true;
     }
-}
-
-function check_numeric_range(obj, config) {
-    alert(config);
-
 }
