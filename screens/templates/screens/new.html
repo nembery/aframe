@@ -6,8 +6,9 @@
 
     var template_variables = [];
 
-
     var selected_automations = []
+
+    var selected_screen_widgets = []
 
     function submit_form() {
 
@@ -15,7 +16,6 @@
         $("#input_forms").val(selected_automations_text);
         // submit the form here after we are all done
         $("#create_form").submit();
-
     }
 
     function add_automation() {
@@ -27,6 +27,15 @@
 
         $( "#template_autocomplete" ).val("");
         $( "#template_autocomplete" ).focus();
+    }
+
+    function add_screen_widget() {
+        var screen_widget_name = $('#screen_widget_select').val()
+
+        selected_screen_widgets.push(screen_widget_name);
+        var new_li = $("<li>")
+        new_li.append(screen_widget_name);
+        $("#selected_screen_widget_ui").append(new_li);
     }
 
     $(window).load(function() {
@@ -102,8 +111,31 @@
             </td>
         </tr>
         <tr>
-            <td colspan="2">
+            <td>
+                Add Screen Widget:
+            </td>
+            <td>
+                <select id="screen_widget_select" name="screen_widget_add">
+                    {% for w in widgets %}
+                    <option value="{{ w.id }}">{{ w.label }}</option>
+                    {% endfor %}
+                </select>
+                <input type="button" onclick="javascript: add_screen_widget()" value="Add"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Screen Widgets:
+            </td>
+            <td>
+                <input type="hidden" name="input_forms" id="input_forms" value="">
+                <ul id="selected_screen_widgets_ui">
 
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
                 <input type="button" onclick="submit_form()" value="Save"/>
             </td>
         </tr>

@@ -1,0 +1,34 @@
+{% extends "screens/widgets/widget_base.html" %}
+{% block widget %}
+<td>
+    <ul id="menu_list_{{ widget_config_id }}">
+
+
+    </ul>
+
+    <script type="text/javascript">
+
+        var widget_config_id = {{ widget_config_id }};
+
+        var menu_list_options = []
+
+        if (layout['widgets'][widget_config_id]['widget_config'] != undefined) {
+            menu_list_options = layout['widgets'][widget_config_id]['widget_config'];
+        }
+
+        console.log(menu_list_options);
+
+        $(menu_list_options).each(function(i,s) {
+            // create html fragment
+            var new_row = $('<li/>');
+            var new_link = $('<a/>');
+            new_link.prop('href', s.value);
+            new_link.html(s.name);
+            new_row.append(new_link);
+
+            // append the new_row html fragment to the new_rows tbody element
+            $('#menu_list_{{ widget_config_id }}').append(new_row);
+        });
+    </script>
+</td>
+{% endblock %}

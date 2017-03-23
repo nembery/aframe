@@ -135,9 +135,6 @@ function load_widget_configs_manual(widget_id, widget_name){
     });
 }
 
-
-
-
 function set_preload_list_config(widget_id){
 
     var config_element = jQuery('#' + widget_id + '_config');

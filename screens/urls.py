@@ -17,7 +17,10 @@ urlpatterns = [
         name="edit"),
     url(r"^(?P<screen_id>[0-9]+)$", views.detail,
         name="detail"),
-
     url(r"^new$", views.new,
-        name="new")
+        name="new"),
+    url(r"^load_widget_config$", views.load_widget_config,
+        name="load_widget_config"),
+    url(r"^load_widget$", views.load_widget,
+        name="load_widget")
 ]

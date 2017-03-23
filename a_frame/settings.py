@@ -515,3 +515,19 @@ WIDGETS = (
     },
 )
 
+SCREEN_WIDGETS = (
+    {
+        "label": "Menu",
+        "configurable": True,
+        "id": "menu",
+        "configuration_template": "menu_config.html",
+        "render_template": "menu.html"
+    },
+    {
+        "label": "Static Image",
+        "configurable": True,
+        "id": "static_image",
+        "configuration_template": "static_image_config.html",
+        "render_template": "static_image.html"
+    }
+)

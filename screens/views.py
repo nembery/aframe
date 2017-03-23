@@ -1,10 +1,12 @@
-from django.shortcuts import render, get_object_or_404, HttpResponseRedirect, HttpResponse
-from models import Screen
 import json
-from input_forms.models import InputForm
-from a_frame import settings
-
 import logging
+
+from django.shortcuts import render, get_object_or_404, HttpResponseRedirect
+from django.template import TemplateDoesNotExist
+
+from a_frame import settings
+from input_forms.models import InputForm
+from models import Screen
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +23,8 @@ def new(request):
     logger.info("__ screens new __")
     screens = Screen.objects.all().order_by("name")
     themes = settings.REGISTERED_APP_THEMES
-    context = {"screens": screens, "themes": themes}
+    widgets = settings.SCREEN_WIDGETS
+    context = {"screens": screens, "themes": themes, 'widgets': widgets}
     return render(request, "screens/new.html", context)
 
 
@@ -47,10 +50,13 @@ def detail(request, screen_id):
 
     themes = settings.REGISTERED_APP_THEMES
 
-    context = {"screen": screen,
-               "input_forms_json": input_forms_json,
-               "input_form_ids": ifi_json,
-               "layout": screen.layout,
+    screen_widgets = settings.SCREEN_WIDGETS
+
+    context = {'screen': screen,
+               'input_forms_json': input_forms_json,
+               'input_form_ids': ifi_json,
+               'layout': screen.layout,
+               'widgets': screen_widgets,
                'themes': themes}
 
     return render(request, "screens/detail.html", context)
@@ -73,19 +79,25 @@ def create(request):
     screen.description = description
     screen.save()
 
-    input_forms_data = json.loads(input_forms)
+    if input_forms == "":
+        input_forms_data = []
+    else:
+        input_forms_data = json.loads(input_forms)
 
     print input_forms_data
 
     layout = dict()
+    layout['input_forms'] = dict()
+    layout['widgets'] = dict()
+
     xcounter = 140
     ycounter = 240
     for name in input_forms_data:
         input_form = InputForm.objects.filter(name=name)[0]
 
-        layout[input_form.id] = dict()
-        layout[input_form.id]["x"] = xcounter
-        layout[input_form.id]["y"] = ycounter
+        layout['input_forms'][input_form.id] = dict()
+        layout['input_forms'][input_form.id]["x"] = xcounter
+        layout['input_forms'][input_form.id]["y"] = ycounter
 
         if xcounter <= 900:
             xcounter += 360
@@ -164,7 +176,7 @@ def update_layout(request):
             screen.input_forms.remove(input_form)
 
     # now let's add any news ones that have been configured
-    for input_form_id in layout_obj.keys():
+    for input_form_id in layout_obj['input_forms'].keys():
         print input_form_id
         found = False
         for inf in input_forms_list:
@@ -180,3 +192,83 @@ def update_layout(request):
 
     return render(request, "overlay_basic.html", {"message": "Layout Updated successfully!"})
 
+
+def load_widget_config(request):
+    """
+    Load the configuration for a given screen widget
+    :param request: http request
+    :return: html template
+    """
+    logger.info("__ screens load_widget_config __")
+    required_fields = set(["widget_id", "screen_id", "widget_config_id"])
+    if not required_fields.issubset(request.POST):
+        logger.error("Did no find all required fields in request")
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
+    widget_id = request.POST["widget_id"]
+    screen_id = request.POST["screen_id"]
+    widget_config_id = request.POST["widget_config_id"]
+
+    widgets = settings.SCREEN_WIDGETS
+    widget_name = ""
+    widget_configuration_template = ""
+
+    found = False
+    for w in widgets:
+
+        if w["id"] == widget_id:
+            widget_name = w["label"]
+            widget_configuration_template = w["configuration_template"]
+            logger.debug(widget_configuration_template)
+            found = True
+            break
+
+    if not found:
+        return render(request, "screens/widgets/overlay_error.html",
+                      {"error": "Could not find widget configuration"})
+
+    try:
+        context = {"widget_id": widget_id, "widget_name": widget_name, "widget_config_id": widget_config_id}
+        return render(request, "screens/widgets/%s" % widget_configuration_template, context)
+    except TemplateDoesNotExist:
+        return render(request, "screens/widgets/overlay_error.html",
+                      {"error": "Could not load widget configuration"})
+
+
+def load_widget(request):
+    """
+    Load the configuration for a given screen widget
+    :param request: http request
+    :return: html template
+    """
+    logger.info("__ screens load_widget_ __")
+    required_fields = set(["widget_id", "widget_config_id"])
+    if not required_fields.issubset(request.POST):
+        logger.error("Did no find all required fields in request")
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
+    widget_id = request.POST["widget_id"]
+    widget_config_id = request.POST["widget_config_id"]
+
+    widgets = settings.SCREEN_WIDGETS
+    widget_name = ""
+
+    found = False
+    for w in widgets:
+        if w["id"] == widget_id:
+            widget_name = w["label"]
+            widget_template = w["render_template"]
+            found = True
+            break
+
+    if not found:
+        return render(request, "screens/widgets/overlay_error.html",
+                      {"error": "Could not find widget configuration"})
+
+    try:
+        context = {"widget_id": widget_id, "widget_name": widget_name, "widget_config_id": widget_config_id}
+        return render(request, "screens/widgets/%s" % widget_template, context)
+
+    except TemplateDoesNotExist:
+        return render(request, "screens/widgets/overlay_error.html",
+                      {"error": "Could not load widget configuration"})

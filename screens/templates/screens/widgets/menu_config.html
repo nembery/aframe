@@ -1,0 +1,106 @@
+{% extends "screens/widgets/widget_overlay.html" %}
+{% block overlay %}
+<script type="text/javascript">
+
+    console.log('{{ widget_config_id }}');
+
+    var config_element = {}
+    var widget_config_id = {{ widget_config_id }};
+    var widget_id = '{{ widget_id }}';
+    if (layout['widgets'][widget_config_id] == undefined) {
+        layout['widgets'][widget_config_id] = {};
+    }
+
+    var config_element = layout['widgets'][widget_config_id];
+
+    var menu_list_options = []
+
+    console.log(config_element);
+
+    if (config_element['menu_list_options'] != undefined) {
+        menu_list_options = config_element["menu_list_options"];
+    }
+
+    console.log(menu_list_options);
+
+    /*
+    $(menu_list_options).each(function(i,s) {
+        // create html fragment
+        var new_row = $('<tr/>');
+        new_row.append('<td>' + s.name + '</td>');
+        new_row.append('<td>' + s.value + '</td>');
+
+        // append the new_row html fragment to the new_rows tbody element
+        $('#menu_list_table_rows').append(new_row);
+    });
+    */
+
+    function add_menu_list_option() {
+
+        var option_name = $("#menu_list_option_name").val();
+        var option_value = $("#menu_list_option_value").val();
+
+        // get table of list items for this option name
+        var menu_list_table = $('#menu_list_table');
+
+        // we are going to construct a new item based on input values
+        var new_item = {};
+
+        // create html fragment to show the item being added
+        var new_row = $('<tr/>');
+        new_row.append('<td>' + option_name + '</td>');
+        new_row.append('<td>' + option_value + '</td>');
+
+        // append the new_row html fragment to the new_rows tbody element
+        $('#menu_list_table_rows').append(new_row);
+
+        var new_menu_list_option = {};
+        new_menu_list_option["name"] = option_name;
+        new_menu_list_option["value"] = option_value;
+
+        menu_list_options.push(new_menu_list_option);
+
+        $("#menu_list_option_name").val("");
+        $("#menu_list_option_value").val("");
+
+        // and debug log for developer sanity
+        console.log(menu_list_options);
+    }
+
+    function set_list_input_config(){
+        // Every screen config should get the 'widget_config' and 'widget_id' at minimum
+        layout['widgets'][widget_config_id]['widget_config'] = menu_list_options;
+        layout['widgets'][widget_config_id]['widget_id'] = '{{ widget_id }}';
+        console.log(layout['widgets'][widget_config_id]);
+        close_overlay();
+        load_widget(widget_id, widget_config_id);
+    }
+
+</script>
+Static List of Options. Add options below to populate the list options widget
+<br/>
+<table>
+    <tr>
+        <th>Option Name</th>
+        <th>Option Value</th>
+    </tr>
+    <tbody id="menu_list_table_rows">
+
+    </tbody>
+    <tbody>
+    <tr>
+        <td>
+            <input type="text" id="menu_list_option_name"/>
+        </td>
+        <td>
+            <input type="text" id="menu_list_option_value"/>
+            <input type="button" onclick="javascript: add_menu_list_option()" value="Add"/>
+        </td>
+    </tr>
+    </tbody>
+</table>
+<input type="button" onclick="javascript: set_list_input_config()" value="OK"/>
+<br/>
+{% endblock %}
+
+
