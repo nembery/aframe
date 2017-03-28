@@ -1,4 +1,5 @@
-
+import os
+import yaml
 
 def generate_dict(path, val):
         d = dict()
@@ -224,3 +225,43 @@ def get_value_for_key_from_json(key, data_structure):
 
     return None
 
+
+def _load_secrets():
+    """
+    find the secrets.yml file in the 'conf' directory and return the yaml parsed value
+    :return: secrets object in the form {'secrets': {'key': {'label': 'some label', 'value': 'some_password' } } }
+    """
+    common_lib_dir = os.path.dirname(os.path.abspath(__file__))
+    conf_dir = os.path.abspath(os.path.join(common_lib_dir, '../../conf'))
+    secrets_file_path = os.path.join(conf_dir, 'secrets.yml')
+    with open(secrets_file_path, 'r') as secrets_file:
+        secrets = yaml.load(secrets_file)
+
+    return secrets
+
+
+def get_secrets_keys():
+    """
+    used for UI select lists
+    :return: a list of dicts that represent key/label pairs of entries in the secrets file.
+    The form is [ {'name': 'some_key', 'label': 'Some Label' } ]
+    """
+    secret_keys = list()
+    secrets = _load_secrets()
+    for key in secrets['secrets']:
+        item = dict()
+        item['name'] = key
+        item['label'] = secrets['secrets'][key]['label']
+        secret_keys.append(item)
+
+    return secret_keys
+
+
+def lookup_secret(key):
+    """
+    load the secrets file and return the value by key
+    :param key: key to use for lookup
+    :return: string value of the secret
+    """
+    secrets = _load_secrets()
+    return secrets['secrets'][key]['value']

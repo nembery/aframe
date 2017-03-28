@@ -153,7 +153,6 @@
             base_window = $("#screen_box_base" );
             new_window = base_window.clone();
 
-
             var new_window_id = "widget_container_" + widget_config_id;
             new_window.prop("id", new_window_id);
             new_window.draggable({
@@ -528,7 +527,7 @@
                     <td>
                         Add Widget: &nbsp;
                         <select id="widget">
-                        {% for widget in widgets %}
+                        {% for widget in available_widgets %}
                             <option value="{{ widget.id }}">{{ widget.label }}</option>
                         {% endfor %}
                         </select>
@@ -544,7 +543,6 @@
                 <tr>
                     <td colspan="2">
                         <input type="button" onclick="javascript: update_layout()" value="Save Screen Layout"/>
-
                     </td>
                 </tr>
             </tbody>

@@ -14,6 +14,7 @@ from tools.models import ConfigTemplate
 from input_forms.models import InputForm
 from a_frame.utils import action_provider
 from a_frame import settings
+from common.lib import aframe_utils
 
 logger = logging.getLogger(__name__)
 
@@ -40,12 +41,13 @@ def configure_action(request):
     provider_name = request.POST["action_provider"]
 
     action_options = action_provider.get_options_for_provider(provider_name)
+    secrets = aframe_utils.get_secrets_keys()
 
     if action_options == "":
         context = {"error": "action provider not found"}
         return render(request, "error.html", context)
 
-    context = {"action_options": action_options, "action_provider": provider_name}
+    context = {"action_options": action_options, "action_provider": provider_name, "secrets": secrets}
     return render(request, "configTemplates/configure_action.html", context)
 
 
@@ -166,7 +168,8 @@ def create(request):
 
     configured_action_options = request.session["new_template_action_options"]
     template.action_provider_options = json.dumps(configured_action_options)
-
+    print "action options are:"
+    print configured_action_options
     print "Saving form"
     template.save()
     return HttpResponseRedirect("/input_forms/view_from_template/%s" % template.id)
@@ -295,6 +298,15 @@ def execute_template(request):
     print completed_template
     action_name = config_template.action_provider
     action_options = json.loads(config_template.action_provider_options)
+
+    # let's load any secrets if necessary
+    provider_options = action_provider.get_options_for_provider(action_name)
+    for opt in provider_options:
+        if opt['type'] == 'secret':
+            opt_name = opt['name']
+            pw_lookup_key = action_options[opt_name]['value']
+            pw_lookup_value = aframe_utils.lookup_secret(pw_lookup_key)
+            action_options[opt['name']]['value'] = pw_lookup_value
 
     print "action name is: " + action_name
 

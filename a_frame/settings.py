@@ -304,7 +304,7 @@ ACTION_PROVIDERS = (
             {
                 "label": "Password",
                 "name": "password",
-                "type": "text",
+                "type": "secret",
                 "default": "password"
             },
             {

@@ -41,22 +41,31 @@ def detail(request, screen_id):
     input_forms_list = screen.input_forms.all().order_by("id")
     input_form_ids = list()
     input_forms = dict()
-    for inf in input_forms_list:
-        input_form_ids.append(inf.id)
-        input_forms[inf.id] = inf.name
+
+    for input_form in input_forms_list:
+        input_form_ids.append(input_form.id)
+        input_forms[input_form.id] = input_form.name
 
     ifi_json = json.dumps(input_form_ids)
     input_forms_json = json.dumps(input_forms)
 
-    themes = settings.REGISTERED_APP_THEMES
+    widgets_list = screen.screen_widgets.all().order_by("id")
+    widget_ids = list()
+    for widget in widgets_list:
+        widget_ids.append(widget.id)
 
-    screen_widgets = settings.SCREEN_WIDGETS
+    wi_json = json.dumps(widget_ids)
+
+    themes = settings.REGISTERED_APP_THEMES
+    available_widgets = settings.SCREEN_WIDGETS
 
     context = {'screen': screen,
                'input_forms_json': input_forms_json,
                'input_form_ids': ifi_json,
+               'widgets': widgets_list,
+               'widget_ids': wi_json,
                'layout': screen.layout,
-               'widgets': screen_widgets,
+               'available_widgets': available_widgets,
                'themes': themes}
 
     return render(request, "screens/detail.html", context)
