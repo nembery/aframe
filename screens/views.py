@@ -3,6 +3,7 @@ import logging
 
 from django.shortcuts import render, get_object_or_404, HttpResponseRedirect
 from django.template import TemplateDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 
 from a_frame import settings
 from input_forms.models import InputForm
@@ -58,6 +59,7 @@ def detail(request, screen_id):
 
     themes = settings.REGISTERED_APP_THEMES
     available_widgets = settings.SCREEN_WIDGETS
+    available_widgets_json = json.dumps(available_widgets)
 
     context = {'screen': screen,
                'input_forms_json': input_forms_json,
@@ -66,6 +68,7 @@ def detail(request, screen_id):
                'widget_ids': wi_json,
                'layout': screen.layout,
                'available_widgets': available_widgets,
+               'available_widgets_json': available_widgets_json,
                'themes': themes}
 
     return render(request, "screens/detail.html", context)
@@ -221,6 +224,7 @@ def load_widget_config(request):
     widgets = settings.SCREEN_WIDGETS
     widget_name = ""
     widget_configuration_template = ""
+    widget_consumes_automation = ""
 
     found = False
     for w in widgets:
@@ -228,6 +232,9 @@ def load_widget_config(request):
         if w["id"] == widget_id:
             widget_name = w["label"]
             widget_configuration_template = w["configuration_template"]
+            if "consumes_automation" in w:
+                widget_consumes_automation = w["consumes_automation"]
+
             logger.debug(widget_configuration_template)
             found = True
             break
@@ -236,8 +243,32 @@ def load_widget_config(request):
         return render(request, "screens/widgets/overlay_error.html",
                       {"error": "Could not find widget configuration"})
 
+    context = {"widget_id": widget_id, "widget_name": widget_name, "widget_config_id": widget_config_id}
+
+    if widget_consumes_automation != "":
+        # this widget will consume the output of a configured automation!
+        try:
+            input_form = InputForm.objects.get(name=widget_consumes_automation)
+
+            logger.debug(input_form.json)
+            json_object = list()
+            json_object = json.loads(input_form.json)
+            for jo in json_object:
+                if "widget" not in jo:
+                    jo["widget"] = "text_input"
+
+            config_template = input_form.script
+            action_options = json.loads(config_template.action_provider_options)
+
+            input_form_context = {"input_form": input_form, "json_object": json_object,
+                                  "action_options": action_options, "consumes_automation": widget_consumes_automation}
+
+            context.update(input_form_context)
+
+        except ObjectDoesNotExist:
+            logger.error("Configured automation for widget does not exist!")
+
     try:
-        context = {"widget_id": widget_id, "widget_name": widget_name, "widget_config_id": widget_config_id}
         return render(request, "screens/widgets/%s" % widget_configuration_template, context)
     except TemplateDoesNotExist:
         return render(request, "screens/widgets/overlay_error.html",

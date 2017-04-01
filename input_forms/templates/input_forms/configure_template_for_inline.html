@@ -1,3 +1,9 @@
+<div class="overlay_menu" style="text-align: right; border: 0px; padding: 0px; font-size: 50%; position: relative">
+    <a href="#" onclick="javascript: close_screen_form({{ widget_config_id }})"
+       style="text-decoration: none">
+        X
+    </a>
+</div>
 {% if inline_per_endpoint %}
 <form action="/input_forms/apply" id="form_{{ input_form.id }}">
 {% else %}
@@ -5,15 +11,6 @@
 {% endif %}
     <table style="width: 100%">
         <tbody class="screen_box_header">
-            <tr>
-                <td colspan="2"
-                    style="text-align: right; border: 0px; padding: 0px; font-size: 50%;">
-                    <a href="#" onclick="javascript: close_screen_form({{ input_form.id }})"
-                       style="text-decoration: none">
-                        X
-                    </a>
-                </td>
-            </tr>
             <tr>
                 <td colspan="2">{{ input_form.name }}</td>
             </tr>

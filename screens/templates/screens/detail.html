@@ -10,6 +10,10 @@
 
     var layout = $.parseJSON('{{ layout|safe }}');
 
+    var available_widgets = $.parseJSON('{{ available_widgets_json|safe }}');
+
+    console.log(available_widgets);
+
     var config_window_moved = false;
     var theme_updated = false;
 
@@ -34,7 +38,8 @@
                 stop: function (event, ui ) {
                     console.log(ui);
 
-                }
+                },
+                handle: ".overlay_menu"
             });
 
             var input_form_hidden_field = new_window.find('[name = input_form_id]');
@@ -102,13 +107,31 @@
     }
 
     function add_widget_config() {
+
+        var widget_id = $('#widget').val();
+        var widget_config_id = generate_widget_config_id();
+
+        if (layout['widgets'][widget_config_id] == undefined) {
+            layout['widgets'][widget_config_id] = {};
+        }
+
+        layout['widgets'][widget_config_id]['widget_config'] = {};
+        layout['widgets'][widget_config_id]['widget_id'] = widget_id;
+
+        for (w in available_widgets) {
+            var aw = available_widgets[w];
+            if (aw['id'] == widget_id) {
+                if (aw['configurable'] != true) {
+                     load_widget(widget_id, widget_config_id);
+                     return;
+                }
+            }
+        }
+
         var doc = jQuery(document.documentElement);
         doc.css('cursor', 'progress');
 
         var url = '/screens/load_widget_config';
-
-        var widget_id = $('#widget').val();
-        var widget_config_id = generate_widget_config_id();
 
         var params = {
             'widget_id': widget_id,
@@ -159,7 +182,8 @@
                 grid: [ 10, 10 ],
                 stop: function (event, ui ) {
                     console.log(ui);
-                }
+                },
+                handle: ".overlay_menu"
              });
 
             $( "body" ).append(new_window);
@@ -216,7 +240,6 @@
                 grid: [ 10, 10 ]
             });
 
-            config_window.css('z-index', 99);
 
             config_window.css("display", "inline-block");
             config_window.css("position", "absolute");
@@ -226,6 +249,8 @@
                 config_window.css("left", 580);
                 config_window_moved = true;
             }
+
+            bring_window_to_front(config_window);
     }
 
     function generate_widget_config_id() {
@@ -300,6 +325,35 @@
 
     function theme_changed() {
         theme_updated = true;
+    }
+
+    function bring_window_to_front(obj) {
+        var highest_z = 0;
+        $('.screen_box').each(function(k,v) {
+
+            var z = parseInt($(v).css('z-index'));
+            if (z == 'auto') {
+                z = 0;
+            }
+
+            if (z > highest_z) {
+                highest_z = z;
+            }
+        });
+
+        if (highest_z >= 99) {
+            console.log('reset z-index to safe levels again!');
+            $('.screen_box').each(function(k,v) {
+                $(v).css('z-index', 'auto');
+            });
+            $(obj).css('z-index', 2);
+
+        } else {
+            if ($(obj).css('z-index') != highest_z) {
+                console.log('new highest is ' + highest_z);
+                $(obj).css('z-index', highest_z + 1);
+            }
+        }
     }
 
     function close_screen_form(input_form_id) {
@@ -476,10 +530,10 @@
 
 <h2>{{ screen.description }}</h2>
 
-<div class="screen_box" id="screen_box_base">
+<div class="screen_box" id="screen_box_base" onclick="javascript: bring_window_to_front(this)">
 </div>
 
-<div class="screen_box" id="configuration_box">
+<div class="screen_box" id="configuration_box" onclick="javascript: bring_window_to_front(this)">
     <form action="/input_forms/applyStandalone">
         <table style="width: 100%; margin-top: 0px; padding-top: 0px; padding: 5px; ">
             <tbody class="screen_box_header">

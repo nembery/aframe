@@ -577,9 +577,23 @@ def apply_standalone_template(request):
         if "action_options_" + str(ao) in request.POST:
             logger.debug("Found a customized action option!")
             new_val = request.POST["action_options_" + str(ao)]
+            print new_val
             current_value = action_options[ao]["value"]
+            print current_value
             action_options[ao]["value"] = re.sub("{{ .* }}", new_val, current_value)
             logger.debug(action_options[ao]["value"])
+
+    # let's load any secrets if necessary
+    provider_options = action_provider.get_options_for_provider(action_name)
+    for opt in provider_options:
+        print opt
+        if opt['type'] == 'secret':
+            opt_name = opt['name']
+            pw_lookup_key = action_options[opt_name]['value']
+            pw_lookup_value = aframe_utils.lookup_secret(pw_lookup_key)
+            action_options[opt_name]['value'] = pw_lookup_value
+
+    print "action name is: " + action_name
 
     action = action_provider.get_provider_instance(action_name, action_options)
     results = action.execute_template(completed_template)

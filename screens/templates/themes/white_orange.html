@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <link rel="stylesheet" href="{% static 'css/jquery-ui.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/common.css' %}" />
     <title>{% block title %}Custom App{% endblock %}</title>
     <script type="text/javascript" src="{% static 'js/jquery-1.12.4.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/jquery-ui.min.js' %}"></script>
@@ -70,7 +71,7 @@
             font-size: 75%;
             position: absolute;
             margin: 5px;
-            box-shadow: 5px 5px 20px 0px darkgray;
+            box-shadow: 5px 5px 20px 0px black;
         }
 
         .screen_box table {
@@ -113,7 +114,7 @@
             margin: auto;
             margin-top: 30px;
             width: 900px;
-            border: 4px solid orange;
+            border: 1px solid orange;
             padding: 10px 10px 10px 10px;
             background-color: #eee;
         }
@@ -130,7 +131,17 @@
 
         .overlay_box input[type=text] {
             width: 250px;
+            font-size: 75%;
+            padding: 6px;
+            margin: 4px;
         }
+
+        .overlay_box input[type=button], .overlay_box input[type=submit], .overlay_box select {
+            font-size: 75%;
+            padding: 6px;
+            margin: 4px;
+        }
+
         .overlay_menu {
             size: 8px;
             text-align: right;

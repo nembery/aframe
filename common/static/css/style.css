@@ -90,6 +90,9 @@ h3 {
 
 .overlay_box input[type=text] {
     width: 250px;
+    padding: 6px;
+    margin: 4px;
+    font-size: 100%;
 }
 
 #action_params_container textarea {
@@ -318,6 +321,7 @@ div .unknownAlert {
     font-weight: bold;
     border-bottom: 1px solid #666;
 }
+
 
 
 

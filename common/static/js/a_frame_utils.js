@@ -173,6 +173,10 @@ function close_overlay() {
     overlay.remove();
 }
 
+function reveal(object_id) {
+    $('#' + object_id).toggle('blind');
+}
+
 // ======================= Widget Validation ======================= //
 
 function check_ipv4_input(obj) {

@@ -40,6 +40,9 @@ input_parameters = {
 {% for ip in input_parameters %}
     "{{ ip }}": "{% templatetag openvariable %} {{ ip }} {% templatetag closevariable %}",
 {% endfor %}
+{% for ao in action_option_variables %}
+    "{{ ao.name }}": "{{ ao.default }}",
+{% endfor %}
 }
 post_data = urllib.urlencode(input_parameters)
 results = urllib2.urlopen("{{ a_frame_url }}", post_data).read()

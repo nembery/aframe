@@ -8,6 +8,7 @@ from django.template import engines
 
 import logging
 import json
+import re
 import socket
 
 from tools.models import ConfigTemplate
@@ -38,6 +39,10 @@ def configure_action(request):
     :param request:
     :return:
     """
+    required_fields = set(["action_provider"])
+    if not required_fields.issubset(request.POST):
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
     provider_name = request.POST["action_provider"]
 
     action_options = action_provider.get_options_for_provider(provider_name)
@@ -91,10 +96,12 @@ def edit(request, template_id):
 
     default_options = action_provider.get_options_for_provider(template.action_provider)
     action_options = json.loads(template.action_provider_options)
+    secrets = aframe_utils.get_secrets_keys()
 
     context = {"template": template,
                "action_options": json.dumps(action_options),
-               "default_options": default_options
+               "default_options": default_options,
+               "secrets": secrets
                }
     return render(request, "configTemplates/edit.html", context)
 
@@ -228,12 +235,25 @@ def get_input_parameters_for_template(config_template):
     host = socket.gethostname()
     url = "/tools/execute_template"
 
+    action_options = json.loads(config_template.action_provider_options)
+    action_option_variables = list()
+
+    for action_option in action_options:
+        opts = action_options[action_option]
+        if "variable" in opts and opts["variable"] != '':
+            print action_option
+            item = dict()
+            item['name'] = 'action_options_' + opts['name']
+            item['default'] = opts['variable']
+            action_option_variables.append(item)
+
     template_usage = {
         "id": config_template.id,
         "name": config_template.name,
         "description": config_template.description,
         "a_frame_url": "http://" + host + url,
-        "input_parameters": input_parameters
+        "input_parameters": input_parameters,
+        "action_option_variables": action_option_variables
     }
 
     print config_template.type
@@ -267,13 +287,25 @@ def get_template_input_parameters_overlay(request):
 
 
 def execute_template(request):
-    required_fields = set(["template_id"])
-    if not required_fields.issubset(request.POST):
-        error = {"output": "missing required template_id parameter", "status": 1}
-        return HttpResponse(json.dumps(error), content_type="application/json")
+    """
+    Executes an automation template, you must supply at least a template_id or template_name
+    If the automation template requires input parameters or action options, those must also be supplied as well
 
-    template_id = request.POST["template_id"]
-    config_template = ConfigTemplate.objects.get(pk=template_id)
+    :param request: HTTPRequest
+    :return: json object of the form:
+        {"output": "output of the automation template", "status": "0 or 1 for success or failure"
+    """
+    if 'template_id' not in request.POST and 'template_name' not in request.POST:
+        error = {'output': 'missing required template_id parameter', 'status': 1}
+        return HttpResponse(json.dumps(error), content_type='application/json')
+    
+    if 'template_id' in request.POST:
+        template_id = request.POST['template_id']
+        config_template = ConfigTemplate.objects.get(pk=template_id)
+    else:
+        template_name = request.POST['template_name']
+        config_template = ConfigTemplate.objects.get(name=template_name)
+        
     template_api = get_input_parameters_for_template(config_template)
 
     context = dict()
@@ -299,6 +331,14 @@ def execute_template(request):
     action_name = config_template.action_provider
     action_options = json.loads(config_template.action_provider_options)
 
+    for ao in action_options:
+        if "action_options_" + str(ao) in request.POST:
+            logger.debug("Found a customized action option!")
+            new_val = request.POST["action_options_" + str(ao)]
+            current_value = action_options[ao]["value"]
+            action_options[ao]["value"] = re.sub("{{ .* }}", new_val, current_value)
+            logger.debug(action_options[ao]["value"])
+
     # let's load any secrets if necessary
     provider_options = action_provider.get_options_for_provider(action_name)
     for opt in provider_options:
@@ -306,7 +346,7 @@ def execute_template(request):
             opt_name = opt['name']
             pw_lookup_key = action_options[opt_name]['value']
             pw_lookup_value = aframe_utils.lookup_secret(pw_lookup_key)
-            action_options[opt['name']]['value'] = pw_lookup_value
+            action_options[opt_name]['value'] = pw_lookup_value
 
     print "action name is: " + action_name
 

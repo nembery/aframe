@@ -1,0 +1,146 @@
+{% extends "screens/widgets/widget_base.html" %}
+{% load staticfiles %}
+{% block widget %}
+<td>
+    <script type="text/javascript" src="{% static 'js/patched_raphael.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/rgbcolor.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery.contextmenu.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/patched_canvg.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/patched_Class.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/json2.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/pathfinding-browser.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/StackBlur.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/shifty.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/draw2d.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/network_topology_icon.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/network_topology_utils.js' %}"></script>
+    <script type="text/javascript">
+
+        $(function() {
+            var widget_config_id = {{ widget_config_id }};
+            var config = {};
+
+            if (layout['widgets'][widget_config_id] != undefined) {
+                if (layout['widgets'][widget_config_id]['widget_config'] != undefined) {
+                    config = layout['widgets'][widget_config_id]['widget_config'];
+                }
+            }
+
+            canvas = new draw2d.Canvas("network_topology_{{ widget_config_id }}", true);
+
+            if (canvases == undefined) {
+                if (canvases[{{ widget_config_id }}] == undefined) {
+                    canvases[{{ widget_config_id }}] = {};
+                }
+            }
+
+            window.canvases[{{ widget_config_id}}] = canvas;
+
+            // set default connection router here
+
+            var createConnection = function(v){
+               // return customized connection
+
+               var connection = new draw2d.Connection({
+                 stroke: 3,
+                 radius: 10,
+                 color: "#445E88",
+                 router: new draw2d.layout.connection.VertexRouter(),
+               });
+               return connection;
+            };
+
+            // install a custom connection create policy
+            //
+            canvas.installEditPolicy(  new draw2d.policy.connection.DragConnectionCreatePolicy({
+                   createConnection: createConnection
+            }));
+
+            canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
+            canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
+
+            canvas.installEditPolicy(new draw2d.policy.canvas.SnapToCenterEditPolicy());
+
+            $('#widget_container_{{ widget_config_id }}').css('height', 'initial');
+            $('#widget_container_{{ widget_config_id }}').css('width', 'initial');
+
+        });
+    </script>
+    <div id="network_topology_{{ widget_config_id }}_toolbar">
+        <ul style="list-style: none">
+            <li style="display: inline">
+                <a href="#" onclick="javascript: reveal('add_network_device_menu_{{ widget_config_id }}');">
+                    Add Network Device
+                </a>
+            </li>
+            <li style="display: inline">
+                Load Network Topology
+            </li>
+        </ul>
+    </div>
+    <div id="add_network_device_menu_{{ widget_config_id }}" class="widget_toolbar">
+
+        <input type="text" size="25" id="add_network_device_name_{{ widget_config_id }}"
+            placeholder="Device Name"/>
+        &nbsp;
+        <input type="text" size="25" id="add_network_device_ip_{{ widget_config_id }}"
+            placeholder="IP Address"/>
+
+
+        <select id="add_network_device_icon_{{ widget_config_id }}">
+            <option value="/static/images/server.png:25:50">Server</option>
+            <option value="/static/images/mx_large.png:50:50">MX Large</option>
+            <option value="/static/images/mx_small.png:50:25">MX Small</option>
+            <option value="/static/images/switch.png:50:20">Switch</option>
+            <option value="/static/images/router.png:50:50">Router</option>
+            <option value="/static/images/switch_chassis.png:50:50">Switch Chassis</option>
+        </select>
+        <script type="text/javascript">
+            $( "#add_network_device_name_{{ widget_config_id }}" ).autocomplete({
+                source: "/endpoints/search_ip",
+                focus: function(event, ui) {
+                    event.preventDefault();
+                    $("#add_network_device_name_{{ widget_config_id }}").val(ui.item.label);
+                },
+
+                select: function (event, ui) {
+
+                    var return_label = ui.item.label;
+                    if (return_label.indexOf('/') > 0) {
+                        var rl_array = return_label.split('/');
+                        var group_name = rl_array[0];
+                        var endpoint_name = rl_array[1];
+                        $("#add_network_device_name_{{ widget_config_id }}").val(endpoint_name);
+                    } else {
+                        $("#add_network_device_ip_{{ widget_config_id }}").val(return_label);
+                    }
+                    var return_value = ui.item.value;
+
+                    if (return_value.indexOf(':') > 0) {
+                        var r_array = return_value.split(':');
+                        var group_id = r_array[0];
+                        var endpoint_ip = r_array[1];
+                        $("#add_network_device_ip_{{ widget_config_id }}").val(endpoint_ip);
+
+                    } else {
+                        $("#add_network_device_ip_{{ widget_config_id }}").val(return_value);
+                    }
+                    return false;
+                }
+            });
+        </script>
+        <input type="button" onclick="javascript: add_network_device({{ widget_config_id }});" value="Add"/>
+    </div>
+    <div id="network_topology_{{ widget_config_id }}" style="background-image: url({% static 'images/grid_lite.png' %});
+                                        background-repeat: repeat;
+                                        width:1000px;
+                                        height:400px;
+                                        position:relative;
+                                        ">
+
+    </div>
+</td>
+{% endblock %}

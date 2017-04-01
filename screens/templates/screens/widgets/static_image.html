@@ -1,0 +1,38 @@
+{% extends "screens/widgets/widget_base.html" %}
+{% block widget %}
+<td>
+    <img title="static_image" id="static_image_{{ widget_config_id }}"/>
+
+    <script type="text/javascript">
+
+        $(function() {
+            var widget_config_id = {{ widget_config_id }};
+            var config = {};
+
+            if (layout['widgets'][widget_config_id]['widget_config'] != undefined) {
+                config = layout['widgets'][widget_config_id]['widget_config'];
+                console.log(layout['widgets'][widget_config_id]['widget_config']);
+                var d = new Date().getTime()
+                var u = layout['widgets'][widget_config_id]['widget_config']['url'];
+                $('#static_image_{{ widget_config_id }}').prop('src', u + '&t=' + d);
+            }
+
+            $('#static_image_{{ widget_config_id }}').on('load', function() {
+                $('#widget_container_{{ widget_config_id }}').css('height', 'initial');
+                $('#widget_container_{{ widget_config_id }}').css('width', 'initial');
+            });
+
+            if (config['refresh'] != undefined) {
+                var refresh = config['refresh'];
+                if (refresh != 0) {
+                    setInterval(function() {
+                        var d = new Date().getTime()
+                        var u = config['url'];
+                        $('#static_image_{{ widget_config_id }}').prop('src', u + '&t=' + d);
+                    }, refresh);
+                }
+            }
+        });
+    </script>
+</td>
+{% endblock %}

@@ -265,3 +265,4 @@ def search_ip(request):
             results.append(r)
 
     return HttpResponse(json.dumps(results), content_type="application/json")
+

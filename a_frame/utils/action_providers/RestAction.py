@@ -2,6 +2,7 @@ import base64
 import json
 import platform
 import ssl
+import urllib
 import urllib2
 from urllib2 import HTTPError
 from lxml import etree
@@ -13,6 +14,14 @@ class RestAction(ActionBase):
         Simple REST action provider
 
         This is a "standalone" action, meaning it will be executed without an endpoint being passed in
+
+        This will handle GET, POST, and DELETE verbs for REST actions. Multiple authentication schemes are also
+        supported.
+
+        For POST operations, the input template will be rendered as-is and used as the data payload
+        For GET operations, the input template must be configured as a JSON formatted string. This will be
+        converted to a the appropriate query parameters if needed. I.E. if you need something like ?action=create
+        added to the end of the URL, add template data as such: { "action": "create" }
     """
 
     # inherited set_global_options from action_base.py will overwrite all of these automatically from the
@@ -55,6 +64,25 @@ class RestAction(ActionBase):
         template = template.replace('\r\n', '\n')
 
         full_url = self.protocol + "://" + self.host + self.url
+
+        if self.request_type == "GET" and template != '':
+            print template
+            ct = self.unescape(template)
+            print ct
+            try:
+                json_query_params = json.loads(ct)
+                query_data = urllib.urlencode(json_query_params)
+
+                if "?" in full_url:
+                    full_url += "&"
+                else:
+                    full_url += "?"
+
+                full_url += query_data
+            except ValueError as ve:
+                print "Could not parse template data for get request!"
+                pass
+
         print full_url
 
         request = urllib2.Request(full_url)
@@ -63,6 +91,9 @@ class RestAction(ActionBase):
             print "using username: %s" % self.username
             base64string = base64.b64encode("%s:%s" % (self.username, self.password))
             request.add_header("Authorization", "Basic %s" % base64string)
+
+        elif self.auth_type == "bearer":
+            request.add_header("Authorization", "Bearer %s" % self.password)
 
         elif self.auth_type == "keystone":
             if not self.connect_to_keystone():

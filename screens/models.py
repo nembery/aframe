@@ -30,3 +30,14 @@ class Screen(models.Model):
         verbose_name = "Screen"
         verbose_name_plural = "Screens"
 
+
+class ScreenWidgetData(models.Model):
+    widget_type = models.CharField(max_length=64)
+    name = models.CharField(max_length=64)
+    data = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "ScreenWidgetData"
+        verbose_name_plural = "ScreenWidgetData"

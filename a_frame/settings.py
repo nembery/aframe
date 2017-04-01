@@ -282,6 +282,10 @@ ACTION_PROVIDERS = (
                         "label": "Basic",
                     },
                     {
+                        "name": "bearer",
+                        "label": "Bearer",
+                    },
+                    {
                         "name": "keystone",
                         "label": "Keystone",
                     },
@@ -529,5 +533,19 @@ SCREEN_WIDGETS = (
         "id": "static_image",
         "configuration_template": "static_image_config.html",
         "render_template": "static_image.html"
+    },
+    {
+        "label": "Open-NTI Graph",
+        "configurable": True,
+        "id": "opennti_graph",
+        "configuration_template": "opennti_graph_config.html",
+        "render_template": "static_image.html",
+        "consumes_automation": "grafana_interfaces_graph_url"
+    },
+    {
+        "label": "Network Topology",
+        "configurable": False,
+        "id": "network_topology",
+        "render_template": "network_topology.html"
     }
 )
