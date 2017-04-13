@@ -312,3 +312,54 @@ def load_widget(request):
     except TemplateDoesNotExist:
         return render(request, "screens/widgets/overlay_error.html",
                       {"error": "Could not load widget configuration"})
+
+
+def create_widget_data(request):
+    logger.info("__ screens create __")
+    required_fields = set(["name", "theme", "description", "input_forms"])
+    if not required_fields.issubset(request.POST):
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
+    name = request.POST["name"]
+    theme = request.POST["theme"]
+    description = request.POST["description"]
+    input_forms = request.POST["input_forms"]
+
+    screen = Screen()
+    screen.name = name
+    screen.theme = theme
+    screen.description = description
+    screen.save()
+
+    if input_forms == "":
+        input_forms_data = []
+    else:
+        input_forms_data = json.loads(input_forms)
+
+    print input_forms_data
+
+    layout = dict()
+    layout['input_forms'] = dict()
+    layout['widgets'] = dict()
+
+    xcounter = 140
+    ycounter = 240
+    for name in input_forms_data:
+        input_form = InputForm.objects.filter(name=name)[0]
+
+        layout['input_forms'][input_form.id] = dict()
+        layout['input_forms'][input_form.id]["x"] = xcounter
+        layout['input_forms'][input_form.id]["y"] = ycounter
+
+        if xcounter <= 900:
+            xcounter += 360
+        else:
+            ycounter += 500
+            xcounter = 160
+
+        screen.input_forms.add(input_form)
+
+    screen.layout = json.dumps(layout)
+    screen.save()
+    screen_id = screen.id
+    return HttpResponseRedirect("/screens/" + str(screen_id))

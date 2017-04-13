@@ -15,7 +15,7 @@ function get_layout_for_icon(widget_config_id) {
         var config = {
             'num_instances': 0,
             'left': -50,
-            'top': 10,
+            'top': 50,
             'total_offset': 100
         };
         canvas_layout[widget_config_id] = config;

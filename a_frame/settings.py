@@ -296,6 +296,10 @@ ACTION_PROVIDERS = (
                     {
                         "name": "ruckus",
                         "label": "Ruckus REST Cookie",
+                    },
+                    {
+                        "name": "saltapi",
+                        "label": "Salt-api",
                     }
                 ]
             },
