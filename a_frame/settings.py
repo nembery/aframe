@@ -352,12 +352,12 @@ ACTION_PROVIDERS = (
                 "type": "select",
                 "choices": [
                     {
-                        "name": "https",
-                        "label": "HTTPS",
-                    },
-                    {
                         "name": "http",
                         "label": "HTTP",
+                    },
+                    {
+                        "name": "https",
+                        "label": "HTTPS",
                     }
                 ]
             },
