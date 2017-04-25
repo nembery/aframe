@@ -22,5 +22,15 @@ urlpatterns = [
     url(r"^load_widget_config$", views.load_widget_config,
         name="load_widget_config"),
     url(r"^load_widget$", views.load_widget,
-        name="load_widget")
+        name="load_widget"),
+    url(r"^createWidgetData$", views.create_widget_data,
+        name="create_widget_data"),
+    url(r"^updateWidgetData$", views.update_widget_data,
+        name="update_widget_data"),
+    url(r"^getWidgetData$", views.get_widget_data,
+        name="get_widget_data"),
+    url(r"^listWidgetData$", views.list_widget_data,
+        name="list_widget_data"),
+    url(r"^deleteWidgetData$", views.delete_widget_data,
+        name="delete_widget_data"),
 ]

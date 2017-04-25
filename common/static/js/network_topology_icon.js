@@ -1,5 +1,5 @@
-
 topologyIconPortLocator = draw2d.layout.locator.PortLocator.extend({
+    NAME: "topologyIconPortLocator",
     init: function() {
         this._super();
     },
@@ -11,6 +11,7 @@ topologyIconPortLocator = draw2d.layout.locator.PortLocator.extend({
     }
 });
 BottomCenterLocator = draw2d.layout.locator.Locator.extend({
+    NAME: "BottomCenterLocator",
     init: function(parent)
     {
         this._super(parent);
@@ -20,17 +21,32 @@ BottomCenterLocator = draw2d.layout.locator.Locator.extend({
         var parent = target.getParent();
         var boundingBox = parent.getBoundingBox();
         var targetBoundingBox = target.getBoundingBox();
-        target.setPosition(boundingBox.w / 2 - targetBoundingBox.w / 2, parent.getHeight() + 5);
+        target.setPosition(boundingBox.w / 2 - targetBoundingBox.w / 2, parent.getHeight());
+    }
+});
+IpLabelLocator = draw2d.layout.locator.Locator.extend({
+    NAME: "IpLabelLocator",
+    init: function(parent)
+    {
+        this._super(parent);
+    },
+    relocate: function(index, target)
+    {
+        var parent = target.getParent();
+        var boundingBox = parent.getBoundingBox();
+        var targetBoundingBox = target.getBoundingBox();
+        target.setPosition(boundingBox.w / 2 - targetBoundingBox.w / 2, parent.getHeight() + 4);
     }
 });
 BootStateLocator = draw2d.layout.locator.Locator.extend({
+    NAME: "BootStateLocator",
     init: function(parent) {
         this._super(parent);
     },
     relocate: function(index, target) {
         var node = target.getParent()
         var x = node.getWidth() - 11;
-        var y = 3;
+        var y = 1;
         target.setPosition(x, y);
     }
 });
@@ -187,8 +203,6 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     getPersistentAttributes: function() {
         // force grabbing the mgnt interface
         var ud = this.getUserData();
-        ud["mgmtInterface"] = this.getMgmtInterface();
-        ud["wistarVm"] = true;
         return this._super();
     },
     setupObject: function(type, label, width, height) {
@@ -198,22 +212,32 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
         this.setType(type);
         this.setLabel(label);
     },
+    getParentCanvasId: function() {
+        var canvas = this.getCanvas();
+        var canvasId = canvas.canvasId;
+        return canvasId.split('_').slice(-1);
+    },
     // override default dc handler
     onDoubleClick: function() {
         return;
     },
-    // FIXME!
     onContextMenu: function(x, y) {
         console.log('on context menu');
         var items = {
+            "status": {
+                name: "Refresh Status"
+            },
+            "details": {
+                name: "View Details"
+            },
             "delete": {
                 name: "Delete"
             }
         };
-        console.log('x is: ' + x);
-        console.log('y is: ' + y);
+        console.log(this);
         $.contextMenu({
             selector: 'body',
+            zIndex: 1000,
             events: {
                 hide: function() {
                     $.contextMenu('destroy');
@@ -222,21 +246,23 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
             callback: $.proxy(function(key, options) {
                 switch (key) {
                     case "delete":
-                        // without undo/redo support
-
 			            var ports = this.getPorts().asArray();
         		        for (i = 0; i < ports.length; i++) {
         		            var connections = ports[i].getConnections();
         		            for (c = 0; c < connections.length; c++) {
-
         		                canvas.remove(canvas.getFigure(c));
         		            }
 		                    this.removePort(ports[i]);
         		        }
-                        this.getCanvas().remove(this);
-
+                        $.contextMenu('destroy');
                         var command = new draw2d.command.CommandDelete(this);
 			            this.getCanvas().getCommandStack().execute(command);
+                        break;
+                    case "status":
+                        refresh_topology_icon_status(this.getLabel(), this.getParentCanvasId());
+                        break;
+                    case "details":
+                        load_topology_icon_details(this.getLabel(), this.getParentCanvasId());
                         break;
                     default:
                         break;
@@ -246,6 +272,5 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
             y: y,
             items: items
         });
-        console.log('WELL');
     }
 });

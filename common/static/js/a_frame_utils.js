@@ -110,7 +110,7 @@ function load_widget_configs(w_id){
     });
 }
 
-function load_widget_configs_manual(widget_id, widget_name){
+function load_widget_configs_manual(widget_id, widget_name) {
 
     var doc = jQuery(document.documentElement);
     doc.css('cursor', 'progress');
@@ -134,6 +134,7 @@ function load_widget_configs_manual(widget_id, widget_name){
         doc.css('cursor', '');
     });
 }
+
 
 function set_preload_list_config(widget_id){
 

@@ -6,6 +6,25 @@
     padding: 5px;
 }
 
+.widget_overlay {
+    position: absolute;
+    z-index: 9999;
+    background: #eee;
+    display: none;
+    padding: 5px;
+    left: 0px;
+    right: 0px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 50px;
+    width: 400px;
+    box-shadow: 5px 5px 20px 0px black;
+}
+
+#context-menu-layer {
+    z-index: 1000;
+}
+
 .context-menu-list {
     margin: 0;
     padding: 2px;
@@ -16,7 +35,7 @@
     list-style-type: none;
     border: 1px solid #DDD;
     background: #EEE;
-    z-index: 9999;
+    z-index: 1001;
     -webkit-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
        -moz-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
         -ms-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);

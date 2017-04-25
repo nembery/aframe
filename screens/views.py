@@ -1,13 +1,14 @@
 import json
 import logging
 
-from django.shortcuts import render, get_object_or_404, HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404, HttpResponseRedirect, HttpResponse
 from django.template import TemplateDoesNotExist
 from django.core.exceptions import ObjectDoesNotExist
 
 from a_frame import settings
 from input_forms.models import InputForm
 from models import Screen
+from models import ScreenWidgetData
 
 logger = logging.getLogger(__name__)
 
@@ -315,51 +316,131 @@ def load_widget(request):
 
 
 def create_widget_data(request):
-    logger.info("__ screens create __")
-    required_fields = set(["name", "theme", "description", "input_forms"])
+    logger.info("__ screens create_widget_data __")
+    required_fields = set(["name", "widget_type", "data"])
     if not required_fields.issubset(request.POST):
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     name = request.POST["name"]
-    theme = request.POST["theme"]
-    description = request.POST["description"]
-    input_forms = request.POST["input_forms"]
+    widget_type = request.POST["widget_type"]
+    data = request.POST["data"]
 
-    screen = Screen()
-    screen.name = name
-    screen.theme = theme
-    screen.description = description
-    screen.save()
+    results = dict()
 
-    if input_forms == "":
-        input_forms_data = []
+    if ScreenWidgetData.objects.filter(name=name).exists():
+        results['status'] = False
+        results['message'] = 'Screen Widget Data already exists with this name!'
+        return HttpResponse(json.dumps(results), content_type="application/json")
+
+    widget_data = ScreenWidgetData()
+    widget_data.name = name
+    widget_data.widget_type = widget_type
+    widget_data.data = data
+
+    widget_data.save()
+
+    results['status'] = True
+    results['message'] = 'widget data saved'
+
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+
+def update_widget_data(request):
+    logger.info("__ screens update_widget_data __")
+    required_fields = set(["name", "widget_type", "data"])
+    if not required_fields.issubset(request.POST):
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
+    name = request.POST["name"]
+    widget_type = request.POST["widget_type"]
+    data = request.POST["data"]
+
+    results = dict()
+
+    if not ScreenWidgetData.objects.filter(name=name).exists():
+        results['status'] = False
+        results['message'] = 'Screen Widget Data does not exist!'
+        return HttpResponse(json.dumps(results), content_type="application/json")
+
+    widget_data = ScreenWidgetData.objects.get(name=name, widget_type=widget_type)
+    widget_data.data = data
+
+    widget_data.save()
+
+    results['status'] = True
+    results['message'] = 'widget data updated'
+
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+
+def get_widget_data(request):
+    logger.info("__ screens get_widget_data __")
+    required_fields = set(["name", "widget_type"])
+    if not required_fields.issubset(request.POST):
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
+    name = request.POST["name"]
+    widget_type = request.POST["widget_type"]
+
+    results = dict()
+
+    if ScreenWidgetData.objects.filter(name=name, widget_type=widget_type).exists():
+        widget_data = ScreenWidgetData.objects.get(name=name, widget_type=widget_type)
+        results['status'] = True
+        results['data'] = widget_data.data
+        results['message'] = 'found widget data'
+
     else:
-        input_forms_data = json.loads(input_forms)
+        results['status'] = False
+        results['message'] = 'widget data not found!'
 
-    print input_forms_data
+    return HttpResponse(json.dumps(results), content_type="application/json")
 
-    layout = dict()
-    layout['input_forms'] = dict()
-    layout['widgets'] = dict()
 
-    xcounter = 140
-    ycounter = 240
-    for name in input_forms_data:
-        input_form = InputForm.objects.filter(name=name)[0]
+def delete_widget_data(request):
+    logger.info("__ screens delete_widget_data __")
+    required_fields = set(["name", "widget_type"])
+    if not required_fields.issubset(request.POST):
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
-        layout['input_forms'][input_form.id] = dict()
-        layout['input_forms'][input_form.id]["x"] = xcounter
-        layout['input_forms'][input_form.id]["y"] = ycounter
+    name = request.POST["name"]
+    widget_type = request.POST["widget_type"]
 
-        if xcounter <= 900:
-            xcounter += 360
-        else:
-            ycounter += 500
-            xcounter = 160
+    results = dict()
 
-        screen.input_forms.add(input_form)
+    if ScreenWidgetData.objects.filter(name=name, widget_type=widget_type).exists():
+        widget_data = ScreenWidgetData.objects.get(name=name, widget_type=widget_type)
+        widget_data.delete()
+        results['status'] = True
+        results['message'] = 'deleted widget data'
 
-    screen.layout = json.dumps(layout)
-    screen.save()
-    screen_id = screen.id
-    return HttpResponseRedirect("/screens/" + str(screen_id))
+    else:
+        results['status'] = True
+        results['message'] = 'widget data already gone!'
+
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+
+def list_widget_data(request):
+    logger.info("__ screens list_widget_data __")
+    required_fields = set(["widget_type"])
+    if not required_fields.issubset(request.POST):
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
+    widget_type = request.POST["widget_type"]
+    results = dict()
+
+    widget_data_list = ScreenWidgetData.objects.filter(widget_type=widget_type)
+
+    wd_list = list()
+    for wd in widget_data_list:
+        wdd = dict()
+        wdd['widget_type'] = widget_type
+        wdd['name'] = wd.name
+        wd_list.append(wdd)
+
+    wdj = json.dumps(wd_list)
+    results['status'] = True
+    results['list'] = wdj
+
+    return HttpResponse(json.dumps(results), content_type="application/json")

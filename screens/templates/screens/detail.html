@@ -411,7 +411,7 @@
             console.log(this_layout);
         }
 
-        var doc = jQuery(document.documentElement);
+        var doc = $(document.documentElement);
         doc.css('cursor', 'progress');
 
         var url = "/screens/updateLayout/"
@@ -423,7 +423,7 @@
             "theme": theme
         }
 
-        var post = jQuery.post(url, params, function(response) {
+        var post = $.post(url, params, function(response) {
             console.log(response);
             if (theme_updated) {
                 location.reload();
@@ -444,7 +444,7 @@
 
     function apply_inline(obj) {
 
-        var doc = jQuery(document.documentElement);
+        var doc = $(document.documentElement);
         doc.css("cursor", "progress");
 
         // where were we clicked from?
@@ -459,7 +459,7 @@
         //var url = '/input_forms/applyStandalone';
         var url = parent_form.prop('action');
 
-        var post = jQuery.post(url, parent_form.serialize(), function(response) {
+        var post = $.post(url, parent_form.serialize(), function(response) {
             console.log(response);
             load_overlay(response);
             doc.css("cursor", "");

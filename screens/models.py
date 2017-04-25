@@ -4,6 +4,7 @@ from django.db import models
 from input_forms.models import InputForm
 
 
+# class to hold global screen widget configuration
 class ScreenWidget(models.Model):
     name = models.CharField(max_length=32)
     description = models.TextField()
@@ -31,6 +32,10 @@ class Screen(models.Model):
         verbose_name_plural = "Screens"
 
 
+# class to hold global screen widget data
+# the same configuration can produce and consume different data
+# i.e a widget to show open-nti graphs can be configured for an
+# open-nti instance, but different data for each different graph
 class ScreenWidgetData(models.Model):
     widget_type = models.CharField(max_length=64)
     name = models.CharField(max_length=64)

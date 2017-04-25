@@ -16,8 +16,11 @@
     <script type="text/javascript" src="{% static 'js/shifty.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/draw2d.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/network_topology_icon.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/network_topology_cloud.js' %}"></script>
+
     <script type="text/javascript" src="{% static 'js/network_topology_utils.js' %}"></script>
     <script type="text/javascript">
+
 
         $(function() {
             var widget_config_id = {{ widget_config_id }};
@@ -29,15 +32,13 @@
                 }
             }
 
-            canvas = new draw2d.Canvas("network_topology_{{ widget_config_id }}", true);
+            var canvas = new draw2d.Canvas("network_topology_" + widget_config_id, true);
 
-            if (canvases == undefined) {
-                if (canvases[{{ widget_config_id }}] == undefined) {
-                    canvases[{{ widget_config_id }}] = {};
-                }
+            if (canvases[widget_config_id] == undefined) {
+                canvases[widget_config_id] = canvas;
             }
 
-            window.canvases[{{ widget_config_id}}] = canvas;
+            console.log(canvases);
 
             // set default connection router here
 
@@ -64,8 +65,8 @@
 
             canvas.installEditPolicy(new draw2d.policy.canvas.SnapToCenterEditPolicy());
 
-            $('#widget_container_{{ widget_config_id }}').css('height', 'initial');
-            $('#widget_container_{{ widget_config_id }}').css('width', 'initial');
+            $('#widget_container_' + widget_config_id).css('height', 'initial');
+            $('#widget_container_' + widget_config_id).css('width', 'initial');
 
         });
     </script>
@@ -77,18 +78,33 @@
                 </a>
             </li>
             <li style="display: inline">
-                Load Network Topology
+                <a href="javascript: reveal('load_topology_dialogue_{{ widget_config_id }}')">Load Network Topology</a>
             </li>
+            <li style="display: inline">
+                <a href="javascript: create_new_topology({{ widget_config_id }})">New Network Topology</a>
+            </li>
+            <li style="display: inline">
+                <a href="javascript: reveal('save_topology_dialogue_{{ widget_config_id }}')">Save Network Topology</a>
+            </li>
+            <li style="display: inline">
+                <a href="javascript: update_network_topology({{ widget_config_id }})">Update</a>
+            </li>
+            <li style="display: inline">
+                <a href="javascript: debug_topology({{ widget_config_id }})">*</a>
+            </li>
+
         </ul>
     </div>
-    <div id="add_network_device_menu_{{ widget_config_id }}" class="widget_toolbar">
+    <div id="add_network_device_menu_{{ widget_config_id }}" class="widget_overlay">
+        <div style="text-align: right">
+            <a href="javascript: reveal('add_network_device_menu_{{ widget_config_id }}')">X</a>
+        </div>
 
         <input type="text" size="25" id="add_network_device_name_{{ widget_config_id }}"
             placeholder="Device Name"/>
         &nbsp;
         <input type="text" size="25" id="add_network_device_ip_{{ widget_config_id }}"
             placeholder="IP Address"/>
-
 
         <select id="add_network_device_icon_{{ widget_config_id }}">
             <option value="/static/images/server.png:25:50">Server</option>
@@ -134,13 +150,36 @@
         </script>
         <input type="button" onclick="javascript: add_network_device({{ widget_config_id }});" value="Add"/>
     </div>
+    <div id="save_topology_dialogue_{{ widget_config_id }}" class="widget_overlay">
+        <div style="text-align: right">
+            <a href="javascript: reveal('save_topology_dialogue_{{ widget_config_id }}')">X</a>
+        </div>
+        Topology Name:
+        <input type="text" size="25" id="save_network_topology_name_{{ widget_config_id }}"
+            placeholder="DC1"/>
+        <input type="button" onclick="javascript: save_network_topology('{{ widget_config_id }}')"
+            value="Save"/>
+    </div>
+    <div id="load_topology_dialogue_{{ widget_config_id }}" class="widget_overlay">
+        <div style="text-align: right">
+            <a href="javascript: reveal('load_topology_dialogue_{{ widget_config_id }}')">X</a>
+        </div>
+        Topology Name:
+        <input type="text" size="25" id="load_network_topology_name_{{ widget_config_id }}"
+            placeholder="DC1"/>
+        <input type="button" onclick="javascript: load_network_topology('{{ widget_config_id }}')"
+            value="Load"/>
+        <br/>
+        Browse all Network Topologies:
+        <input type="button" onclick="javascript: list_network_topologies('{{ widget_config_id }}')"
+            value="Browse"/>
+    </div>
     <div id="network_topology_{{ widget_config_id }}" style="background-image: url({% static 'images/grid_lite.png' %});
                                         background-repeat: repeat;
                                         width:1000px;
                                         height:400px;
                                         position:relative;
-                                        ">
-
-    </div>
+                                        "></div>
+    <input type="hidden" id="topology_name_{{ widget_config_id }}"/>
 </td>
 {% endblock %}
