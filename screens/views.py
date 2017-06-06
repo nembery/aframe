@@ -6,9 +6,12 @@ from django.template import TemplateDoesNotExist
 from django.core.exceptions import ObjectDoesNotExist
 
 from a_frame import settings
+from common.lib import aframe_utils
+
 from input_forms.models import InputForm
 from models import Screen
 from models import ScreenWidgetData
+from models import ScreenWidgetConfig
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +62,15 @@ def detail(request, screen_id):
     wi_json = json.dumps(widget_ids)
 
     themes = settings.REGISTERED_APP_THEMES
-    available_widgets = settings.SCREEN_WIDGETS
+    all_widgets = settings.SCREEN_WIDGETS
+
+    # only load non-transient widgets
+    available_widgets = list()
+    for aw in all_widgets:
+        transient = aw.get("transient", False)
+        if not transient:
+            available_widgets.append(aw)
+
     available_widgets_json = json.dumps(available_widgets)
 
     context = {'screen': screen,
@@ -213,19 +224,18 @@ def load_widget_config(request):
     :return: html template
     """
     logger.info("__ screens load_widget_config __")
-    required_fields = set(["widget_id", "screen_id", "widget_config_id"])
+    required_fields = set(["widget_id", "widget_layout_id"])
     if not required_fields.issubset(request.POST):
         logger.error("Did no find all required fields in request")
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     widget_id = request.POST["widget_id"]
-    screen_id = request.POST["screen_id"]
-    widget_config_id = request.POST["widget_config_id"]
+    widget_layout_id = request.POST["widget_layout_id"]
 
     widgets = settings.SCREEN_WIDGETS
     widget_name = ""
     widget_configuration_template = ""
-    widget_consumes_automation = ""
+    widget_consumes_input_form = ""
 
     found = False
     for w in widgets:
@@ -233,8 +243,8 @@ def load_widget_config(request):
         if w["id"] == widget_id:
             widget_name = w["label"]
             widget_configuration_template = w["configuration_template"]
-            if "consumes_automation" in w:
-                widget_consumes_automation = w["consumes_automation"]
+            if "consumes_input_form" in w:
+                widget_consumes_input_form = w["consumes_input_form"]
 
             logger.debug(widget_configuration_template)
             found = True
@@ -244,15 +254,14 @@ def load_widget_config(request):
         return render(request, "screens/widgets/overlay_error.html",
                       {"error": "Could not find widget configuration"})
 
-    context = {"widget_id": widget_id, "widget_name": widget_name, "widget_config_id": widget_config_id}
+    context = {"widget_id": widget_id, "widget_name": widget_name, "widget_layout_id": widget_layout_id}
 
-    if widget_consumes_automation != "":
+    if widget_consumes_input_form != "":
         # this widget will consume the output of a configured automation!
         try:
-            input_form = InputForm.objects.get(name=widget_consumes_automation)
+            input_form = InputForm.objects.get(name=widget_consumes_input_form)
 
             logger.debug(input_form.json)
-            json_object = list()
             json_object = json.loads(input_form.json)
             for jo in json_object:
                 if "widget" not in jo:
@@ -262,7 +271,7 @@ def load_widget_config(request):
             action_options = json.loads(config_template.action_provider_options)
 
             input_form_context = {"input_form": input_form, "json_object": json_object,
-                                  "action_options": action_options, "consumes_automation": widget_consumes_automation}
+                                  "action_options": action_options, "consumes_input_form": widget_consumes_input_form}
 
             context.update(input_form_context)
 
@@ -279,17 +288,31 @@ def load_widget_config(request):
 def load_widget(request):
     """
     Load the configuration for a given screen widget
+
+    Widgets can provide any functionality to the screen
+    widgets can store data in 3 different places:
+        Global widget configuration is stored in the ScreenWidgetConfig db table
+        Global widget data is stored in the ScreenWidgetData db table
+        Per Screen / Per Widget instance data is stored in the layout object on the screen itself
+
+        For example, you may configure a graph widget globally to point to a specific automation for data
+        then each graph can load specific parameters from the global widget data db table to be shared among screens
+        then finally, the specific time slice can be stored in the layout data on the screen
     :param request: http request
     :return: html template
     """
     logger.info("__ screens load_widget_ __")
-    required_fields = set(["widget_id", "widget_config_id"])
+    required_fields = set(["widget_id"])
     if not required_fields.issubset(request.POST):
-        logger.error("Did no find all required fields in request")
+        logger.error("Did not find all required fields in request")
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     widget_id = request.POST["widget_id"]
-    widget_config_id = request.POST["widget_config_id"]
+
+    # widget_layout_id is an identifier used to id the specific widget config stored
+    # in the layout object of this screen. This is a per-screen / per-widget id
+    # widgets defined as transient do not have a widget_layout_id
+    widget_layout_id = request.POST["widget_layout_id"]
 
     widgets = settings.SCREEN_WIDGETS
     widget_name = ""
@@ -304,10 +327,42 @@ def load_widget(request):
 
     if not found:
         return render(request, "screens/widgets/overlay_error.html",
-                      {"error": "Could not find widget configuration"})
+                      {"error": "Could not find widget"})
 
     try:
-        context = {"widget_id": widget_id, "widget_name": widget_name, "widget_config_id": widget_config_id}
+        context = {"widget_id": widget_id,
+                   "widget_name": widget_name,
+                   "widget_layout_id": widget_layout_id,
+                   "widget_global_config": {}
+                   }
+
+        # grab the widget global configuration if it exists and set on the context
+        # FIXME - widget_type and widget_id are used interchangeably, this should just be widget_id basically everywhere
+        if ScreenWidgetConfig.objects.filter(widget_type=widget_id).exists():
+            print "FOUND WIDGET CONFIG"
+            widget_config = ScreenWidgetConfig.objects.get(widget_type=widget_id)
+            context.update
+            context.update({"widget_global_config": widget_config.data})
+
+        if "consumes_automation" in w:
+
+            post_vars = dict()
+            for v in request.POST:
+                post_vars[v] = request.POST[v]
+
+            post_vars["template_name"] = w["consumes_automation"]
+            automation_results = aframe_utils.execute_template(post_vars)
+
+            context.update({"automation_results": automation_results})
+            try:
+                # attempt to load results for the user! not every automation will return json though, so we can't
+                # count on it!
+                results_object = json.loads(automation_results['output'])
+                context.update({"automation_output": results_object})
+            except:
+                print "Could not parse JSON output from automation!"
+                pass
+
         return render(request, "screens/widgets/%s" % widget_template, context)
 
     except TemplateDoesNotExist:
@@ -315,6 +370,9 @@ def load_widget(request):
                       {"error": "Could not load widget configuration"})
 
 
+#
+#   CRUD data for per-widget_type data. This is data that can be only loaded by a particular widget_type
+#
 def create_widget_data(request):
     logger.info("__ screens create_widget_data __")
     required_fields = set(["name", "widget_type", "data"])
@@ -442,5 +500,82 @@ def list_widget_data(request):
     wdj = json.dumps(wd_list)
     results['status'] = True
     results['list'] = wdj
+
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+
+#
+#   CRUD methods for global widget configuration, i.e. things that can be applied to widgets of a certain type
+#   globally
+#   
+def save_widget_config(request):
+    logger.info("__ screens save_widget_config __")
+    required_fields = set(["widget_type", "data"])
+    if not required_fields.issubset(request.POST):
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
+    widget_type = request.POST["widget_type"]
+    data = request.POST["data"]
+
+    results = dict()
+
+    if ScreenWidgetConfig.objects.filter(widget_type=widget_type).exists():
+        widget_config = ScreenWidgetConfig.objects.get(widget_type=widget_type)
+    else:
+        widget_config = ScreenWidgetConfig()
+
+    widget_config.widget_type = widget_type
+    widget_config.data = data
+
+    widget_config.save()
+
+    results['status'] = True
+    results['message'] = 'widget config saved'
+
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+
+def get_widget_config(request):
+    logger.info("__ screens get_widget_config __")
+    required_fields = set(["widget_type"])
+    if not required_fields.issubset(request.POST):
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
+    widget_type = request.POST["widget_type"]
+
+    results = dict()
+
+    if ScreenWidgetConfig.objects.filter(widget_type=widget_type).exists():
+        widget_config = ScreenWidgetConfig.objects.get(widget_type=widget_type)
+        results['status'] = True
+        results['data'] = widget_config.data
+        results['message'] = 'found widget config'
+
+    else:
+        results['status'] = False
+        results['message'] = 'widget config not found!'
+
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+
+def delete_widget_config(request):
+    logger.info("__ screens delete_widget_config __")
+    required_fields = set(["widget_type"])
+    if not required_fields.issubset(request.POST):
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
+    widget_type = request.POST["widget_type"]
+
+    results = dict()
+
+    if ScreenWidgetConfig.objects.filter(widget_type=widget_type).exists():
+        widget_config = ScreenWidgetConfig.objects.get(widget_type=widget_type)
+        widget_config.delete()
+        results['status'] = True
+        results['message'] = 'deleted widget config'
+
+    else:
+        results['status'] = True
+        results['message'] = 'widget config already gone!'
 
     return HttpResponse(json.dumps(results), content_type="application/json")

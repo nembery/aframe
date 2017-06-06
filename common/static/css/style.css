@@ -162,7 +162,6 @@ input[type=text], input[type=number], input[type=password], textarea {
     width: 250px;
     border: 0px;
     border: 1px solid grey;
-
     background: #fff;
 }
 

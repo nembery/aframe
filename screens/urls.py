@@ -33,4 +33,10 @@ urlpatterns = [
         name="list_widget_data"),
     url(r"^deleteWidgetData$", views.delete_widget_data,
         name="delete_widget_data"),
+    url(r"^saveWidgetConfig$", views.save_widget_config,
+        name="save_widget_config"),
+    url(r"^getWidgetConfig$", views.get_widget_config,
+        name="get_widget_config"),
+    url(r"^deleteWidgetConfig$", views.delete_widget_config,
+        name="delete_widget_config"),
 ]

@@ -148,6 +148,10 @@ REGISTERED_ENDPOINT_PROVIDERS = (
     {
         "class": "JunosSpaceDeviceList",
         "name": "Junos Space Device List",
+    },
+    {
+        "class": "SaltMinion",
+        "name": "Salt Minions",
     }
 )
 ACTION_PROVIDERS = (
@@ -523,6 +527,19 @@ WIDGETS = (
     },
 )
 
+# Screen widgets are used to parse the output of the various automations and input_forms created in aframe.
+# These are by nature tightly tied to the output of the various automations.
+# I.E. you will write an screen widget to display the output of some REST API call.
+# Configuration:
+# label: Human friendly name shown when you want to add non-transient widgets to a 'screen'
+# configurable: boolean that determines if this widgets requires some configuration on a per-instance basis
+# id: id of the widget
+# configuration_template: name of the html template to render for per-instance configuration
+# render_template: html template to be rendered on the screen
+# consumes_input_form: an input form that can be used for per instance configuration
+# transient: allows the widget to be placed and saved on the screen. Transient widgets much be summoned manually
+# consumes_automation: the automation to be executed before the widget is rendered. The output of the template is
+#   added to the context
 SCREEN_WIDGETS = (
     {
         "label": "Menu",
@@ -544,12 +561,44 @@ SCREEN_WIDGETS = (
         "id": "opennti_graph",
         "configuration_template": "opennti_graph_config.html",
         "render_template": "static_image.html",
-        "consumes_automation": "grafana_interfaces_graph_url"
+        "consumes_input_form": "grafana_interfaces_graph_url"
     },
     {
         "label": "Network Topology",
         "configurable": False,
         "id": "network_topology",
         "render_template": "network_topology.html"
+    },
+    {
+        "label": "Minion Status",
+        "configurable": False,
+        "transient": True,
+        "id": "minion_status",
+        "render_template": "salt_minion_status.html",
+        "consumes_automation": "get_salt_minion_status"
+    },
+    {
+        "label": "Proxy List",
+        "configurable": False,
+        "transient": False,
+        "id": "minion_list",
+        "render_template": "salt_proxy_list.html",
+        "consumes_automation": "get_salt_proxy_list"
+    },
+    {
+        "label": "Minion Config",
+        "configurable": False,
+        "transient": True,
+        "id": "minion_config",
+        "render_template": "salt_minion_config.html",
+        "consumes_automation": "get_salt_minion_config"
+    },
+    {
+        "label": "Open-NTI Graph",
+        "configurable": False,
+        "transient": True,
+        "id": "opennti_inline_graph",
+        "render_template": "static_image.html",
+        "consumes_automation": "grafana_all_interfaces_graph_url"
     }
 )

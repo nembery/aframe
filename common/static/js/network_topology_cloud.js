@@ -58,9 +58,9 @@ draw2d.shape.node.TopologyLinkCloud = draw2d.shape.icon.Cloud2.extend({
 	onDoubleClick: function() {
 	    var canvas = this.getCanvas();
 	    var canvasId = canvas.canvasId;
-	    var widget_config_id = canvasId.split('_').slice(-1);
-	    console.log(widget_config_id + " " + this.getLabel());
-	    load_network_topology(widget_config_id, this.getLabel());
+	    var widget_layout_id = canvasId.split('_').slice(-1);
+	    console.log(widget_layout_id + " " + this.getLabel());
+	    load_network_topology(widget_layout_id, this.getLabel());
 	},
 	onContextMenu: function(x, y) {
         var items = {
@@ -81,9 +81,9 @@ draw2d.shape.node.TopologyLinkCloud = draw2d.shape.icon.Cloud2.extend({
                     case "delete":
 			            var canvas = this.getCanvas();
                         var canvasId = canvas.canvasId;
-                        var widget_config_id = canvasId.split('_').slice(-1);
-                        console.log(widget_config_id + " " + this.getLabel());
-                        delete_network_topology(widget_config_id, this.getLabel());
+                        var widget_layout_id = canvasId.split('_').slice(-1);
+                        console.log(widget_layout_id + " " + this.getLabel());
+                        delete_network_topology(widget_layout_id, this.getLabel());
                         break;
                     default:
                         break;

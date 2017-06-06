@@ -4,34 +4,36 @@ if (canvases == undefined) {
 }
 var canvas_layout = {};
 
-function get_layout_for_icon(widget_config_id) {
+function get_layout_for_icon(widget_layout_id) {
+    // determine where on the canvas to put this icon
+    // i.e. don't overlap them
 
-    var wrap_limit = 5;
-    var icon_offset = 110;
+    var wrap_limit = 8;
+    var icon_offset = 120;
 
     if (canvas_layout == undefined) {
         canvas_layout = {};
     }
 
-    if (canvas_layout[widget_config_id] == undefined) {
+    if (canvas_layout[widget_layout_id] == undefined) {
         var config = {
             'num_instances': 0,
-            'left': -50,
-            'top': 50,
+            'left': -25,
+            'top': 25,
             'total_offset': 100
         };
-        canvas_layout[widget_config_id] = config;
+        canvas_layout[widget_layout_id] = config;
     }
 
-    var c = canvas_layout[widget_config_id];
+    var c = canvas_layout[widget_layout_id];
 
     console.log('adding one');
     c['num_instances'] += 1;
-    c['left'] += 100;
+    c['left'] += 120;
     c['top'] += 0;
 
     if (c['num_instances'] > wrap_limit) {
-        c['left'] = 50;
+        c['left'] = 25;
         c['top'] += icon_offset;
         c['num_instances'] = 1;
         c['total_offset'] += 110;
@@ -40,7 +42,9 @@ function get_layout_for_icon(widget_config_id) {
     return c;
 }
 
-function clear_layout(widget_config_id) {
+function clear_layout(widget_layout_id) {
+    // reset the layout on this canvas
+    // if you delete a topology, then we want to start over
     if (canvas_layout == undefined) {
         canvas_layout = {};
     }
@@ -50,26 +54,27 @@ function clear_layout(widget_config_id) {
             'top': 50,
             'total_offset': 100
         };
-    canvas_layout[widget_config_id] = config;
+    canvas_layout[widget_layout_id] = config;
 }
 
-function add_network_device(widget_config_id) {
+function add_network_device(widget_layout_id) {
+    // add an icon to the canvas
 
     if (canvases == undefined) {
         console.log('uh oh');
         return;
     }
 
-    if (canvases[widget_config_id] == undefined) {
+    if (canvases[widget_layout_id] == undefined) {
         console.log(' now what? ');
         return;
     }
 
-    canvas = canvases[widget_config_id];
+    canvas = canvases[widget_layout_id];
 
-    var name = $('#add_network_device_name_' + widget_config_id).val();
-    var ip = $('#add_network_device_ip_' + widget_config_id).val();
-    var icon_val = $('#add_network_device_icon_' + widget_config_id).val();
+    var name = $('#add_network_device_name_' + widget_layout_id).val();
+    var ip = $('#add_network_device_ip_' + widget_layout_id).val();
+    var icon_val = $('#add_network_device_icon_' + widget_layout_id).val();
 
     var icon_array = icon_val.split(':');
     var icon_name = icon_array[0];
@@ -78,26 +83,31 @@ function add_network_device(widget_config_id) {
 
     console.log(icon_name, icon_width, icon_height);
     var icon = new draw2d.shape.node.topologyIcon({ path: icon_name, width: icon_width, height: icon_height });
-    //var icon = new draw2d.shape.node.topologyIcon();
 
     icon.setup(name, ip);
 
-    var c = get_layout_for_icon(widget_config_id);
+    var c = get_layout_for_icon(widget_layout_id);
     canvas.add(icon, c['left'], c['top']);
 
 }
 
-function create_new_topology(widget_config_id) {
-    var canvas = window.canvases[widget_config_id];
+function create_new_topology(widget_layout_id) {
+    // clear the current canvas of all icons and create a new one
+
+    var canvas = window.canvases[widget_layout_id];
     canvas.clear();
 
-    var name_field = $('#topology_name_' + widget_config_id);
+    clear_layout(widget_layout_id)
+    layout['widgets'][widget_layout_id]['widget_config'] = {};
+
+    var name_field = $('#topology_name_' + widget_layout_id);
     name_field.val('n/a');
 }
 
-function debug_topology(widget_config_id) {
+function debug_topology(widget_layout_id) {
+    // dump the canvas as JSON to the console.log
 
-    var canvas = window.canvases[widget_config_id];
+    var canvas = window.canvases[widget_layout_id];
     var writer = new draw2d.io.json.Writer();
 
     writer.marshal(canvas, function(json) {
@@ -107,14 +117,15 @@ function debug_topology(widget_config_id) {
     });
 }
 
-function save_network_topology(widget_config_id) {
+function save_network_topology(widget_layout_id) {
+    // serialize the canvas to JSON and post to AFrame to store in the db
 
     var doc = $(document.documentElement);
     doc.css('cursor', 'progress');
 
     var url = "/screens/createWidgetData";
 
-    var canvas = window.canvases[widget_config_id];
+    var canvas = window.canvases[widget_layout_id];
 
     var writer = new draw2d.io.json.Writer();
 
@@ -125,10 +136,10 @@ function save_network_topology(widget_config_id) {
     });
 
     console.log(data);
-    console.log(layout['widgets'][widget_config_id]);
+    console.log(layout['widgets'][widget_layout_id]);
 
-    var widget_name = $('#save_network_topology_name_' + widget_config_id).val();
-    var widget_type = layout['widgets'][widget_config_id]['widget_id'];
+    var widget_name = $('#save_network_topology_name_' + widget_layout_id).val();
+    var widget_type = layout['widgets'][widget_layout_id]['widget_id'];
 
     var params = {
         "name": widget_name,
@@ -140,7 +151,16 @@ function save_network_topology(widget_config_id) {
     var post = $.post(url, params, function(response) {
         if(response['status'] == true) {
             alert('Saved OK');
-            reveal('save_topology_dialogue_' + widget_config_id);
+            reveal('save_topology_dialogue_' + widget_layout_id);
+
+            // let's save this topology on the layout config
+            widget_config = {
+                "name": widget_name,
+                "widget_type": widget_type,
+            }
+
+            layout['widgets'][widget_layout_id]['widget_config'] = widget_config;
+
         } else{
             alert(response['message']);
         }
@@ -155,14 +175,15 @@ function save_network_topology(widget_config_id) {
     });
 }
 
-function update_network_topology(widget_config_id) {
+function update_network_topology(widget_layout_id) {
+    // update current topology and update in the DB
 
     var doc = $(document.documentElement);
     doc.css('cursor', 'progress');
 
     var url = "/screens/updateWidgetData";
 
-    var canvas = window.canvases[widget_config_id];
+    var canvas = window.canvases[widget_layout_id];
 
     var writer = new draw2d.io.json.Writer();
 
@@ -173,12 +194,18 @@ function update_network_topology(widget_config_id) {
     });
 
     console.log(data);
-    console.log(layout['widgets'][widget_config_id]);
+    console.log(layout['widgets'][widget_layout_id]);
 
-    var widget_name = $('#topology_name_' + widget_config_id).val();
+    if (data == []) {
+        console.log('found a blank canvas to update!');
+        doc.css('cursor', '');
+        return;
+    }
+
+    var widget_name = $('#topology_name_' + widget_layout_id).val();
 
     console.log(widget_name);
-    var widget_type = layout['widgets'][widget_config_id]['widget_id'];
+    var widget_type = layout['widgets'][widget_layout_id]['widget_id'];
 
     var params = {
         "name": widget_name,
@@ -204,31 +231,31 @@ function update_network_topology(widget_config_id) {
     });
 }
 
-function load_network_topology(widget_config_id, widget_data_name) {
+function load_network_topology(widget_layout_id, widget_data_name) {
+    // load a saved canvas from the DB
 
     var doc = $(document.documentElement);
     doc.css('cursor', 'progress');
 
     var url = "/screens/getWidgetData";
 
-    var canvas = window.canvases[widget_config_id];
+    var canvas = window.canvases[widget_layout_id];
     canvas.clear();
 
-    clear_layout(widget_config_id);
+    clear_layout(widget_layout_id);
 
     var writer = new draw2d.io.json.Writer();
 
     if (widget_data_name == undefined) {
-        widget_data_name = $('#load_network_topology_name_' + widget_config_id).val();
+        widget_data_name = $('#load_network_topology_name_' + widget_layout_id).val();
     }
 
-    var widget_type = layout['widgets'][widget_config_id]['widget_id'];
+    var widget_type = layout['widgets'][widget_layout_id]['widget_id'];
 
     var params = {
         "name": widget_data_name,
         "widget_type": widget_type
     }
-    console.log(params);
 
     var post = $.post(url, params, function(response) {
         if(response['status'] == true) {
@@ -236,12 +263,15 @@ function load_network_topology(widget_config_id, widget_data_name) {
             reader = new draw2d.io.json.Reader();
             reader.unmarshal(canvas, json);
 
-            if ($('#load_topology_dialogue_' + widget_config_id).css('display') != 'none') {
-                reveal('load_topology_dialogue_' + widget_config_id);
+            if ($('#load_topology_dialogue_' + widget_layout_id).css('display') != 'none') {
+                reveal('load_topology_dialogue_' + widget_layout_id);
             }
 
-            var name_field = $('#topology_name_' + widget_config_id);
+            var name_field = $('#topology_name_' + widget_layout_id);
             name_field.val(widget_data_name);
+
+            // let's save this topology on the layout config
+            layout['widgets'][widget_layout_id]['widget_config'] = params;
         }
     });
 
@@ -254,20 +284,20 @@ function load_network_topology(widget_config_id, widget_data_name) {
     });
 }
 
-function delete_network_topology(widget_config_id, widget_data_name) {
+function delete_network_topology(widget_layout_id, widget_data_name) {
 
     var doc = $(document.documentElement);
     doc.css('cursor', 'progress');
 
     var url = "/screens/deleteWidgetData";
 
-    var canvas = window.canvases[widget_config_id];
+    var canvas = window.canvases[widget_layout_id];
 
     if (widget_data_name == undefined) {
-        widget_data_name = $('#load_network_topology_name_' + widget_config_id).val();
+        widget_data_name = $('#load_network_topology_name_' + widget_layout_id).val();
     }
 
-    var widget_type = layout['widgets'][widget_config_id]['widget_id'];
+    var widget_type = layout['widgets'][widget_layout_id]['widget_id'];
 
     var params = {
         "name": widget_data_name,
@@ -277,7 +307,10 @@ function delete_network_topology(widget_config_id, widget_data_name) {
 
     var post = $.post(url, params, function(response) {
         if(response['status'] == true) {
-            list_network_topologies(widget_config_id);
+            // remove from layout
+            layout['widgets'][widget_layout_id]['widget_config'] = {};
+
+            list_network_topologies(widget_layout_id);
         }
     });
 
@@ -290,39 +323,42 @@ function delete_network_topology(widget_config_id, widget_data_name) {
     });
 }
 
-function list_network_topologies(widget_config_id) {
+function list_network_topologies(widget_layout_id) {
 
-    var doc = jQuery(document.documentElement);
+    var doc = $(document.documentElement);
     doc.css('cursor', 'progress');
 
     var url = "/screens/listWidgetData"
 
-    var widget_type = layout['widgets'][widget_config_id]['widget_id'];
+    var widget_type = layout['widgets'][widget_layout_id]['widget_id'];
 
-    var canvas = window.canvases[widget_config_id];
+    var canvas = window.canvases[widget_layout_id];
     canvas.clear();
 
-    clear_layout(widget_config_id);
+    clear_layout(widget_layout_id);
 
     var params = {
         "widget_type": widget_type
     }
 
     var post = $.post(url, params, function(response) {
-        console.log(response);
+
+        // remove stale config from layout
+        layout['widgets'][widget_layout_id]['widget_config'] = {};
+
         var widget_list = $.parseJSON(response['list']);
         $.each(widget_list, function(i, o) {
             var name = o["name"]
             var cloud = new draw2d.shape.node.TopologyLinkCloud(name);
             cloud.width = 100;
             cloud.height = 100;
-            var c = get_layout_for_icon(widget_config_id);
+            var c = get_layout_for_icon(widget_layout_id);
             canvas.add(cloud, c['left'], c['top']);
         });
     });
 
-    if ($('#load_topology_dialogue_' + widget_config_id).css('display') != 'none') {
-        reveal('load_topology_dialogue_' + widget_config_id);
+    if ($('#load_topology_dialogue_' + widget_layout_id).css('display') != 'none') {
+        reveal('load_topology_dialogue_' + widget_layout_id);
     }
 
 
@@ -333,4 +369,90 @@ function list_network_topologies(widget_config_id) {
     post.always(function() {
         doc.css('cursor', '');
     });
+}
+
+function save_network_topology_config(widget_layout_id) {
+    // save global widget config to the db
+    // global config is inherited by all widgets of this type
+
+    var doc = $(document.documentElement);
+    doc.css('cursor', 'progress');
+
+    var url = "/screens/saveWidgetConfig";
+
+    var widget_type = layout['widgets'][widget_layout_id]['widget_id'];
+    d = {};
+
+    d["detail_widget"] = $('#detail_widget_' + widget_layout_id).val();
+    d["detail_identifier_param"] = $('#detail_identifier_param_' + widget_layout_id).val();
+
+    d["config_widget"] = $('#config_widget_' + widget_layout_id).val();
+    d["config_identifier_param"] = $('#config_identifier_param_' + widget_layout_id).val();
+
+    d["telemetry_widget"] = $('#telemetry_widget_' + widget_layout_id).val();
+    d["telemetry_identifier_param"] = $('#telemetry_identifier_param_' + widget_layout_id).val();
+
+    data = JSON.stringify(d);
+
+    var params = {
+        "widget_type": widget_type,
+        "data": data
+    }
+
+    console.log(params);
+
+    var post = $.post(url, params, function(response) {
+        if(response['status'] == true) {
+            alert('Saved OK');
+            reveal('configure_topology_dialogue_' + widget_layout_id);
+        } else{
+            alert(response['message']);
+        }
+    });
+
+    post.fail(function() {
+        alert('Could not perform request!');
+    });
+
+    post.always(function() {
+        doc.css('cursor', '');
+    });
+}
+
+function load_topology_icon_details(icon_id, global_config) {
+    // will load the widget for the specific icon
+    if (global_widget_configs['network_topology']["detail_widget"] == undefined) {
+        console.log('detail is not configured in the global config!');
+        return;
+    }
+    var desired_widget = global_widget_configs['network_topology']["detail_widget"];
+    var icon_param = global_widget_configs['network_topology']["detail_identifier_param"];
+    var widget_layout_id = generate_widget_layout_id();
+    load_widget(desired_widget, widget_layout_id, { [icon_param]: icon_id});
+}
+
+function load_topology_icon_config(icon_id, global_config) {
+    // will load the widget for the specific icon
+    if (global_widget_configs['network_topology']["config_widget"] == undefined) {
+        console.log('config is not configured in the global config!');
+        return;
+    }
+    var desired_widget = global_widget_configs['network_topology']["config_widget"];
+    var icon_param = global_widget_configs['network_topology']["config_identifier_param"];
+    var widget_layout_id = generate_widget_layout_id();
+    load_widget(desired_widget, widget_layout_id, { [icon_param]: icon_id});
+}
+
+
+function load_topology_icon_telemetry(icon_id, global_config) {
+    // will load the widget for the specific icon
+    if (global_widget_configs['network_topology']["telemetry_widget"] == undefined) {
+        console.log('telemetry is not configured in the global config!');
+        return;
+    }
+    var desired_widget = global_widget_configs['network_topology']["telemetry_widget"];
+    var icon_param = global_widget_configs['network_topology']["telemetry_identifier_param"];
+    var widget_layout_id = generate_widget_layout_id();
+
+    load_widget(desired_widget, widget_layout_id, { [icon_param]: icon_id});
 }

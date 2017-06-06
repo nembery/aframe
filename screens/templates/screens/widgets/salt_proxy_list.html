@@ -1,0 +1,20 @@
+{% extends "screens/widgets/widget_base.html" %}
+{% block widget %}
+<td>
+    <div>
+        <h3>Imported Network Devices</h3>
+        <table>
+            {% for k, v in automation_output.return.0.items %}
+            <tr>
+                <td>
+                    {{ k }}
+                </td>
+                <td>
+                    {{ v.proxy.host }}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</td>
+{% endblock %}

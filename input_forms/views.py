@@ -481,6 +481,8 @@ def apply_per_endpoint_template(request):
             context[j["name"]] = str(request.POST[j["name"]])
 
     context["af_endpoint_ip"] = endpoint["ip"]
+    context["af_endpoint_id"] = endpoint["id"]
+    context["af_endpoint_name"] = endpoint["name"]
     context["af_endpoint_username"] = endpoint["username"]
     context["af_endpoint_password"] = endpoint["password"]
     context["af_endpoint_type"] = endpoint["type"]
@@ -511,6 +513,16 @@ def apply_per_endpoint_template(request):
             logger.debug(action_options[ao]["value"])
 
     logger.debug("action name is: " + action_name)
+
+    # let's load any secrets if necessary
+    provider_options = action_provider.get_options_for_provider(action_name)
+    for opt in provider_options:
+        print opt
+        if opt['type'] == 'secret':
+            opt_name = opt['name']
+            pw_lookup_key = action_options[opt_name]['value']
+            pw_lookup_value = aframe_utils.lookup_secret(pw_lookup_key)
+            action_options[opt_name]['value'] = pw_lookup_value
 
     action = action_provider.get_provider_instance(action_name, action_options)
     action.set_endpoint(endpoint)

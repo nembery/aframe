@@ -1,25 +1,39 @@
 {% extends "screens/widgets/widget_base.html" %}
 {% block widget %}
 <td>
-    <img title="static_image" id="static_image_{{ widget_config_id }}"/>
-
+    <div id="image_title_{{ widget_layout_id }}"></div>
+    <img title="static_image" id="static_image_{{ widget_layout_id }}"/>
     <script type="text/javascript">
 
         $(function() {
-            var widget_config_id = {{ widget_config_id }};
+            var widget_layout_id = {{ widget_layout_id }};
             var config = {};
 
-            if (layout['widgets'][widget_config_id]['widget_config'] != undefined) {
-                config = layout['widgets'][widget_config_id]['widget_config'];
-                console.log(layout['widgets'][widget_config_id]['widget_config']);
-                var d = new Date().getTime()
-                var u = layout['widgets'][widget_config_id]['widget_config']['url'];
-                $('#static_image_{{ widget_config_id }}').prop('src', u + '&t=' + d);
+            var url = '{{ automation_results.output|safe }}';
+
+            if (layout['widgets'][widget_layout_id] == undefined) {
+                layout['widgets'][widget_layout_id] = {};
+                layout['widgets'][widget_layout_id]['widget_config'] = {};
+                layout['widgets'][widget_layout_id]['widget_config']['url'] = url;
             }
 
-            $('#static_image_{{ widget_config_id }}').on('load', function() {
-                $('#widget_container_{{ widget_config_id }}').css('height', 'initial');
-                $('#widget_container_{{ widget_config_id }}').css('width', 'initial');
+            if (layout['widgets'][widget_layout_id]['widget_config'] != undefined) {
+                config = layout['widgets'][widget_layout_id]['widget_config'];
+                console.log(layout['widgets'][widget_layout_id]['widget_config']);
+                var d = new Date().getTime()
+                var u = layout['widgets'][widget_layout_id]['widget_config']['url'];
+                $('#static_image_{{ widget_layout_id }}').prop('src', u + '&t=' + d);
+
+                if (config['title'] != undefined) {
+                    console.log('setting title');
+                    $('#image_title_{{ widget_layout_id }}').html('<h3>' + config['title'] + '</h3>');
+                }
+
+            }
+
+            $('#static_image_{{ widget_layout_id }}').on('load', function() {
+                $('#widget_container_{{ widget_layout_id }}').css('height', 'initial');
+                $('#widget_container_{{ widget_layout_id }}').css('width', 'initial');
             });
 
             if (config['refresh'] != undefined) {
@@ -28,7 +42,7 @@
                     setInterval(function() {
                         var d = new Date().getTime()
                         var u = config['url'];
-                        $('#static_image_{{ widget_config_id }}').prop('src', u + '&t=' + d);
+                        $('#static_image_{{ widget_layout_id }}').prop('src', u + '&t=' + d);
                     }, refresh);
                 }
             }

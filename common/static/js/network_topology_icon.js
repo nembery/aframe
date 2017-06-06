@@ -230,6 +230,12 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
             "details": {
                 name: "View Details"
             },
+            "config": {
+                name: "View Configuration"
+            },
+            "telemetry": {
+                name: "View Telemetry"
+            },
             "delete": {
                 name: "Delete"
             }
@@ -254,7 +260,7 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
         		            }
 		                    this.removePort(ports[i]);
         		        }
-                        $.contextMenu('destroy');
+                        // $.contextMenu('destroy');
                         var command = new draw2d.command.CommandDelete(this);
 			            this.getCanvas().getCommandStack().execute(command);
                         break;
@@ -263,6 +269,12 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
                         break;
                     case "details":
                         load_topology_icon_details(this.getLabel(), this.getParentCanvasId());
+                        break;
+                    case "config":
+                        load_topology_icon_config(this.getLabel(), this.getParentCanvasId());
+                        break;
+                    case "telemetry":
+                        load_topology_icon_telemetry(this.getLabel() + ":" + this.getIp(), this.getParentCanvasId());
                         break;
                     default:
                         break;

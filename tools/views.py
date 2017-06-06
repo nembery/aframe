@@ -243,6 +243,7 @@ def get_input_parameters_for_template(config_template):
         if "variable" in opts and opts["variable"] != '':
             print action_option
             item = dict()
+            # item['name'] = 'action_options_' + opts['name']
             item['name'] = 'action_options_' + opts['name']
             item['default'] = opts['variable']
             action_option_variables.append(item)
@@ -295,87 +296,9 @@ def execute_template(request):
     :return: json object of the form:
         {"output": "output of the automation template", "status": "0 or 1 for success or failure"
     """
-    if 'template_id' not in request.POST and 'template_name' not in request.POST:
-        error = {'output': 'missing required template_id parameter', 'status': 1}
-        return HttpResponse(json.dumps(error), content_type='application/json')
-    
-    if 'template_id' in request.POST:
-        template_id = request.POST['template_id']
-        config_template = ConfigTemplate.objects.get(pk=template_id)
-    else:
-        template_name = request.POST['template_name']
-        config_template = ConfigTemplate.objects.get(name=template_name)
-        
-    template_api = get_input_parameters_for_template(config_template)
+    post_vars = request.POST.dict()
 
-    context = dict()
-
-    try:
-        print str(template_api["input_parameters"])
-        input_parameters = template_api["input_parameters"]
-
-        for j in input_parameters:
-            print "setting context %s" % j
-            context[j] = str(request.POST[j])
-
-    except Exception as ex:
-        print str(ex)
-        error = {"output": "missing required parameters", "status": 1}
-        return HttpResponse(json.dumps(error), content_type="application/json")
-
-    compiled_template = engines['django'].from_string(config_template.template)
-    # compiled_template = get_template_from_string(config_template.template)
-    completed_template = str(compiled_template.render(context))
-
-    print completed_template
-    action_name = config_template.action_provider
-    action_options = json.loads(config_template.action_provider_options)
-
-    for ao in action_options:
-        if "action_options_" + str(ao) in request.POST:
-            logger.debug("Found a customized action option!")
-            new_val = request.POST["action_options_" + str(ao)]
-            current_value = action_options[ao]["value"]
-            action_options[ao]["value"] = re.sub("{{ .* }}", new_val, current_value)
-            logger.debug(action_options[ao]["value"])
-
-    # let's load any secrets if necessary
-    provider_options = action_provider.get_options_for_provider(action_name)
-    for opt in provider_options:
-        if opt['type'] == 'secret':
-            opt_name = opt['name']
-            pw_lookup_key = action_options[opt_name]['value']
-            pw_lookup_value = aframe_utils.lookup_secret(pw_lookup_key)
-            action_options[opt_name]['value'] = pw_lookup_value
-
-    print "action name is: " + action_name
-
-    action = action_provider.get_provider_instance(action_name, action_options)
-    if config_template.type == "per-endpoint":
-        required_fields = set(["af_endpoint_ip", "af_endpoint_username",
-                               "af_endpoint_password", "af_endpoint_password"]
-                              )
-
-        if not required_fields.issubset(request.POST):
-            error = {"output": "missing required authentication parameters", "status": 1}
-            return HttpResponse(json.dumps(error), content_type="application/json")
-
-        endpoint = dict()
-        endpoint["ip"] = request.POST["af_endpoint_ip"]
-        endpoint["username"] = request.POST["af_endpoint_username"]
-        endpoint["password"] = request.POST["af_endpoint_password"]
-        endpoint["type"] = request.POST["af_endpoint_type"]
-
-        action.set_endpoint(endpoint)
-
-    try:
-        results = action.execute_template(completed_template.strip().replace('\r\n', '\n'))
-        response = {"output": results, "status": 0}
-
-    except Exception as ex:
-        print str(ex)
-        response = {"output": "Error executing template", "status": 1}
-
+    response = aframe_utils.execute_template(post_vars)
     return HttpResponse(json.dumps(response), content_type="application/json")
 
 

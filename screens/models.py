@@ -32,10 +32,10 @@ class Screen(models.Model):
         verbose_name_plural = "Screens"
 
 
-# class to hold global screen widget data
+# class to hold instance screen widget data
 # the same configuration can produce and consume different data
-# i.e a widget to show open-nti graphs can be configured for an
-# open-nti instance, but different data for each different graph
+# i.e a widget to show graphs can be configured for an
+# graph producer, but different data for each different instance
 class ScreenWidgetData(models.Model):
     widget_type = models.CharField(max_length=64)
     name = models.CharField(max_length=64)
@@ -46,3 +46,19 @@ class ScreenWidgetData(models.Model):
     class Meta:
         verbose_name = "ScreenWidgetData"
         verbose_name_plural = "ScreenWidgetData"
+
+
+# class to hold global screen widget data
+# the same configuration can produce and consume different data
+# i.e a widget to show graphs can be configured for an
+# graph producer via the global screen_widget_config, but different data for each different instance
+# via it's screen_widget_data
+class ScreenWidgetConfig(models.Model):
+    widget_type = models.CharField(max_length=64)
+    data = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "ScreenWidgetConfig"
+        verbose_name_plural = "ScreenWidgetConfig"
