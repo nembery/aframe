@@ -2,6 +2,7 @@ import base64
 import json
 import platform
 import ssl
+import urllib
 import urllib2
 from urllib2 import HTTPError
 from lxml import etree
@@ -13,6 +14,14 @@ class RestAction(ActionBase):
         Simple REST action provider
 
         This is a "standalone" action, meaning it will be executed without an endpoint being passed in
+
+        This will handle GET, POST, and DELETE verbs for REST actions. Multiple authentication schemes are also
+        supported.
+
+        For POST operations, the input template will be rendered as-is and used as the data payload
+        For GET operations, the input template must be configured as a JSON formatted string. This will be
+        converted to a the appropriate query parameters if needed. I.E. if you need something like ?action=create
+        added to the end of the URL, add template data as such: { "action": "create" }
     """
 
     # inherited set_global_options from action_base.py will overwrite all of these automatically from the
@@ -33,6 +42,7 @@ class RestAction(ActionBase):
     _oauth2_auth_path = "/oauth2/token"
     _auth_token = ""
     _ruckus_auth_path = "/v3_1/session"
+    _saltapi_auth_path = "/login"
 
     def execute_template(self, template):
         """
@@ -51,10 +61,29 @@ class RestAction(ActionBase):
         opener = urllib2.build_opener(handler)
         urllib2.install_opener(opener)
 
-        # ensure no CRLF has snuck through
+        # ensure no CRLF was able to snick through
         template = template.replace('\r\n', '\n')
 
         full_url = self.protocol + "://" + self.host + self.url
+
+        if self.request_type == "GET" and template != '':
+            print template
+            ct = self.unescape(template)
+            print ct
+            try:
+                json_query_params = json.loads(ct)
+                query_data = urllib.urlencode(json_query_params)
+
+                if "?" in full_url:
+                    full_url += "&"
+                else:
+                    full_url += "?"
+
+                full_url += query_data
+            except ValueError as ve:
+                print "Could not parse template data for get request!"
+                pass
+
         print full_url
 
         request = urllib2.Request(full_url)
@@ -64,26 +93,37 @@ class RestAction(ActionBase):
             base64string = base64.b64encode("%s:%s" % (self.username, self.password))
             request.add_header("Authorization", "Basic %s" % base64string)
 
+        elif self.auth_type == "bearer":
+            request.add_header("Authorization", "Bearer %s" % self.password)
+
         elif self.auth_type == "keystone":
-            if not self.connect_to_keystone():
+            if not self.__connect_to_keystone():
                 return "Authentication error connecting to Keystone!"
 
             print "Connected to Keystone!"
             request.add_header("X-Auth-Token", self._auth_token)
 
         elif self.auth_type == "oauth2":
-            if not self.connect_to_oauth2():
+            if not self.__connect_to_oauth2():
                 return "Authentication error!"
 
             print "OAuth2 authentication succeeded!"
             request.add_header("Authorization", str(self._auth_token))
 
         elif self.auth_type == "ruckus":
-            if not self.connect_to_ruckus():
+            if not self.__connect_to_ruckus():
                 return "Authentication error!"
 
             print "Ruckus authentication succeeded!"
             request.add_header("Cookie", "JSESSIONID=" + str(self._auth_token))
+
+        elif self.auth_type == "saltapi":
+            if not self.__connect_to_saltapi():
+                return "Authentication error!"
+
+            print "Saltapi authentication succeeded!"
+            request.add_header("X-Auth-Token", str(self._auth_token))
+            print self._auth_token
 
         request.get_method = lambda: self.request_type
 
@@ -92,18 +132,15 @@ class RestAction(ActionBase):
 
         data = str(template + "\n\n")
         print "Request type: %s" % self.request_type
+        print "%s" % data
 
         if self.request_type == "GET" or self.request_type == "DELETE":
             try:
-                if hasattr(ssl, 'SSLContext'):
-                    context = ssl.create_default_context()  # disables SSL cert checking!
-                    context.check_hostname = False
-                    context.verify_mode = ssl.CERT_NONE
-                    r = urllib2.urlopen(request, context=context)
+                results = self.__perform_get(request)
+                if results != "":
+                    return self.__format_results(results)
                 else:
-                    r = urllib2.urlopen(request)
-                results = r.read()
-                return self.format_results(results)
+                    return "Successful REST Operation"
 
             except Exception as ex:
                 print str(ex)
@@ -114,43 +151,17 @@ class RestAction(ActionBase):
                 request.add_header("Content-Type", self.content_type)
                 request.add_header("Content-Length", len(data))
 
-                if hasattr(ssl, 'SSLContext'):
-                    context = ssl.create_default_context()  # disables SSL cert checking!
-                    context.check_hostname = False
-                    context.verify_mode = ssl.CERT_NONE
-                    results = urllib2.urlopen(request, data, context=context).read()
+                result = self.__perform_post(request, data).read()
+
+                if result != "":
+                    return self.__format_results(result)
                 else:
-                    results = urllib2.urlopen(request, data).read()
-                return self.format_results(results)
+                    return "Successful POST Operation"
+
             except HTTPError as he:
                 return "Error! %s" % str(he)
 
-    @staticmethod
-    def format_results(results):
-        """
-        detects string format (xml || json) and formats appropriately
-
-        :param results: string from urlopen
-        :return: formatted string output
-        """
-        # use pretty_print if we have an xml document returned
-        if results.startswith("<?xml"):
-            print "Found XML results - using pretty_print"
-            print results
-            xml = etree.fromstring(results)
-            return etree.tostring(xml, pretty_print=True)
-
-        # is the result valid json?
-        try:
-            json_string = json.loads(results)
-            print "Found JSON results"
-            return json.dumps(json_string, indent=4)
-        except ValueError:
-            # this isn't xml or json, so just return it!
-            print "Unknown results!"
-            return results
-
-    def connect_to_keystone(self):
+    def __connect_to_keystone(self):
         """
         connects to Keystone in the specified project scope
 
@@ -189,11 +200,12 @@ class RestAction(ActionBase):
         request.add_header("charset", "UTF-8")
         request.add_header("X-AFrame-Useragent", "%s:%s" % (platform.node(), "aframe_rest_client"))
         request.add_header("Content-Length", len(_auth_json))
-        result = urllib2.urlopen(request, _auth_json)
+
+        result = self.__perform_post(request, _auth_json)
         self._auth_token = result.info().getheader('X-Subject-Token')
         return True
 
-    def connect_to_oauth2(self):
+    def __connect_to_oauth2(self):
         """
         connects to OAuth2 with the specified user and password
 
@@ -217,13 +229,7 @@ class RestAction(ActionBase):
         request.add_header("Authorization", "Basic %s" % base64string)
         request.add_header("Content-Type", "application/json")
 
-        if hasattr(ssl, 'SSLContext'):
-            context = ssl.create_default_context()  # disables SSL cert checking!
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-            result = urllib2.urlopen(request, _auth_json, context=context).read()
-        else:
-            result = urllib2.urlopen(request, _auth_json).read()
+        result = self.__perform_post(request, _auth_json).read()
 
         try:
             json_string = json.loads(result)
@@ -238,7 +244,7 @@ class RestAction(ActionBase):
         self._auth_token = json_string["token_type"] + " " + json_string["access_token"]
         return True
 
-    def connect_to_ruckus(self):
+    def __connect_to_ruckus(self):
         """
         connects to Ruckus REST server to get a Cookie with the specified user and password
 
@@ -260,16 +266,87 @@ class RestAction(ActionBase):
         print "Ruckus Rest Cookie using username/password: %s %s" % (self.username, self.password)
         request.add_header("Content-Type", "application/json")
 
-        if hasattr(ssl, 'SSLContext'):
-            context = ssl.create_default_context()  # disables SSL cert checking!
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-            result = urllib2.urlopen(request, _auth_json, context=context).read()
-        else:
-            result = urllib2.urlopen(request, _auth_json).read()
+        result = self.__perform_post(request, _auth_json)
 
         auth_token_string = result.info().getheader('Set-cookie')
         self._auth_token = auth_token_string.split(';')[0]
 
         return True
 
+    def __connect_to_saltapi(self):
+        """
+        connects to salt api endpoint to get a token with the specified user and password
+        
+        defaults to 'pam' eauth method
+
+        :return: boolean if successful
+
+        """
+
+        _auth_json = """
+           {
+            "username" : "%s",
+            "password" : "%s",
+            "eauth": "pam"
+            }
+            """ % (self.username, self.password)
+
+        full_url = self.protocol + "://" + self.host + self._saltapi_auth_path
+        print full_url
+        request = urllib2.Request(full_url)
+
+        print "Authenticating to salt-api with username/password: %s %s" % (self.username, self.password)
+        request.add_header("Content-Type", "application/json")
+
+        result = self.__perform_post(request, _auth_json).read()
+        json_results = json.loads(result)
+        self._auth_token = json_results['return'][0]['token']
+
+        return True
+
+    @staticmethod
+    def __perform_post(request, data):
+        if hasattr(ssl, 'SSLContext'):
+            context = ssl.create_default_context()  # disables SSL cert checking!
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+            return urllib2.urlopen(request, data, context=context)
+
+        else:
+            print "no ssl"
+            return urllib2.urlopen(request, data)
+
+    @staticmethod
+    def __perform_get(request):
+        if hasattr(ssl, 'SSLContext'):
+            context = ssl.create_default_context()  # disables SSL cert checking!
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+            return urllib2.urlopen(request, context=context).read()
+        else:
+            return urllib2.urlopen(request).read()
+
+    @staticmethod
+    def __format_results(results):
+        """
+        detects string format (xml || json) and formats appropriately
+
+        :param results: string from urlopen
+        :return: formatted string output
+        """
+        # use pretty_print if we have an xml document returned
+        if results.startswith("<?xml"):
+            print "Found XML results - using pretty_print"
+            print results
+            xml = etree.fromstring(results)
+            return etree.tostring(xml, pretty_print=True)
+
+        # is the result valid json?
+        try:
+            json_string = json.loads(results)
+            print "Found JSON results"
+            return json.dumps(json_string, indent=4)
+        except ValueError:
+            # this isn't xml or json, so just return it!
+            print "Unknown results!"
+            return results

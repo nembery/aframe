@@ -6,6 +6,8 @@
 
     var template_variables = [];
 
+    var widgets = $.parseJSON('{{ widgets_json|safe }}');
+
     function submit_form() {
         // on form submission, gather up all the template variables
         // and keep in a json object. We only care about the constructed
@@ -52,6 +54,16 @@
                 // now use the 'ends with' selector to get the widget_config value form element and value
                 var widget_config = row.find('[id $= "_widget_config"]').val();
 
+                // verify we have something to work with
+                if (widget_config == "") {
+                    widget_config = "{}";
+                }
+
+                // widget_config is a JSON string stored on the DOM
+                // convert it back to a data structure here before serializing the whole thing back to a string
+                // FIXME - should this be surrounded with try/catch?
+                var widget_config_object = JSON.parse(widget_config);
+
                 // let's log it here for the dev again
                 console.log("name is: " + name);
                 console.log("default is: " + default_value);
@@ -63,7 +75,7 @@
                         "label" : label,
                         "default": default_value,
                         "widget": widget,
-                        "widget_config": widget_config
+                        "widget_config": widget_config_object
                     };
                 template_variables.push(t);
             }
@@ -149,16 +161,15 @@
                         </td>
                         <td>
                             <select name="{{ t }}_widget" id="{{ t }}_widget"
-                                    onchange="javascript: load_widget_configs(this)">
-                                <option value="text_input">Free form text input - no validation</option>
-                                <option value="text_area">Free form text area - no validation</option>
-                                <option value="numeric_range">Text input - numeric range validation</option>
-                                <option value="text_regex">Text input - regular expression validation</option>
-                                <option value="preload_value">Bind value from another automation</option>
-                                <option value="preload_list">Bind list of values from another automation</option>
-                                <option value="static_list">Static list of values</option>
+                                    onchange="javascript: load_widget_configs('{{ t }}_widget')">
+                                {% for w in widgets %}
+                                <option value="{{ w.id }}">{{ w.label }}</option>
+                                {% endfor %}
                             </select>
                             <input type="hidden" name="{{ t }}_widget_config" id="{{ t }}_widget_config" value=""/>
+                            <input type="button" id="{{ t }}_widget_config_button" value="Configure"
+                                   onclick="javascript: load_widget_configs('{{ t }}_widget')"
+                                   style="display: none; width: 75px;"/>
                         </td>
                     </tr>
                     {% endfor %}

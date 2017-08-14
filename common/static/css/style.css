@@ -47,12 +47,12 @@ h3 {
     color: orange;
 }
 
-#overlay_menu {
+.overlay_menu {
     size: 8px;
     text-align: right;
 }
 
-#overlay_menu a:hover {
+.overlay_menu a:hover {
     text-decoration: none;
 }
 
@@ -65,7 +65,7 @@ h3 {
     width: 100%;
     height: 100%;
     background: rgba(0,0,0,0.75);
-    z-index: 1000;
+    z-index: 99;
     overflow: scroll;
 }
 
@@ -73,7 +73,7 @@ h3 {
     margin: auto;
     margin-top: 30px;
     width: 900px;
-    border: 4px solid rgb(104, 174, 100);
+    border: 4px solid orange;
     padding: 10px 10px 10px 10px;
     background-color: #fff;
 }
@@ -86,6 +86,13 @@ h3 {
 
 .overlay_box textarea {
     width: 850px;
+}
+
+.overlay_box input[type=text] {
+    width: 250px;
+    padding: 6px;
+    margin: 4px;
+    font-size: 100%;
 }
 
 #action_params_container textarea {
@@ -152,8 +159,10 @@ input[type=text], input[type=number], input[type=password], textarea {
     font-size: 100%;
     font-family: "lucida grande",verdana,helvetica,arial,sans-serif;
     padding: 5px;
-    margin-left: 15px;
-    width: 490px;
+    width: 250px;
+    border: 0px;
+    border: 1px solid grey;
+    background: #fff;
 }
 
 input[type=submit], input[type=button] {
@@ -191,9 +200,6 @@ table tr td {
        padding-left: 10px;
        text-align: left;
 }
-table tr:nth-child(even) {
-       background: #f9f9f9;
-}
 
 div .centered_box {
     margin: auto;
@@ -201,7 +207,7 @@ div .centered_box {
     border: 4px solid grey;
     padding: 10px 50px 30px 50px;
     background-color: #fff;
-    overflow: scroll;
+    /* overflow: scroll; */
 }
 
 div .redAlert {
@@ -250,6 +256,11 @@ div .unknownAlert {
 	cursor: default;
 	background: white;
 	border: 1px solid grey;
+	z-index: 1001;
+}
+
+.ui-front {
+    z-index: 1001;
 }
 
 .ui-menu {
@@ -282,6 +293,34 @@ div .unknownAlert {
 .ui-menu .ui-state-active {
 	margin: -1px;
 }
+
+.screen_box {
+
+    display: none;
+    background: #eee;
+    border: 1px solid #ddd;
+    width: 350px;
+    font-size: 75%;
+    position: absolute;
+    margin: 5px;
+}
+
+.screen_box table {
+    margin: 0px;
+    padding: 0px;
+}
+
+.screen_box input[type=text], .screen_box input[type=password] {
+    width: 175px;
+    margin: 0px;
+    padding: 2px;
+}
+
+.screen_box_header tr td {
+    font-weight: bold;
+    border-bottom: 1px solid #666;
+}
+
 
 
 

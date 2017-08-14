@@ -1,0 +1,93 @@
+{% extends "screens/widgets/widget_overlay.html" %}
+{% block overlay %}
+<script type="text/javascript">
+
+    var widget_layout_id = {{ widget_layout_id }};
+    var widget_id = '{{ widget_id }}';
+    if (layout['widgets'][widget_layout_id] == undefined) {
+        console.log('OPENNTI SETTING WIDGET_CONFIG');
+        layout['widgets'][widget_layout_id] = {};
+    }
+
+    function set_opennti_graph_config(){
+
+        var config = {};
+        var open_nti_host = $('[name = "open_nti_host"]').val();
+        var from = $('[name = "from"]').val();
+        var to = $('[name = "to"]').val();
+        var host_regex = $('[name = "host_regex"]').val();
+        var interface_regex = $('[name = "interface_regex"]').val();
+        var width = $('[name = "width"]').val();
+        var height = $('[name = "height"]').val();
+
+        var refresh = $('#opennti_graph_refresh').val();
+
+        var params = {
+            "template_name": "{{ consumes_input_form }}",
+            "open_nti_host": open_nti_host,
+            "from": from,
+            "to": to,
+            "host_regex": host_regex,
+            "interface_regex": interface_regex,
+            "width": width,
+            "height": height,
+        }
+
+        var config = {};
+
+        var url = '/tools/execute_template/';
+        var post = $.post(url, params, function(response) {
+
+            var url = response['output'].replace('\n', '');
+            console.log(response);
+            config['url'] = url;
+            config['refresh'] = parseInt(refresh) * 1000;
+            config['title'] = host_regex + " " + interface_regex;
+
+        });
+
+        console.log(config);
+
+        // Every screen config should get the 'widget_config' and 'widget_id' at minimum
+        layout['widgets'][widget_layout_id]['widget_config'] = config;
+        layout['widgets'][widget_layout_id]['widget_id'] = '{{ widget_id }}';
+        console.log(layout['widgets'][widget_layout_id]);
+        close_overlay();
+        setTimeout(function() { load_widget(widget_id, widget_layout_id) }, 1000);
+    }
+
+</script>
+<table>
+    <tbody>
+    <tr>
+        <td colspan="2">
+            Simple Static Image. New images can be added to the common/lib/static/images directory
+        </td>
+    </tr>
+    </tbody>
+    {% include "input_forms/input_form_body.html" %}
+    <tbody>
+    <tr>
+        <td>
+            Refresh Interval:
+        </td>
+        <td>
+            <select id="opennti_graph_refresh">
+                <option value="0" selected="selected">None</option>
+                <option value="30">30</option>
+                <option value="60">60</option>
+                <option value="90">90</option>
+                <option value="120">120</option>
+                <option value="180">180</option>
+                <option value="300">300</option>
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <input type="button" onclick="javascript: set_opennti_graph_config()" value="OK"/>
+        </td>
+    </tr>
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "screens/widgets/widget_overlay.html" %}
+{% block overlay %}
+<script type="text/javascript">
+
+    console.log('{{ widget_layout_id }}');
+
+    var config_element = {}
+    var widget_layout_id = {{ widget_layout_id }};
+    var widget_id = '{{ widget_id }}';
+    if (layout['widgets'][widget_layout_id] == undefined) {
+        layout['widgets'][widget_layout_id] = {};
+    }
+
+    var config_element = layout['widgets'][widget_layout_id];
+
+    console.log(config_element);
+
+    if (config_element['url'] != undefined) {
+         $('static_image_url').val(config_element['url']);
+    }
+
+    console.log(menu_list_options);
+
+    function set_static_image_config(){
+
+        var config = {};
+        var url = $('#static_image_url').val();
+        var refresh = $('#static_image_refresh').val();
+
+        config['url'] = url;
+        config['refresh'] = parseInt(refresh) * 1000;
+
+        // Every screen config should get the 'widget_config' and 'widget_id' at minimum
+        layout['widgets'][widget_layout_id]['widget_config'] = config;
+        layout['widgets'][widget_layout_id]['widget_id'] = '{{ widget_id }}';
+        console.log(layout['widgets'][widget_layout_id]);
+        close_overlay();
+        load_widget(widget_id, widget_layout_id);
+    }
+
+</script>
+<table>
+    <tr>
+        <td colspan="2">
+            Simple Static Image. New images can be added to the common/lib/static/images directory
+        </td>
+    </tr>
+    <tr>
+        <td>
+            URL:
+        </td>
+        <td>
+            <input type="text" id="static_image_url" value="/static/images/a-frame-logo.png"
+                    title="add images to the common/lib/static/images directory"/>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Refresh Interval:
+        </td>
+        <td>
+            <select id="static_image_refresh">
+                <option value="0" selected="selected">None</option>
+                <option value="30">30</option>
+                <option value="60">60</option>
+                <option value="90">90</option>
+                <option value="120">120</option>
+                <option value="180">180</option>
+                <option value="300">300</option>
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <input type="button" onclick="javascript: set_static_image_config()" value="OK"/>
+        </td>
+    </tr>
+</table>
+{% endblock %}

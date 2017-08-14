@@ -8,11 +8,12 @@ from a_frame.utils.action_providers.action_base import ActionBase
 
 class SSHRemoteExecution(ActionBase):
     """
-        Runs a template as a local script
-        !!! Potentially dangerous !!!
-        Essentially runs untrusted user input on the local box
+        Runs a template as a remote script
 
-        By convention use the execute_template will create a local script, set it chmod +x
+        Will either run a CLI on a remote host via SSH
+        or use SCP to place a compiled template on that host
+
+        FIXME - maybe this should actually scp and execute all at once?
         device details will be set in the ENV as
         ENDPOINT_IP
         ENDPOINT_USERNAME
@@ -24,7 +25,7 @@ class SSHRemoteExecution(ActionBase):
     endpoint_password = ""
 
     request_type = "cli"
-    file_path = "/var/tmp/aframe/script.sh"
+    file_path = "/tmp/aframe/script.sh"
 
     def set_endpoint(self, endpoint):
         self.endpoint_ip = endpoint["ip"]
@@ -39,8 +40,19 @@ class SSHRemoteExecution(ActionBase):
         :param template:
         :return: String results from the endpoint netconf subsystem
         """
+
+        # let's ensure we don't have silly dos style line breaks
+        template = template.replace("\r\n", "\n")
+        template = template.replace("\r", "\n")
+
         if self.request_type == "scp":
             return self.scp_template(template)
+        elif self.request_type == "scp_and_execute":
+            # first copy over the template
+            self.scp_template(template)
+            # this will update the file_path if necessary
+            # so, now let's just call execute_cli on the file_path
+            return self.execute_cli(self.file_path)
         else:
             return self.execute_cli(template)
 

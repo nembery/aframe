@@ -1,0 +1,275 @@
+{% extends "screens/widgets/widget_base.html" %}
+{% load staticfiles %}
+{% block widget %}
+<td>
+    <script type="text/javascript" src="{% static 'js/patched_raphael.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/rgbcolor.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery.contextmenu.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/patched_canvg.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/patched_Class.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/json2.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/pathfinding-browser.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/StackBlur.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/shifty.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/draw2d.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/network_topology_icon.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/network_topology_cloud.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/network_topology_utils.js' %}"></script>
+    <script type="text/javascript">
+
+        $(function() {
+            var widget_layout_id = {{ widget_layout_id }};
+            var config = {};
+
+            global_widget_configs['{{ widget_id }}'] = $.parseJSON('{{ widget_global_config|safe }}');
+
+            if (global_widget_configs['{{ widget_id }}']['detail_widget'] != undefined) {
+                $('#detail_widget_{{ widget_layout_id }}').val(global_widget_configs['{{ widget_id }}']['detail_widget']);
+                $('#detail_identifier_param_{{ widget_layout_id }}').val(global_widget_configs['{{ widget_id }}']['detail_identifier_param']);
+            }
+
+            if (global_widget_configs['{{ widget_id }}']['config_widget'] != undefined) {
+                $('#config_widget_{{ widget_layout_id }}').val(global_widget_configs['{{ widget_id }}']['config_widget']);
+                $('#config_identifier_param_{{ widget_layout_id }}').val(global_widget_configs['{{ widget_id }}']['config_identifier_param']);
+            }
+
+
+            if (global_widget_configs['{{ widget_id }}']['telemetry_widget'] != undefined) {
+                $('#telemetry_widget_{{ widget_layout_id }}').val(global_widget_configs['{{ widget_id }}']['telemetry_widget']);
+                $('#telemetry_identifier_param_{{ widget_layout_id }}').val(global_widget_configs['{{ widget_id }}']['telemetry_identifier_param']);
+            }
+
+            if (layout['widgets'][widget_layout_id] != undefined) {
+                if (layout['widgets'][widget_layout_id]['widget_config'] != undefined) {
+                    config = layout['widgets'][widget_layout_id]['widget_config'];
+                }
+            }
+
+            var canvas = new draw2d.Canvas("network_topology_" + widget_layout_id, true);
+
+            if (canvases[widget_layout_id] == undefined) {
+                canvases[widget_layout_id] = canvas;
+            }
+
+            console.log(canvases);
+
+            // set default connection router here
+
+            var createConnection = function(v){
+               // return customized connection
+
+               var connection = new draw2d.Connection({
+                 stroke: 3,
+                 radius: 10,
+                 color: "#445E88",
+                 router: new draw2d.layout.connection.VertexRouter(),
+               });
+               return connection;
+            };
+
+            // install a custom connection create policy
+            //
+            canvas.installEditPolicy(  new draw2d.policy.connection.DragConnectionCreatePolicy({
+                   createConnection: createConnection
+            }));
+
+            canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
+            canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
+
+            canvas.installEditPolicy(new draw2d.policy.canvas.SnapToCenterEditPolicy());
+
+            $('#widget_container_' + widget_layout_id).css('height', 'initial');
+            $('#widget_container_' + widget_layout_id).css('width', 'initial');
+
+            // load the previously saved topology, if any
+            if (config['name'] != undefined) {
+                load_network_topology(widget_layout_id, config['name']);
+            }
+        });
+
+    </script>
+    <div id="network_topology_{{ widget_layout_id }}_toolbar" class="network_topology_toolbar">
+        <ul style="list-style: none">
+            <li style="display: inline">
+                <a href="#" onclick="javascript: reveal('add_network_device_menu_{{ widget_layout_id }}');">
+                    Add Network Device
+                </a>
+            </li>
+            <li style="display: inline">
+                <a href="javascript: reveal('load_topology_dialogue_{{ widget_layout_id }}')">Load Network Topology</a>
+            </li>
+            <li style="display: inline">
+                <a href="javascript: create_new_topology({{ widget_layout_id }})">New Network Topology</a>
+            </li>
+            <li style="display: inline">
+                <a href="javascript: reveal('save_topology_dialogue_{{ widget_layout_id }}')">Save Network Topology</a>
+            </li>
+            <li style="display: inline">
+                <a href="javascript: update_network_topology({{ widget_layout_id }})">Update</a>
+            </li>
+            <li style="display: inline">
+                <a href="javascript: reveal('configure_topology_dialogue_{{ widget_layout_id }}')">Configure Topology
+                    Widget</a>
+            </li>
+            <li style="display: inline">
+                <a href="javascript: debug_topology({{ widget_layout_id }})">*</a>
+            </li>
+        </ul>
+    </div>
+    <div id="add_network_device_menu_{{ widget_layout_id }}" class="widget_overlay">
+        <div style="text-align: right">
+            <a href="javascript: reveal('add_network_device_menu_{{ widget_layout_id }}')">X</a>
+        </div>
+        <h3>Add Icon</h3>
+
+        <input type="text" size="25" id="add_network_device_name_{{ widget_layout_id }}"
+               placeholder="Device Name"/>
+        <input type="text" size="25" id="add_network_device_ip_{{ widget_layout_id }}"
+               placeholder="IP Address"/>
+        <select id="add_network_device_icon_{{ widget_layout_id }}">
+            <option value="/static/images/server.png:25:50">Server</option>
+            <option value="/static/images/mx_large.png:50:50">MX Large</option>
+            <option value="/static/images/mx_small.png:50:25">MX Small</option>
+            <option value="/static/images/switch.png:50:20">Switch</option>
+            <option value="/static/images/router.png:50:50">Router</option>
+            <option value="/static/images/switch_chassis.png:50:50">Switch Chassis</option>
+        </select>
+        <script type="text/javascript">
+            $( "#add_network_device_name_{{ widget_layout_id }}" ).autocomplete({
+                source: "/endpoints/search_ip",
+                focus: function(event, ui) {
+                    event.preventDefault();
+                    $("#add_network_device_name_{{ widget_layout_id }}").val(ui.item.label);
+                },
+
+                select: function (event, ui) {
+
+                    var return_label = ui.item.label;
+                    if (return_label.indexOf('/') > 0) {
+                        var rl_array = return_label.split('/');
+                        var group_name = rl_array[0];
+                        var endpoint_name = rl_array[1];
+                        $("#add_network_device_name_{{ widget_layout_id }}").val(endpoint_name);
+                    } else {
+                        $("#add_network_device_ip_{{ widget_layout_id }}").val(return_label);
+                    }
+                    var return_value = ui.item.value;
+
+                    if (return_value.indexOf(':') > 0) {
+                        var r_array = return_value.split(':');
+                        var group_id = r_array[0];
+                        var endpoint_ip = r_array[1];
+                        $("#add_network_device_ip_{{ widget_layout_id }}").val(endpoint_ip);
+
+                    } else {
+                        $("#add_network_device_ip_{{ widget_layout_id }}").val(return_value);
+                    }
+                    return false;
+                }
+            });
+
+        </script>
+        <input type="button" onclick="javascript: add_network_device({{ widget_layout_id }});" value="Add"/>
+    </div>
+    <div id="save_topology_dialogue_{{ widget_layout_id }}" class="widget_overlay">
+        <div style="text-align: right">
+            <a href="javascript: reveal('save_topology_dialogue_{{ widget_layout_id }}')">X</a>
+        </div>
+        <h3>Save Topology</h3>
+        Topology Name:
+        <input type="text" size="25" id="save_network_topology_name_{{ widget_layout_id }}"
+               placeholder="DC1"/>
+        <input type="button" onclick="javascript: save_network_topology('{{ widget_layout_id }}')"
+               value="Save"/>
+    </div>
+    <div id="load_topology_dialogue_{{ widget_layout_id }}" class="widget_overlay">
+        <div style="text-align: right">
+            <a href="javascript: reveal('load_topology_dialogue_{{ widget_layout_id }}')">X</a>
+        </div>
+        <h3>Load Topology</h3>
+        Topology Name:
+        <input type="text" size="25" id="load_network_topology_name_{{ widget_layout_id }}"
+               placeholder="DC1"/>
+        <input type="button" onclick="javascript: load_network_topology('{{ widget_layout_id }}')"
+               value="Load"/>
+        <br/>
+        Browse all Network Topologies:
+        <input type="button" onclick="javascript: list_network_topologies('{{ widget_layout_id }}')"
+               value="Browse"/>
+    </div>
+    <div id="configure_topology_dialogue_{{ widget_layout_id }}" class="widget_overlay">
+        <div style="text-align: right">
+            <a href="javascript: reveal('configure_topology_dialogue_{{ widget_layout_id }}')">X</a>
+        </div>
+        <h3>Configure Automation Actions</h3>
+        <table>
+            <tr>
+                <td>
+                    Detail Widget:
+                </td>
+                <td>
+                    <input type="text" size="25" id="detail_widget_{{ widget_layout_id }}"/>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Detail Widget ID Parameter:
+                </td>
+                <td>
+                    <input type="text" size="25" id="detail_identifier_param_{{ widget_layout_id }}"/>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Config Widget:
+                </td>
+                <td>
+                    <input type="text" size="25" id="config_widget_{{ widget_layout_id }}"/>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Config Widget ID Parameter:
+                </td>
+                <td>
+                    <input type="text" size="25" id="config_identifier_param_{{ widget_layout_id }}"/>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Telemetry Widget:
+                </td>
+                <td>
+                    <input type="text" size="25" id="telemetry_widget_{{ widget_layout_id }}"/>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Telemetry ID Parameter:
+                </td>
+                <td>
+                    <input type="text" size="25" id="telemetry_identifier_param_{{ widget_layout_id }}"/>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <input type="button" onclick="javascript: save_network_topology_config('{{ widget_layout_id }}')"
+                           value="Save"/>
+                </td>
+            </tr>
+        </table>
+
+    </div>
+    <div id="network_topology_{{ widget_layout_id }}" style="background-image: url({% static 'images/grid_lite.png' %});
+                                        background-repeat: repeat;
+                                        width:1000px;
+                                        height:400px;
+                                        position:relative;
+                                        "></div>
+    <input type="hidden" id="topology_name_{{ widget_layout_id }}"/>
+</td>
+{% endblock %}

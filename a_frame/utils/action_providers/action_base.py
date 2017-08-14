@@ -52,7 +52,18 @@ class ActionBase(object):
         """
         return {"continue": can_continue, "message": exit_message}
 
-
+    @staticmethod
+    def unescape(s):
+        """
+        :param s: String - string that should be have html entities removed
+        :return: string with html entities removed
+        """
+        s = s.replace("&lt;", "<")
+        s = s.replace("&gt;", ">")
+        s = s.replace("&amp;", "&")
+        s = s.replace("&quot;", '"')
+        s = s.replace("&#39;", "'")
+        return s
 
 
 

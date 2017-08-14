@@ -47,9 +47,45 @@ function embed_template() {
     });
 }
 
-function load_widget_configs(obj){
-    console.log('loading widget config for ' + obj.value);
-    console.log('loading widget config for ' + obj.id);
+function load_widget_configs(w_id){
+    // We will get the select object as the parameter
+    // the value represents the choice the user has made
+    // let's check the widget definition to see if there
+    // is any configuration required and load it if necessary
+
+    if (typeof(widgets) == "undefined") {
+        // if the widgets object isn't around, we need to bail out
+        console.log("widgets variable is not available");
+        return false;
+    }
+    console.log(widget_config);
+
+    var widget_config = {};
+    var obj = $("#" + w_id);
+    var config_button = $("#" + obj.prop("id") + "_config_button");
+
+    $(widgets).each(function(i,w) {
+        console.log(w.id +  " == " + obj.val());
+        if (w.id == obj.val()) {
+            widget_config = w;
+            // break out
+            return false;
+        }
+    });
+
+    if (widget_config.configurable == false) {
+        // no need to load a configuration here
+        config_button.css("display", "none");
+        // overwrite any previous widget parameters
+        var config_element = $("#" + obj.prop("id") + "_config");
+        var widget_config_text = JSON.stringify({}, null, 0);
+        config_element.val(widget_config_text);
+        return true;
+    }
+
+    config_button.css("display", "");
+
+    console.log('loading widget config for ' + obj.val());
 
     var doc = jQuery(document.documentElement);
     doc.css('cursor', 'progress');
@@ -57,8 +93,8 @@ function load_widget_configs(obj){
     var url = "/input_forms/loadWidgetConfig/"
 
     var params = {
-        "widget_name": obj.value,
-        "widget_id": obj.id
+        "widget_id": obj.val(),
+        "target_id": obj.prop("id")
     }
 
     var post = jQuery.post(url, params, function(response) {
@@ -74,7 +110,7 @@ function load_widget_configs(obj){
     });
 }
 
-function load_widget_configs_manual(widget_id, widget_name){
+function load_widget_configs_manual(widget_id, widget_name) {
 
     var doc = jQuery(document.documentElement);
     doc.css('cursor', 'progress');
@@ -99,27 +135,6 @@ function load_widget_configs_manual(widget_id, widget_name){
     });
 }
 
-
-function set_numeric_range_config(widget_id){
-
-    console.log(widget_id);
-    var config_element = jQuery('#' + widget_id + '_config');
-
-    console.log('#' + widget_id + '_config');
-    var lower = jQuery('#numeric_range_lower').val();
-    var higher = jQuery('#numeric_range_higher').val();
-
-    var widget_config = {
-        "lower": lower,
-        "higher": higher
-    }
-
-    var widget_config_text = JSON.stringify(widget_config, null, 0);
-    config_element.val(widget_config_text);
-    console.log(widget_config_text);
-    console.log('all done');
-    close_overlay();
-}
 
 function set_preload_list_config(widget_id){
 
@@ -157,4 +172,19 @@ function close_overlay() {
     overlay.empty();
     overlay.removeClass("help-overlay");
     overlay.remove();
+}
+
+function reveal(object_id) {
+    $('#' + object_id).toggle('blind');
+}
+
+// ======================= Widget Validation ======================= //
+
+function check_ipv4_input(obj) {
+    ip = obj.value;
+    if (! ip.match('^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')) {
+        alert('IP format is not valid!');
+        obj.value = '0.0.0.0';
+        return true;
+    }
 }

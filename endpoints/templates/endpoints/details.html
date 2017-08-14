@@ -7,6 +7,14 @@
 $(window).load(function() {
     $( "#template_autocomplete" ).autocomplete({
         source: "/input_forms/search",
+        focus: function(event, ui) {
+            event.preventDefault();
+            $("#template_autocomplete").val(ui.item.label);
+        },
+        select: function (event, ui) {
+            $("#template_autocomplete").val(ui.item.label);
+            return false;
+        }
     });
 });
 
@@ -76,7 +84,7 @@ $(window).load(function() {
                 <input type="hidden" name="group_id" value="{{ group_id }}">
                 <input type="hidden" name="endpoint_id" value="{{ endpoint.id}}">
                 <input type="text" name="input_form_name" size="25" id="template_autocomplete"
-                       placeholder="search input form definitions"> &nbsp;
+                       placeholder="search input form definitions">
                 <input type="submit">
             </form>
         </td>

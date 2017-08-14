@@ -1,0 +1,53 @@
+{% extends "screens/widgets/widget_base.html" %}
+{% block widget %}
+<td>
+    <div>
+
+        {% for k, v in automation_output.return.0.items %}
+        <h3>{{ k }}</h3>
+        <table>
+            <tr>
+                <td>
+                    Telemetry Collector:
+                </td>
+                <td>
+                    {{ v.telemetry.collector }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Syslog:
+                </td>
+                <td>
+                    {{ v.syslog_host }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    SNMP:
+                </td>
+                <td>
+                    {{ v.snmp.community }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Docker Image Cache:
+                </td>
+                <td>
+                    {{ v.docker_registry_cache.registry_url }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    APT Cache:
+                </td>
+                <td>
+                    {{ v.apt_cache.apt_url }}
+                </td>
+            </tr>
+        </table>
+        {% endfor %}
+    </div>
+</td>
+{% endblock %}

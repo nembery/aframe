@@ -1,0 +1,26 @@
+<td>
+    <input type="text" name="{{ j.name }}" placeholder="{{ j.default }}"
+           onblur="javascript: check_numeric_range_{{ j.name }}_{{ input_form.id }}(this);">
+    <script type="text/javascript">
+        function check_numeric_range_{{ j.name }}_{{ input_form.id }}(obj) {
+            var config = $.parseJSON('{{ j.widget_config_json|safe }}');
+            var num = parseInt(obj.value);
+            var lower = config["lower"];
+            var higher = config["higher"];
+
+            if (num < lower) {
+                alert('Number is too low!');
+                obj.value = config["lower"];
+                obj.focus();
+            }
+
+            if (num > higher) {
+                alert('Number is too high!');
+                obj.value = config["higher"];
+                obj.focus();
+            }
+            return true;
+
+        }
+    </script>
+</td>

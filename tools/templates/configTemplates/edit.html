@@ -144,6 +144,12 @@
                            id="{{ opts.name }}_variable"
                            placeholder="{% templatetag openvariable %} Variable {% templatetag closevariable %} Label"
                            style="display: none; width: 165px"/>
+                {% elif opts.type == 'secret' %}
+                    <select name="{{ opts.name }}" title="Secret lookup from conf/secrets.yml">
+                        {% for s in secrets %}
+                            <option value="{{ s.name }}">{{ s.label }}</option>
+                        {% endfor %}
+                    </select>
                 {% else %}
                 <select name="{{ opts.name }}">
                     {% for c in opts.choices %}

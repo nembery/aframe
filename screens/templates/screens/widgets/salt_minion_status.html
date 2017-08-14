@@ -1,0 +1,56 @@
+{% extends "screens/widgets/widget_base.html" %}
+{% block widget %}
+<td>
+    <div>
+
+        {% for k, v in automation_output.return.0.items %}
+        <h3>{{ k }}</h3>
+        <table>
+            <tr>
+                <td>
+                    Kernel:
+                </td>
+                <td>
+                    {{ v.kernelrelease }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    OS:
+                </td>
+                <td>
+                    {{ v.os }} {{ v.osrelease }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    CPU:
+                </td>
+                <td>
+                    {{ v.num_cpus }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    RAM:
+                </td>
+
+                <td>
+                    {{ v.mem_total }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Management IPs:
+                </td>
+                <td>
+                    {% for i in v.fqdn_ip4 %}
+                    {{ i }} <br/>
+                    {% endfor %}
+                </td>
+            </tr>
+        </table>
+        {% endfor %}
+    </div>
+</td>
+{% endblock %}

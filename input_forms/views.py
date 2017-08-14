@@ -9,6 +9,7 @@ from django.template import TemplateSyntaxError, TemplateDoesNotExist
 from django.template import engines
 from django.template.base import VariableNode
 
+from a_frame import settings
 from a_frame.utils import action_provider
 from common.lib import aframe_utils
 from endpoints import endpoint_provider
@@ -39,7 +40,30 @@ def search(request):
     results = []
     for input_form in input_form_list:
         if input_form.script.type == "per-endpoint":
-            results.append(input_form.name)
+            r = dict()
+            r["value"] = input_form.id
+            r["label"] = input_form.name
+            results.append(r)
+
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+
+def search_all(request):
+    """
+    used for UI autocomplete searches. No filtering is applied, also returns dicts instead of a simple list of names
+    :param request: term
+    :return: json list of dicts
+    """
+    logger.info("__ input_forms search __")
+
+    term = request.GET["term"]
+    input_form_list = InputForm.objects.filter(name__contains=term)
+    results = []
+    for input_form in input_form_list:
+        r = dict()
+        r["value"] = input_form.id
+        r["label"] = input_form.name
+        results.append(r)
 
     return HttpResponse(json.dumps(results), content_type="application/json")
 
@@ -57,7 +81,10 @@ def search_standalone(request):
     results = []
     for input_form in input_form_list:
         if input_form.script.type == "standalone":
-            results.append(input_form.name)
+            r = dict()
+            r["value"] = input_form.id
+            r["label"] = input_form.name
+            results.append(r)
 
     return HttpResponse(json.dumps(results), content_type="application/json")
 
@@ -87,18 +114,37 @@ def edit(request, input_form_id):
                 if not variable_string.startswith("af_"):
                     available_tags.append(variable_string)
 
-    context = {"input_form": input_form, "config_template": config_template, "available_tags": available_tags}
+    widgets = settings.WIDGETS
+    widgets_json = json.dumps(widgets)
+    context = {
+        "input_form": input_form,
+        "config_template": config_template,
+        "available_tags": available_tags,
+        "widgets": widgets,
+        "widgets_json": widgets_json
+    }
     return render(request, "input_forms/edit.html", context)
 
 
 def detail(request, input_form_id):
     logger.info("__ input_forms detail __")
-    input_form = InputForm.objects.get(pk=input_form_id)
+    try:
+        input_form = InputForm.objects.get(pk=input_form_id)
+
+    except ObjectDoesNotExist as odne:
+        logger.error("Input form with id %s could not be found!" % input_form_id)
+        return HttpResponseRedirect("/input_forms")
+
     logger.debug(input_form.json)
     json_object = json.loads(input_form.json)
 
     for j in json_object:
         if "widget" in j:
+
+            if "widget_config" in j:
+                print "jsonifying widget config"
+                j["widget_config_json"] = json.dumps(j["widget_config"])
+
             if j["widget"] == "preload_list" and "widget_config" in j:
                 widget_config = json.loads(j["widget_config"])
                 template_name = widget_config["template_name"]
@@ -130,7 +176,11 @@ def detail(request, input_form_id):
     config_template = input_form.script
     action_options = json.loads(config_template.action_provider_options)
 
-    context = {"input_form": input_form, "json_object": json_object, 'action_options': action_options}
+    inline_per_endpoint = False
+
+    context = {"input_form": input_form, "json_object": json_object, 'action_options': action_options,
+               'inline_per_endpoint': inline_per_endpoint}
+
     if input_form.script.type == "standalone":
         return render(request, "input_forms/configure_standalone_template.html", context)
     else:
@@ -171,7 +221,14 @@ def new_from_template(request, template_id):
                 if not variable_string.startswith("af_"):
                     available_tags.append(variable_string)
 
-    context = {"config_template": config_template, "available_tags": available_tags}
+    widgets = settings.WIDGETS
+    widgets_json = json.dumps(widgets)
+    context = {
+        "config_template": config_template,
+        "available_tags": available_tags,
+        "widgets": widgets,
+        "widgets_json": widgets_json
+    }
     return render(request, "input_forms/new.html", context)
 
 
@@ -303,6 +360,29 @@ def preview(request, input_form_id):
     return render(request, "input_forms/preview.html", context)
 
 
+def configure_template_for_screen(request, input_form_id):
+    logger.info("__ input_forms configure_template_for_screen __")
+    input_form = InputForm.objects.get(pk=input_form_id)
+    logger.debug(input_form.json)
+    json_object = list()
+    json_object = json.loads(input_form.json)
+    for jo in json_object:
+        if "widget" not in jo:
+            jo["widget"] = "text_input"
+
+    config_template = input_form.script
+    action_options = json.loads(config_template.action_provider_options)
+
+    inline_per_endpoint = False
+    if config_template.type == 'per-endpoint':
+        inline_per_endpoint = True
+
+    context = {"input_form": input_form, "json_object": json_object, 'action_options': action_options,
+               'inline_per_endpoint': inline_per_endpoint}
+
+    return render(request, "input_forms/configure_template_for_inline.html", context)
+
+
 def configure_template_for_endpoint(request):
     logger.info("__ input_forms confgure_template_for_endpoint __")
     required_fields = set(["input_form_name", "group_id", "endpoint_id"])
@@ -401,6 +481,8 @@ def apply_per_endpoint_template(request):
             context[j["name"]] = str(request.POST[j["name"]])
 
     context["af_endpoint_ip"] = endpoint["ip"]
+    context["af_endpoint_id"] = endpoint["id"]
+    context["af_endpoint_name"] = endpoint["name"]
     context["af_endpoint_username"] = endpoint["username"]
     context["af_endpoint_password"] = endpoint["password"]
     context["af_endpoint_type"] = endpoint["type"]
@@ -432,10 +514,27 @@ def apply_per_endpoint_template(request):
 
     logger.debug("action name is: " + action_name)
 
+    # let's load any secrets if necessary
+    provider_options = action_provider.get_options_for_provider(action_name)
+    for opt in provider_options:
+        print opt
+        if opt['type'] == 'secret':
+            opt_name = opt['name']
+            pw_lookup_key = action_options[opt_name]['value']
+            pw_lookup_value = aframe_utils.lookup_secret(pw_lookup_key)
+            action_options[opt_name]['value'] = pw_lookup_value
+
     action = action_provider.get_provider_instance(action_name, action_options)
     action.set_endpoint(endpoint)
     results = action.execute_template(completed_template)
     context = {"results": results}
+
+    if "inline" in request.POST and request.POST["inline"] == 'yes_please':
+        print "returning INLINE"
+        context["input_form_name"] = input_form.name
+        context["input_form_id"] = input_form_id
+        return render(request, "overlay_results.html", context)
+
     return render(request, "input_forms/results.html", context)
 
 
@@ -472,6 +571,13 @@ def apply_standalone_template(request):
 
     completed_template = str(compiled_template.render(context))
 
+    if "preview" in request.POST:
+        if request.POST["preview"] == "yes_please":
+            logger.info("Returning template Preview")
+            pre_tags = "<html><body><pre>"
+            post_tags = "</pre></body</html>"
+            return HttpResponse(pre_tags + completed_template + post_tags)
+
     logger.info(completed_template)
     action_name = config_template.action_provider
     logger.info(action_name)
@@ -483,14 +589,36 @@ def apply_standalone_template(request):
         if "action_options_" + str(ao) in request.POST:
             logger.debug("Found a customized action option!")
             new_val = request.POST["action_options_" + str(ao)]
+            print new_val
             current_value = action_options[ao]["value"]
+            print current_value
             action_options[ao]["value"] = re.sub("{{ .* }}", new_val, current_value)
             logger.debug(action_options[ao]["value"])
+
+    # let's load any secrets if necessary
+    provider_options = action_provider.get_options_for_provider(action_name)
+    for opt in provider_options:
+        print opt
+        if opt['type'] == 'secret':
+            opt_name = opt['name']
+            pw_lookup_key = action_options[opt_name]['value']
+            pw_lookup_value = aframe_utils.lookup_secret(pw_lookup_key)
+            action_options[opt_name]['value'] = pw_lookup_value
+
+    print "action name is: " + action_name
 
     action = action_provider.get_provider_instance(action_name, action_options)
     results = action.execute_template(completed_template)
     context = {"results": results}
-    return render(request, "input_forms/results.html", context)
+
+    if "inline" in request.POST and request.POST["inline"] == 'yes_please':
+        print "returning INLINE"
+        context["input_form_name"] = input_form.name
+        context["input_form_id"] = input_form_id
+        return render(request, "overlay_results.html", context)
+    else:
+        print "returning full results"
+        return render(request, "input_forms/results.html", context)
 
 
 def apply_template_to_queue(request):
@@ -595,17 +723,36 @@ def load_widget_config(request):
     :return: html template
     """
     logger.info("__ input_forms load_widget_config __")
-    required_fields = set(["widget_name", "widget_id"])
+    required_fields = set(["widget_id", "target_id"])
     if not required_fields.issubset(request.POST):
         logger.error("Did no find all required fields in request")
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
-    # fixme - should I add a map here to avoid passing param directly from ui?
-    widget_name = request.POST["widget_name"]
     widget_id = request.POST["widget_id"]
+    target_id = request.POST["target_id"]
+
+    widgets = settings.WIDGETS
+    widget_name = ""
+    widget_configuration_template = ""
+
+    found = False
+    for w in widgets:
+        logger.debug(w["id"] + " == " + widget_id)
+
+        if w["id"] == widget_id:
+            widget_name = w["label"]
+            widget_configuration_template = w["configuration_template"]
+            logger.debug(widget_configuration_template)
+            found = True
+            break
+
+    if not found:
+        return render(request, "input_forms/widgets/overlay_error.html",
+                      {"error": "Could not find widget configuration"})
 
     try:
-        context = {"widget_id": widget_id, "widget_name": widget_name}
-        return render(request, "input_forms/widgets/%s_config.html" % widget_name, context)
+        context = {"widget_id": widget_id, "widget_name": widget_name, "target_id": target_id}
+        return render(request, "input_forms/widgets/%s" % widget_configuration_template, context)
     except TemplateDoesNotExist:
-        return render(request, "input_forms/widgets/overlay_error.html", {"error": "Invalid Parameters in POST"})
+        return render(request, "input_forms/widgets/overlay_error.html",
+                      {"error": "Could not load widget configuration"})

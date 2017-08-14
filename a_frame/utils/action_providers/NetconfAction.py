@@ -192,13 +192,6 @@ class NetconfAction(ActionBase):
         return "Completed with diff: %s" % diff
 
     @staticmethod
-    def unescape(s):
-        s = s.replace("&lt;", "<")
-        s = s.replace("&gt;", ">")
-        s = s.replace("&amp;", "&")
-        return s
-
-    @staticmethod
     def format_results(results):
         """
         detects string format (xml || json) and formats appropriately

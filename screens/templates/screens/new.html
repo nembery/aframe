@@ -1,0 +1,145 @@
+
+{% extends "base.html" %}
+{% block title %}A-Frame{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+
+    var template_variables = [];
+
+    var selected_automations = []
+
+    var selected_screen_widgets = []
+
+    function submit_form() {
+
+        var selected_automations_text = JSON.stringify(selected_automations, null, 2);
+        $("#input_forms").val(selected_automations_text);
+        // submit the form here after we are all done
+        $("#create_form").submit();
+    }
+
+    function add_automation() {
+        var automation_name = $( "#template_autocomplete" ).val();
+        selected_automations.push(automation_name);
+        var new_li = $("<li>")
+        new_li.append(automation_name);
+        $("#selected_automations_ui").append(new_li);
+
+        $( "#template_autocomplete" ).val("");
+        $( "#template_autocomplete" ).focus();
+    }
+
+    function add_screen_widget() {
+        var screen_widget_name = $('#screen_widget_select').val()
+
+        selected_screen_widgets.push(screen_widget_name);
+        var new_li = $("<li>")
+        new_li.append(screen_widget_name);
+        $("#selected_screen_widget_ui").append(new_li);
+    }
+
+    $(window).load(function() {
+        $( "#template_autocomplete" ).autocomplete({
+            source: "/input_forms/searchAll",
+            focus: function(event, ui) {
+				event.preventDefault();
+		        $("#template_autocomplete").val(ui.item.label);
+			},
+            select: function (event, ui) {
+                $("#template_autocomplete").val(ui.item.label);
+                $("#template_autocomplete_id").val(ui.item.value);
+                return false;
+            }
+        });
+    });
+
+
+</script>
+{% endblock%}
+{% block content %}
+<h2>Create a new Screen</h2>
+<form method="POST" action="/screens/create" id="create_form">
+    <table>
+        <tr>
+            <td>
+                Name:
+            </td>
+            <td>
+                <input type="text" name="name" id="name" size="50" placeholder="Name of this screen view"
+                       onblur="return clean_string_no_special(this);"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Theme:
+            </td>
+            <td>
+                <select name="theme" id="theme">
+                    {% for theme in themes %}
+                    <option value="{{ theme.base_template }}">{{ theme.label }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Description:
+            </td>
+            <td>
+                <textarea rows="5" cols="60" name="description" id="description"></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Add Automation Input Form:
+            </td>
+            <td>
+                <input type="text" size="25" id="template_autocomplete"
+                       placeholder="search input form definitions"> &nbsp;
+                <input type="button" onclick="javascript: add_automation()" value="Add"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Automations:
+            </td>
+            <td>
+                <input type="hidden" name="input_forms" id="input_forms" value="">
+                <ul id="selected_automations_ui">
+
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Add Screen Widget:
+            </td>
+            <td>
+                <select id="screen_widget_select" name="screen_widget_add">
+                    {% for w in widgets %}
+                    <option value="{{ w.id }}">{{ w.label }}</option>
+                    {% endfor %}
+                </select>
+                <input type="button" onclick="javascript: add_screen_widget()" value="Add"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Screen Widgets:
+            </td>
+            <td>
+                <input type="hidden" name="input_forms" id="input_forms" value="">
+                <ul id="selected_screen_widgets_ui">
+
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <input type="button" onclick="submit_form()" value="Save"/>
+            </td>
+        </tr>
+    </table>
+</form>
+
+{% endblock %}

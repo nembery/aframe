@@ -2,7 +2,6 @@
 {% load staticfiles %}
 {% block title %}A-Frame - New Template{% endblock %}
 {% block scripts %}
-    <script type="text/javascript" src="{% static 'js/jquery-1.8.1.min.js' %}"></script>
     <script type="text/javascript">
 
     function get_action_options(action_name) {
@@ -86,6 +85,12 @@
                            id="{{ opts.name }}_variable"
                            placeholder="{% templatetag openvariable %} Variable {% templatetag closevariable %} Label"
                            style="display: none; width: 165px"/>
+                {% elif opts.type == 'secret' %}
+                    <select name="{{ opts.name }}" title="Secret lookup from conf/secrets.yml">
+                        {% for s in secrets %}
+                            <option value="{{ s.name }}">{{ s.label }}</option>
+                        {% endfor %}
+                    </select>
                 {% else %}
                     <select name="{{ opts.name }}">
                         {% for c in opts.choices %}

@@ -8,12 +8,14 @@ from django.template import engines
 
 import logging
 import json
+import re
 import socket
 
 from tools.models import ConfigTemplate
 from input_forms.models import InputForm
 from a_frame.utils import action_provider
 from a_frame import settings
+from common.lib import aframe_utils
 
 logger = logging.getLogger(__name__)
 
@@ -37,15 +39,20 @@ def configure_action(request):
     :param request:
     :return:
     """
+    required_fields = set(["action_provider"])
+    if not required_fields.issubset(request.POST):
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
     provider_name = request.POST["action_provider"]
 
     action_options = action_provider.get_options_for_provider(provider_name)
+    secrets = aframe_utils.get_secrets_keys()
 
     if action_options == "":
         context = {"error": "action provider not found"}
         return render(request, "error.html", context)
 
-    context = {"action_options": action_options, "action_provider": provider_name}
+    context = {"action_options": action_options, "action_provider": provider_name, "secrets": secrets}
     return render(request, "configTemplates/configure_action.html", context)
 
 
@@ -89,10 +96,12 @@ def edit(request, template_id):
 
     default_options = action_provider.get_options_for_provider(template.action_provider)
     action_options = json.loads(template.action_provider_options)
+    secrets = aframe_utils.get_secrets_keys()
 
     context = {"template": template,
                "action_options": json.dumps(action_options),
-               "default_options": default_options
+               "default_options": default_options,
+               "secrets": secrets
                }
     return render(request, "configTemplates/edit.html", context)
 
@@ -166,7 +175,8 @@ def create(request):
 
     configured_action_options = request.session["new_template_action_options"]
     template.action_provider_options = json.dumps(configured_action_options)
-
+    print "action options are:"
+    print configured_action_options
     print "Saving form"
     template.save()
     return HttpResponseRedirect("/input_forms/view_from_template/%s" % template.id)
@@ -225,12 +235,26 @@ def get_input_parameters_for_template(config_template):
     host = socket.gethostname()
     url = "/tools/execute_template"
 
+    action_options = json.loads(config_template.action_provider_options)
+    action_option_variables = list()
+
+    for action_option in action_options:
+        opts = action_options[action_option]
+        if "variable" in opts and opts["variable"] != '':
+            print action_option
+            item = dict()
+            # item['name'] = 'action_options_' + opts['name']
+            item['name'] = 'action_options_' + opts['name']
+            item['default'] = opts['variable']
+            action_option_variables.append(item)
+
     template_usage = {
         "id": config_template.id,
         "name": config_template.name,
         "description": config_template.description,
         "a_frame_url": "http://" + host + url,
-        "input_parameters": input_parameters
+        "input_parameters": input_parameters,
+        "action_option_variables": action_option_variables
     }
 
     print config_template.type
@@ -264,66 +288,17 @@ def get_template_input_parameters_overlay(request):
 
 
 def execute_template(request):
-    required_fields = set(["template_id"])
-    if not required_fields.issubset(request.POST):
-        error = {"output": "missing required template_id parameter", "status": 1}
-        return HttpResponse(json.dumps(error), content_type="application/json")
+    """
+    Executes an automation template, you must supply at least a template_id or template_name
+    If the automation template requires input parameters or action options, those must also be supplied as well
 
-    template_id = request.POST["template_id"]
-    config_template = ConfigTemplate.objects.get(pk=template_id)
-    template_api = get_input_parameters_for_template(config_template)
+    :param request: HTTPRequest
+    :return: json object of the form:
+        {"output": "output of the automation template", "status": "0 or 1 for success or failure"
+    """
+    post_vars = request.POST.dict()
 
-    context = dict()
-
-    try:
-        print str(template_api["input_parameters"])
-        input_parameters = template_api["input_parameters"]
-
-        for j in input_parameters:
-            print "setting context %s" % j
-            context[j] = str(request.POST[j])
-
-    except Exception as ex:
-        print str(ex)
-        error = {"output": "missing required parameters", "status": 1}
-        return HttpResponse(json.dumps(error), content_type="application/json")
-
-    compiled_template = engines['django'].from_string(config_template.template)
-    # compiled_template = get_template_from_string(config_template.template)
-    completed_template = str(compiled_template.render(context))
-
-    print completed_template
-    action_name = config_template.action_provider
-    action_options = json.loads(config_template.action_provider_options)
-
-    print "action name is: " + action_name
-
-    action = action_provider.get_provider_instance(action_name, action_options)
-    if config_template.type == "per-endpoint":
-        required_fields = set(["af_endpoint_ip", "af_endpoint_username",
-                               "af_endpoint_password", "af_endpoint_password"]
-                              )
-
-        if not required_fields.issubset(request.POST):
-            error = {"output": "missing required authentication parameters", "status": 1}
-            return HttpResponse(json.dumps(error), content_type="application/json")
-
-        endpoint = dict()
-        endpoint["ip"] = request.POST["af_endpoint_ip"]
-        endpoint["username"] = request.POST["af_endpoint_username"]
-        endpoint["password"] = request.POST["af_endpoint_password"]
-        endpoint["type"] = request.POST["af_endpoint_type"]
-
-        action.set_endpoint(endpoint)
-
-    try:
-        results = action.execute_template(completed_template.strip().replace('\r\n', '\n'))
-        response = {"output": results, "status": 0}
-
-    except Exception as ex:
-        print str(ex)
-        response = {"output": "Error executing template", "status": 1}
-
+    response = aframe_utils.execute_template(post_vars)
     return HttpResponse(json.dumps(response), content_type="application/json")
 
 

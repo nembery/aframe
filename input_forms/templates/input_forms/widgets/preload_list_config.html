@@ -1,8 +1,41 @@
 {% extends "input_forms/widgets/widget_overlay.html" %}
 {% block overlay %}
+<script type="text/javascript">
+    console.log('{{ target_id }}');
+    var config_element = $('#{{ target_id }}_config');
 
-Preload a list of values that come from the results of *another* automation. This will execute the desired automation
-and create list based on the return values. The list will have a 'display name' and a 'value'.
+    if (config_element.val() != "") {
+        
+        j = JSON.parse(config_element.val());
+        console.log(j);
+        $('#template_autocomplete').val(j.template_name);
+        $('#preload_list_key_name').val(j.key_name);
+        $('#preload_list_value_name').val(j.value_name);
+    }
+
+    function set_preload_list_config(target_id){
+
+        var config_element = $('#' + target_id + '_config');
+    
+        var template_name = $('#template_autocomplete').val();
+        var preload_list_key_name = $('#preload_list_key_name').val();
+        var preload_list_value_name = $('#preload_list_value_name').val();
+    
+        var widget_config = {
+            "template_name": template_name,
+            "key_name": preload_list_key_name,
+            "value_name": preload_list_value_name
+        }
+    
+        var widget_config_text = JSON.stringify(widget_config, null, 0);
+        config_element.val(widget_config_text);
+        console.log(widget_config_text);
+        console.log('all done');
+        close_overlay();
+    }
+</script>
+Preload a value that comes from the results of *another* automation. This will execute the desired automation
+and insert the returned value.
 
 <br/>
 <input type="text" name="input_form_name" size="25" id="template_autocomplete"
@@ -16,20 +49,16 @@ Key to use as 'Value':
 <input type="text" id="preload_list_value_name" style="width: 75px"/>
 
 <br/>
-<input type="button" onclick="javascript: set_preload_list_config('{{ widget_id }}')" value="OK"/>
+<input type="button" onclick="javascript: set_preload_list_config('{{ target_id }}')" value="OK"/>
 
 <script type="text/javascript">
     $( "#template_autocomplete" ).autocomplete({
         source: "/input_forms/searchStandalone",
     });
 
-    var widget_config = jQuery('#{{ widget_id }}_config');
+    var widget_config = $('#{{ target_id }}_config');
     if (typeof(widget_config) != "undefined") {
         console.log(widget_config);
-        console.log(widget_config).val();
     }
-
 </script>
 {% endblock %}
-
-

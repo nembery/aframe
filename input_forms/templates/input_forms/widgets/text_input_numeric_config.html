@@ -1,0 +1,45 @@
+{% extends "input_forms/widgets/widget_overlay.html" %}
+{% block overlay %}
+<script type="text/javascript">
+    console.log('{{ target_id }}');
+    var config_element = $('#{{ target_id }}_config');
+
+    if (config_element.val() != "") {
+        
+        j = JSON.parse(config_element.val());
+        $('#numeric_range_lower').val(j.lower);
+        $('#numeric_range_higher').val(j.higher);
+    }
+
+    function set_numeric_range_config(target_id){
+
+        console.log(target_id);
+        var config_element = $('#' + target_id + '_config');
+
+        console.log('#' + target_id + '_config');
+        var lower = $('#numeric_range_lower').val();
+        var higher = $('#numeric_range_higher').val();
+
+        var widget_config = {
+            "lower": lower,
+            "higher": higher
+        }
+
+        var widget_config_text = JSON.stringify(widget_config, null, 0);
+        config_element.val(widget_config_text);
+        console.log(widget_config_text);
+        console.log('all done');
+        close_overlay();
+    }
+</script>
+Numeric Range Validation. The entered value must be a numeral between lower and higher bounds
+<br/>
+Lower: <input type="text" id="numeric_range_lower" value="0" style="width: 100"/>
+&nbsp; - &nbsp;
+Higher: <input type="text" id="numeric_range_higher" value="4096" style="width: 100"/>
+<br/>
+<input type="button" onclick="javascript: set_numeric_range_config('{{ target_id }}')" value="OK"/>
+<br/>
+{% endblock %}
+
+

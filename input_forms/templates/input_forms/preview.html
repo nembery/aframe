@@ -9,21 +9,18 @@
 {% block content %}
 <h2>{{ input_form.name }} Preview</h2>
 {{ input_form.instructions }}
-
+<form method="POST" action="/input_forms/applyStandalone">
 <table>
-    {% for j in json_object %}
-    <tbody>
-        <tr>
-            <td class="template_title">
-                {{ j.label }}
-            </td>
-            <td>
-                <input type="text" name="{{ name }}" placeholder="{{ j.default }}">
+    {% include "input_forms/input_form_body.html" %}
+    <tr>
+            <td colspan="2" style="text-align: right">
+                <input type="hidden" name="input_form_id" value="{{ input_form.id }}"/>
+                <input type="hidden" name="preview" value="yes_please"/>
+                <input type="submit" value="Preview Template"/>
             </td>
         </tr>
-    </tbody>
-    {% endfor %}
 </table>
+</form>
 <br/>
 <font class="small">This is a per-endpoint template. To execute this template, first choose an endpoint and select this template.</font>
 {% endblock %}

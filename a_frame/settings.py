@@ -22,7 +22,7 @@ SECRET_KEY = "6byb6f6)0z@0e!z1^%+j)18z%+#wusz5jdr@nl+y*_cvp#o*o@"
 # SECURITY WARNING: don"t run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -37,6 +37,7 @@ INSTALLED_APPS = (
     "tools",
     "endpoints",
     "input_forms",
+    "screens",
 )
 
 MIDDLEWARE_CLASSES = (
@@ -105,6 +106,31 @@ LOGGING = {
     },
 }
 
+DEVICE_LIST_PAGING_SIZE = 10
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            # insert your TEMPLATE_DIRS here
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                # Insert your TEMPLATE_CONTEXT_PROCESSORS here or use this
+                # list if you haven't customized them:
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
 # add your class name here so it will be loaded at runtime
 REGISTERED_ENDPOINT_PROVIDERS = (
     {
@@ -122,6 +148,10 @@ REGISTERED_ENDPOINT_PROVIDERS = (
     {
         "class": "JunosSpaceDeviceList",
         "name": "Junos Space Device List",
+    },
+    {
+        "class": "SaltMinion",
+        "name": "Salt Minions",
     }
 )
 ACTION_PROVIDERS = (
@@ -174,12 +204,17 @@ ACTION_PROVIDERS = (
                 "choices": [
                     {
                         "name": "cli",
-                        "label": "Execute CLI remotely",
+                        "label": "Execute CLI remotely via SSH",
                         "arguments": []
                     },
                     {
                         "name": "scp",
-                        "label": "Secure Copy template as file to remote host",
+                        "label": "SCP template to remote path",
+                        "arguments": []
+                    },
+                    {
+                        "name": "scp_and_execute",
+                        "label": "SCP and Execute template on remote host",
                         "arguments": []
                     }
                 ]
@@ -189,6 +224,42 @@ ACTION_PROVIDERS = (
                 "name": "file_path",
                 "type": "text",
                 "default": "/var/tmp/aframe/{{ script_name }}"
+            }
+        ]
+    },
+    {
+        "name": "GitAction",
+        "label": "Git Repository Manipulation",
+        "options": [
+            {
+                "label": "Remote URL",
+                "name": "remote_url",
+                "type": "text",
+                "default": "https://user:pass@github.com/nembery/aframe.git"
+            },
+            {
+                "label": "Target Branch",
+                "name": "target_branch",
+                "type": "text",
+                "default": "master"
+            },
+            {
+                "label": "Target Directory",
+                "name": "target_directory",
+                "type": "text",
+                "default": "/"
+            },
+            {
+                "label": "Target Filename",
+                "name": "target_filename",
+                "type": "text",
+                "default": "README.md"
+            },
+            {
+                "label": "Commit Message",
+                "name": "commit_message",
+                "type": "text",
+                "default": "Committed from AFrame"
             }
         ]
     },
@@ -215,6 +286,10 @@ ACTION_PROVIDERS = (
                         "label": "Basic",
                     },
                     {
+                        "name": "bearer",
+                        "label": "Bearer",
+                    },
+                    {
                         "name": "keystone",
                         "label": "Keystone",
                     },
@@ -225,6 +300,10 @@ ACTION_PROVIDERS = (
                     {
                         "name": "ruckus",
                         "label": "Ruckus REST Cookie",
+                    },
+                    {
+                        "name": "saltapi",
+                        "label": "Salt-api",
                     }
                 ]
             },
@@ -237,7 +316,7 @@ ACTION_PROVIDERS = (
             {
                 "label": "Password",
                 "name": "password",
-                "type": "text",
+                "type": "secret",
                 "default": "password"
             },
             {
@@ -277,12 +356,12 @@ ACTION_PROVIDERS = (
                 "type": "select",
                 "choices": [
                     {
-                        "name": "https",
-                        "label": "HTTPS",
-                    },
-                    {
                         "name": "http",
                         "label": "HTTP",
+                    },
+                    {
+                        "name": "https",
+                        "label": "HTTPS",
                     }
                 ]
             },
@@ -304,7 +383,7 @@ ACTION_PROVIDERS = (
                 "type": "text",
                 "default": "application/json",
             },
-                        {
+            {
                 "label": "Accepts Content Type",
                 "name": "accepts_type",
                 "type": "text",
@@ -314,27 +393,212 @@ ACTION_PROVIDERS = (
     }
 )
 
-DEVICE_LIST_PAGING_SIZE = 10
-
-TEMPLATES = [
+REGISTERED_APP_THEMES = (
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            # insert your TEMPLATE_DIRS here
-        ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                # Insert your TEMPLATE_CONTEXT_PROCESSORS here or use this
-                # list if you haven't customized them:
-                'django.contrib.auth.context_processors.auth',
-                'django.template.context_processors.debug',
-                'django.template.context_processors.i18n',
-                'django.template.context_processors.media',
-                'django.template.context_processors.static',
-                'django.template.context_processors.tz',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
+        "label": "Default Theme",
+        "base_template": "base.html",
     },
-]
+    {
+        "label": "Dark",
+        "base_template": "themes/dark.html",
+    },
+    {
+        "label": "Grey/Blue",
+        "base_template": "themes/grey_blue.html",
+    },
+    {
+        "label": "Grey/Red",
+        "base_template": "themes/grey_red.html",
+    },
+    {
+        "label": "Grey/Green",
+        "base_template": "themes/grey_green.html",
+    },
+    {
+        "label": "Grey/Orange",
+        "base_template": "themes/grey_orange.html",
+    },
+    {
+        "label": "White/Blue",
+        "base_template": "themes/white_blue.html",
+    },
+    {
+        "label": "White/Red",
+        "base_template": "themes/white_red.html",
+    },
+{
+        "label": "White/Green",
+        "base_template": "themes/white_green.html",
+    },
+    {
+        "label": "White/Orange",
+        "base_template": "themes/white_orange.html",
+    }
+)
+
+WIDGETS = (
+    {
+        "label": "Simple Text Input",
+        "configurable": False,
+        "id": "text_input",
+        "configuration_template": None,
+        "render_template": "text_input.html"
+    },
+    {
+        "label": "Text Input with Regex Validation",
+        "configurable": True,
+        "id": "text_input_regex",
+        "configuration_template": "text_input_regex_config.html",
+        "render_template": "text_input_regex.html"
+    },
+    {
+        "label": "Text Input with Numeric Validation",
+        "configurable": True,
+        "id": "text_input_numeric",
+        "configuration_template": "text_input_numeric_config.html",
+        "render_template": "text_input_numeric.html"
+    },
+    {
+        "label": "IPv4 Address",
+        "configurable": False,
+        "id": "ipv4_input",
+        "configuration_template": None,
+        "render_template": "ipv4_input.html"
+    },
+    {
+        "label": "Password Input",
+        "configurable": False,
+        "id": "password_input",
+        "configuration_template": None,
+        "render_template": "password_input.html"
+    },
+    {
+        "label": "Complex Password Input",
+        "configurable": True,
+        "id": "complex_password_input",
+        "configuration_template": "complex_password_input_config.html",
+        "render_template": "complex_password_input.html"
+    },
+    {
+        "label": "Text Area Input",
+        "configurable": False,
+        "id": "text_area_input",
+        "configuration_template": None,
+        "render_template": "text_area_input.html"
+    },
+    {
+        "label": "Configurable Select List",
+        "configurable": True,
+        "id": "select_input",
+        "configuration_template": "select_input_config.html",
+        "render_template": "select_input.html"
+    },
+    {
+        "label": "Preloaded Value from Automation",
+        "configurable": True,
+        "id": "preload_value",
+        "configuration_template": "preload_value_config.html",
+        "render_template": "preload_value.html"
+    },
+    {
+        "label": "Preloaded List from Automation",
+        "configurable": True,
+        "id": "preload_list",
+        "configuration_template": "preload_list_config.html",
+        "render_template": "preload_list.html"
+    },
+    {
+        "label": "Endpoint Name Search",
+        "configurable": False,
+        "id": "endpoint_name_search_input",
+        "render_template": "endpoint_name_search_input.html"
+    },
+    {
+        "label": "Endpoint ID Search",
+        "configurable": False,
+        "id": "endpoint_id_search_input",
+        "render_template": "endpoint_id_search_input.html"
+    },
+    {
+        "label": "Endpoint IP Search",
+        "configurable": False,
+        "id": "endpoint_ip_search_input",
+        "render_template": "endpoint_ip_search_input.html"
+    },
+)
+
+# Screen widgets are used to parse the output of the various automations and input_forms created in aframe.
+# These are by nature tightly tied to the output of the various automations.
+# I.E. you will write an screen widget to display the output of some REST API call.
+# Configuration:
+# label: Human friendly name shown when you want to add non-transient widgets to a 'screen'
+# configurable: boolean that determines if this widgets requires some configuration on a per-instance basis
+# id: id of the widget
+# configuration_template: name of the html template to render for per-instance configuration
+# render_template: html template to be rendered on the screen
+# consumes_input_form: an input form that can be used for per instance configuration
+# transient: allows the widget to be placed and saved on the screen. Transient widgets much be summoned manually
+# consumes_automation: the automation to be executed before the widget is rendered. The output of the template is
+#   added to the context
+SCREEN_WIDGETS = (
+    {
+        "label": "Menu",
+        "configurable": True,
+        "id": "menu",
+        "configuration_template": "menu_config.html",
+        "render_template": "menu.html"
+    },
+    {
+        "label": "Static Image",
+        "configurable": True,
+        "id": "static_image",
+        "configuration_template": "static_image_config.html",
+        "render_template": "static_image.html"
+    },
+    {
+        "label": "Open-NTI Graph",
+        "configurable": True,
+        "id": "opennti_graph",
+        "configuration_template": "opennti_graph_config.html",
+        "render_template": "static_image.html",
+        "consumes_input_form": "grafana_interfaces_graph_url"
+    },
+    {
+        "label": "Network Topology",
+        "configurable": False,
+        "id": "network_topology",
+        "render_template": "network_topology.html"
+    },
+    {
+        "label": "Minion Status",
+        "configurable": False,
+        "transient": True,
+        "id": "minion_status",
+        "render_template": "salt_minion_status.html",
+        "consumes_automation": "get_salt_minion_status"
+    },
+    {
+        "label": "Proxy List",
+        "configurable": False,
+        "transient": False,
+        "id": "minion_list",
+        "render_template": "salt_proxy_list.html",
+        "consumes_automation": "get_salt_proxy_list"
+    },
+    {
+        "label": "Minion Config",
+        "configurable": False,
+        "transient": True,
+        "id": "minion_config",
+        "render_template": "salt_minion_config.html",
+        "consumes_automation": "get_salt_minion_config"
+    },
+    {
+        "label": "Open-NTI Graph",
+        "configurable": False,
+        "transient": True,
+        "id": "opennti_inline_graph",
+        "render_template": "static_image.html",
+        "consumes_automation": "grafana_all_interfaces_graph_url"
+    }
+)
