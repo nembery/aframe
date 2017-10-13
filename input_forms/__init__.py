@@ -1,0 +1,1 @@
+default_app_config = 'input_forms.apps.InputFormAppConfig'
