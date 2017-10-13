@@ -1,0 +1,8 @@
+# Imports Directory allows you to stage exported import forms here
+#
+# any exported input_form found in this directory will be imported on aframe start-up
+#
+# This allows you to distribute aframe forms inside an ansible playbook or salt state and have them available on startup
+#
+# :-)
+#
