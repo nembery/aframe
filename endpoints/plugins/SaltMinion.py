@@ -30,9 +30,9 @@ class SaltMinion(EndpointBase):
         config = [
             {
                 "name": "host",
-                "label": "Salt Master Host IP address",
+                "label": "Salt Master IP and API Port",
                 "type": "text",
-                "value": "0.0.0.0"
+                "value": "0.0.0.0:8000"
             },
             {
                 "name": "username",
@@ -268,6 +268,10 @@ class SaltMinion(EndpointBase):
                 "eauth": "pam"
                 }
                 """ % (self.username, self.password)
+
+        if ':' not in self.host:
+            # if we don't have a port specified, let's add the default of 8000 here
+            self.host += ':8000'
 
         full_url = self.protocol + "://" + self.host + self._saltapi_auth_path
         request = urllib2.Request(full_url)
