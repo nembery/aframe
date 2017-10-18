@@ -247,7 +247,12 @@ def _load_secrets():
     conf_dir = os.path.abspath(os.path.join(common_lib_dir, '../../conf'))
     secrets_file_path = os.path.join(conf_dir, 'secrets.yml')
     with open(secrets_file_path, 'r') as secrets_file:
-        secrets = yaml.load(secrets_file)
+        try:
+            secrets = yaml.load(secrets_file)
+        except yaml.scanner.ScannerError as se:
+            logger.error('Could not parse secrets file!')
+            logger.error(se)
+            secrets = {'secrets': {'default': {'label': 'default', 'value': 'password123'}}}
 
     return secrets
 
@@ -260,11 +265,12 @@ def get_secrets_keys():
     """
     secret_keys = list()
     secrets = _load_secrets()
-    for key in secrets['secrets']:
-        item = dict()
-        item['name'] = key
-        item['label'] = secrets['secrets'][key]['label']
-        secret_keys.append(item)
+    if 'secrets' in secrets:
+        for key in secrets['secrets']:
+            item = dict()
+            item['name'] = key
+            item['label'] = secrets['secrets'][key]['label']
+            secret_keys.append(item)
 
     return secret_keys
 
@@ -276,7 +282,10 @@ def lookup_secret(key):
     :return: string value of the secret
     """
     secrets = _load_secrets()
-    return secrets['secrets'][key]['value']
+    if 'secrets' in secrets:
+        return secrets['secrets'][key]['value']
+
+    return 'password123'
 
 
 def execute_template(post_vars):
