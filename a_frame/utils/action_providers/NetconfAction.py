@@ -64,34 +64,46 @@ class NetconfAction(ActionBase):
         except RpcError as e:
             print e
             return "Error executing command: %s" % str(e)
+        finally:
+            print "Closing device handle"
+            self.dev.close()
 
         print etree.tostring(results, pretty_print=True)
         return etree.tostring(results, pretty_print=True)
 
     def execute_cheat_command(self, template):
-        print "Executing cheat command"
-        results = self.dev.cli(template)
-        return self.format_results(results)
+        try:
+            print "Executing cheat command"
+            results = self.dev.cli(template)
+            return self.format_results(results)
+        finally:
+            print "Closing device handle"
+            self.dev.close()
 
     def assert_set_configuration(self, pattern):
 
-        print "Checking set command regex"
-        config = self.dev.cli('show configuration | display set')
-        print config
-        config_pattern = re.compile(pattern)
+        try:
+            print "Checking set command regex"
+            config = self.dev.cli('show configuration | display set')
+            print config
+            config_pattern = re.compile(pattern)
 
-        results = ""
-        for line in config.split('\n'):
-            if config_pattern.match(line):
-                results += line + "\n"
+            results = ""
+            for line in config.split('\n'):
+                if config_pattern.match(line):
+                    results += line + "\n"
 
-        if results != "":
-            return results
+            if results != "":
+                return results
+        finally:
+            print "Closing device handle"
+            self.dev.close()
 
     def assert_xpath_configuration(self, xpath):
 
         print "Searching xpath"
         configuration_xml = self.dev.execute("<get-configuration></get-configuration>")
+        self.dev.close()
         print configuration_xml
         if configuration_xml.find(xpath):
             return "Configuration element: %s is present" % xpath
@@ -184,11 +196,11 @@ class NetconfAction(ActionBase):
         except UnlockError as ue:
             print "Could not unlock database"
             print str(ue)
-            self.dev.close()
             return "Committed, but could not unlock db"
+        finally:
+            print "Closing device handle"
+            self.dev.close()
 
-        print "Closing device handle"
-        self.dev.close()
         return "Completed with diff: %s" % diff
 
     @staticmethod
@@ -199,7 +211,7 @@ class NetconfAction(ActionBase):
         :param results: string from urlopen
         :return: formatted string output
         """
-        print results
+        # print results
         try:
             if type(results) is str:
                 results = etree.fromstring(results)
