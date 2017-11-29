@@ -38,9 +38,6 @@
                             select: function (event, ui) {
                                 $("#endpoint_autocomplete_{{ input_form.id }}").val(ui.item.label);
                                 var return_value = ui.item.value;
-                                console.log('HI THERE');
-                                console.log(return_value);
-                                console.log('AND THERE');
                                 if (return_value.indexOf(':') > 0) {
                                     var r_array = return_value.split(':');
                                     var group_id = r_array[0];
