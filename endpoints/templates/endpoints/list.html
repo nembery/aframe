@@ -18,8 +18,17 @@
     }
 
     $(window).load(function() {
+
         $( "#template_autocomplete" ).autocomplete({
             source: "/input_forms/search",
+            focus: function(event, ui) {
+                event.preventDefault();
+                $("#template_autocomplete").val(ui.item.label);
+            },
+            select: function (event, ui) {
+                $("#template_autocomplete").val(ui.item.label);
+                return false;
+            }
         });
     });
 
