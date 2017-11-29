@@ -38,7 +38,9 @@
                             select: function (event, ui) {
                                 $("#endpoint_autocomplete_{{ input_form.id }}").val(ui.item.label);
                                 var return_value = ui.item.value;
-
+                                console.log('HI THERE');
+                                console.log(return_value);
+                                console.log('AND THERE');
                                 if (return_value.indexOf(':') > 0) {
                                     var r_array = return_value.split(':');
                                     var group_id = r_array[0];
@@ -52,6 +54,7 @@
                                 return false;
                             }
                         });
+                        $( "#endpoint_autocomplete_{{ input_form.id }}" ).attr('autocomplete', 'on');
                     </script>
                 </td>
             </tr>
@@ -62,7 +65,7 @@
             <tr>
                 <td>
                     <input type="hidden" name="input_form_id" value="{{ input_form.id }}"/>
-                    <input type="hidden" name="per_endpoint" value="{{ per_endpoint_inline }}"/>
+                    <input type="hidden" name="per_endpoint" value="{{ inline_per_endpoint }}"/>
                     <input type="hidden" name="inline" value="yes_please"/>
                     <input type="button" value="Apply" onclick="apply_inline(this)">
                 </td>
