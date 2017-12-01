@@ -167,12 +167,10 @@ def get_list_from_json(key, value, data_structure, kv_list=[], depth=0):
             print "recursively searching %s" % str(v)
             depth += 1
             r = get_list_from_json(key, value, v, kv_list, depth)
-            if r is not None:
-                print "returning from list with success %s" % depth
+            if r is None:
                 return r
-
         print "returning from list none %s" % depth
-        return None
+        return kv_list
 
     elif type(data_structure) == dict:
         if key in data_structure and value in data_structure:
