@@ -18,57 +18,59 @@
             return objects;
         }
 
-        console.log('here we go!');
-        
-        var widget_layout_id = {{ widget_layout_id }};
+        $(function() {
+            console.log('here we go!');
 
-        var col_1_key = "key";
-        var col_2_key = "value";
-        var col_1_header = "Id";
-        var col_2_header = "Value";
-        var list_title = "New List";
+            var widget_layout_id = {{ widget_layout_id }};
 
-        if (layout['widgets'][widget_layout_id]['widget_config'] != undefined) {
-            wc = layout['widgets'][widget_layout_id]['widget_config'];
-            col_1_key = wc['col_1_key'];
-            col_2_key = wc['col_2_key'];
-            col_1_header = wc['col_1_header'];
-            col_2_header = wc['col_2_header'];
-            list_title = wc['list_title'];
+            var col_1_key = "key";
+            var col_2_key = "value";
+            var col_1_header = "Id";
+            var col_2_header = "Value";
+            var list_title = "New List";
 
-            console.log(wc);
-        }
+            if (layout['widgets'][widget_layout_id]['widget_config'] != undefined) {
+                wc = layout['widgets'][widget_layout_id]['widget_config'];
+                col_1_key = wc['col_1_key'];
+                col_2_key = wc['col_2_key'];
+                col_1_header = wc['col_1_header'];
+                col_2_header = wc['col_2_header'];
+                list_title = wc['list_title'];
 
-        var url = '/tools/execute_template';
-
-        var params = {
-            'template_name': wc['preload_automation']
-        }
-
-        var post = $.post(url, params, function(response) {
-            console.log(response);
-
-            if ('output' in response) {
-                var r = JSON.parse(response.output);
-                var t = search_results(r, col_1_key, col_2_key);
-                console.log(t);
-
-                for (i in t) {
-                    o = t[i];
-                    var new_row = "<tr><td>" + o[col_1_key] + "</td><td>" + o[col_2_key] + "</td></tr>"
-                    $("#{{ widget_layout_id }}_list_body").append(new_row);
-                }
+                console.log(wc);
             }
-            $('#widget_container_{{ widget_layout_id }}').css('height', 'initial');
-            $('#widget_container_{{ widget_layout_id }}').css('width', 'initial');
 
-            // fixme - move to onload function
-            $("#{{ widget_layout_id }}_col_1_header").html(col_1_header);
-            $("#{{ widget_layout_id }}_col_2_header").html(col_2_header);
+            var url = '/tools/execute_template';
 
-            $("#{{ widget_layout_id }}_list_title").html(list_title);
+            var params = {
+                'template_name': wc['preload_automation']
+            }
 
-        });
+            var post = $.post(url, params, function(response) {
+                console.log(response);
+
+                if ('output' in response) {
+                    var r = JSON.parse(response.output);
+                    var t = search_results(r, col_1_key, col_2_key);
+                    console.log(t);
+
+                    for (i in t) {
+                        o = t[i];
+                        var new_row = "<tr><td>" + o[col_1_key] + "</td><td>" + o[col_2_key] + "</td></tr>"
+                        $("#{{ widget_layout_id }}_list_body").append(new_row);
+                    }
+                }
+                $('#widget_container_{{ widget_layout_id }}').css('height', 'initial');
+                $('#widget_container_{{ widget_layout_id }}').css('width', 'initial');
+
+                // fixme - move to onload function
+                $("#{{ widget_layout_id }}_col_1_header").html(col_1_header);
+                $("#{{ widget_layout_id }}_col_2_header").html(col_2_header);
+
+                $("#{{ widget_layout_id }}_list_title").html(list_title);
+
+            });
+        )};
 
 </script>
 <td>
