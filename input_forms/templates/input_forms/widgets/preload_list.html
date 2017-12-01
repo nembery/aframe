@@ -1,6 +1,6 @@
 <td>
     <select name="{{ j.name }}" id="{{ j.name }}">
-        {% for o in j.data %}
+        {% for o in j.widget_data %}
         <option value="{{ o.value }}">{{ o.key }}</option>
         {% endfor %}
     </select>
