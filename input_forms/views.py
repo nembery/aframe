@@ -140,46 +140,8 @@ def detail(request, input_form_id):
 
     for j in json_object:
         if "widget" in j:
-
-            if "widget_config" in j:
-                print "jsonifying widget config"
-                j["widget_config_json"] = json.dumps(j["widget_config"])
-
-            if j["widget"] == "preload_list" and "widget_config" in j:
-
-                widget_config = j["widget_config"]
-                template_name = widget_config["template_name"]
-                key = widget_config["key_name"]
-                value = widget_config["value_name"]
-                config_template = ConfigTemplate.objects.get(name=template_name)
-
-                action_name = config_template.action_provider
-                action_options = json.loads(config_template.action_provider_options)
-
-                # let's load any secrets if necessary
-                provider_options = action_provider.get_options_for_provider(action_name)
-                for opt in provider_options:
-                    print opt
-                    if opt['type'] == 'secret':
-                        opt_name = opt['name']
-                        pw_lookup_key = action_options[opt_name]['value']
-                        pw_lookup_value = aframe_utils.lookup_secret(pw_lookup_key)
-                        action_options[opt_name]['value'] = pw_lookup_value
-
-                action = action_provider.get_provider_instance(action_name, action_options)
-
-                try:
-                    results = action.execute_template(config_template.template.strip().replace('\r\n', '\n'))
-                    print results
-                    results_object = json.loads(results)
-                    print key
-                    print value
-                    d = aframe_utils.get_list_from_json(key, value, results_object, list(), 0)
-                    print d
-                    j["widget_data"] = d
-
-                except Exception as ex:
-                    print str(ex)
+            # modify widget options in place
+            _configure_widget_options(j)
 
         else:
             j["widget"] = "text_input"
@@ -378,7 +340,9 @@ def configure_template_for_screen(request, input_form_id):
     json_object = list()
     json_object = json.loads(input_form.json)
     for jo in json_object:
-        if "widget" not in jo:
+        if "widget" in jo:
+            _configure_widget_options(jo)
+        else:
             jo["widget"] = "text_input"
 
     config_template = input_form.script
@@ -413,6 +377,11 @@ def configure_template_for_endpoint(request):
 
     logger.debug(input_form.json)
     json_object = json.loads(input_form.json)
+    for jo in json_object:
+        if "widget" in jo:
+            _configure_widget_options(jo)
+        else:
+            jo["widget"] = "text_input"
 
     config_template = input_form.script
     action_options = json.loads(config_template.action_provider_options)
@@ -438,6 +407,11 @@ def configure_template_for_queue(request):
 
     logger.debug(input_form.json)
     json_object = json.loads(input_form.json)
+    for jo in json_object:
+        if "widget" in jo:
+            _configure_widget_options(jo)
+        else:
+            jo["widget"] = "text_input"
 
     context = {"input_form": input_form, "json_object": json_object, "endpoints": endpoints, "group_id": group_id}
     return render(request, "input_forms/configure_template_for_queue.html", context)
@@ -767,3 +741,61 @@ def load_widget_config(request):
     except TemplateDoesNotExist:
         return render(request, "input_forms/widgets/overlay_error.html",
                       {"error": "Could not load widget configuration"})
+
+
+def _configure_widget_options(j):
+    '''
+    Configures widget specific options if necessary
+    :param j: input_form configuration object
+    :return: configured input_form json object
+    '''
+
+    if "widget_config" in j:
+        logger.debug("jsonifying widget config")
+        j["widget_config_json"] = json.dumps(j["widget_config"])
+
+    if j["widget"] == "preload_list" and "widget_config" in j:
+
+        try:
+            widget_config = j["widget_config"]
+            template_name = widget_config["template_name"]
+            key = widget_config["key_name"]
+            value = widget_config["value_name"]
+            config_template = ConfigTemplate.objects.get(name=template_name)
+
+        except (ObjectDoesNotExist, KeyError):
+            logger.error('Could not load preloaded_list template name!')
+            return j
+
+        action_name = config_template.action_provider
+
+        try:
+            action_options = json.loads(config_template.action_provider_options)
+        except (ValueError, TypeError):
+            logger.error('Could not load action_provider_options from config_template!')
+            return j
+
+        # let's load any secrets if necessary
+        provider_options = action_provider.get_options_for_provider(action_name)
+        for opt in provider_options:
+            if opt['type'] == 'secret':
+                opt_name = opt['name']
+                pw_lookup_key = action_options[opt_name]['value']
+                pw_lookup_value = aframe_utils.lookup_secret(pw_lookup_key)
+                action_options[opt_name]['value'] = pw_lookup_value
+
+        action = action_provider.get_provider_instance(action_name, action_options)
+
+        try:
+            results = action.execute_template(config_template.template.strip().replace('\r\n', '\n'))
+            print results
+            results_object = json.loads(results)
+            print key
+            print value
+            d = aframe_utils.get_list_from_json(key, value, results_object, list(), 0)
+            print d
+            j["widget_data"] = d
+
+        except Exception as ex:
+            print str(ex)
+            return j
