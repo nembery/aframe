@@ -22,6 +22,14 @@
                 console.log(layout['widgets'][widget_layout_id]['widget_config']);
                 var d = new Date().getTime()
                 var u = layout['widgets'][widget_layout_id]['widget_config']['url'];
+
+                // append a fake timestamp to the end of the URL to prevent caching
+                var t = '?t=';
+                if(u.includes('?')){
+                    // this url already includes a query separator, use the '&' instead!
+                    t = '&t=';
+                }
+
                 $('#static_image_{{ widget_layout_id }}').prop('src', u + '&t=' + d);
 
                 if (config['title'] != undefined) {
