@@ -52,8 +52,17 @@ Key to use as 'Value':
 <input type="button" onclick="javascript: set_preload_list_config('{{ target_id }}')" value="OK"/>
 
 <script type="text/javascript">
+
     $( "#template_autocomplete" ).autocomplete({
         source: "/input_forms/searchStandalone",
+        focus: function(event, ui) {
+            event.preventDefault();
+            $("#template_autocomplete").val(ui.item.label);
+        },
+        select: function (event, ui) {
+            $("#template_autocomplete").val(ui.item.label);
+            return false;
+        }
     });
 
     var widget_config = $('#{{ target_id }}_config');
