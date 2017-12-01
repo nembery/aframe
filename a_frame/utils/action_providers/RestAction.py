@@ -298,9 +298,22 @@ class RestAction(ActionBase):
         print "Authenticating to salt-api with username/password: %s %s" % (self.username, self.password)
         request.add_header("Content-Type", "application/json")
 
-        result = self.__perform_post(request, _auth_json).read()
-        json_results = json.loads(result)
-        self._auth_token = json_results['return'][0]['token']
+        try:
+            result = self.__perform_post(request, _auth_json).read()
+            json_results = json.loads(result)
+            self._auth_token = json_results['return'][0]['token']
+        except HTTPError as he:
+            print 'Could not auth to salt_api!'
+            print str(he)
+            return False
+        except ValueError as ve:
+            print 'Could not parse json results from salt_api'
+            print str(ve)
+            return False
+        except KeyError:
+            print 'Could not find valid auth token in salt_api response!'
+            print json_results
+            return False
 
         return True
 
