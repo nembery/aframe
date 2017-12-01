@@ -146,7 +146,8 @@ def detail(request, input_form_id):
                 j["widget_config_json"] = json.dumps(j["widget_config"])
 
             if j["widget"] == "preload_list" and "widget_config" in j:
-                widget_config = json.loads(j["widget_config"])
+
+                widget_config = j["widget_config"]
                 template_name = widget_config["template_name"]
                 key = widget_config["key_name"]
                 value = widget_config["value_name"]
