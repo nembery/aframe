@@ -341,7 +341,8 @@ def load_widget(request):
         if ScreenWidgetConfig.objects.filter(widget_type=widget_id).exists():
             print "FOUND WIDGET CONFIG"
             widget_config = ScreenWidgetConfig.objects.get(widget_type=widget_id)
-            context.update
+            # context.update
+            print widget_config.data
             context.update({"widget_global_config": widget_config.data})
 
         if "consumes_automation" in w:
@@ -359,7 +360,7 @@ def load_widget(request):
                 # count on it!
                 results_object = json.loads(automation_results['output'])
                 context.update({"automation_output": results_object})
-            except:
+            except ValueError:
                 print "Could not parse JSON output from automation!"
                 pass
 

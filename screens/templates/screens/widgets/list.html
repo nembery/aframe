@@ -1,0 +1,86 @@
+{% extends "screens/widgets/widget_base.html" %}
+{% block widget %}
+<script type="text/javascript">
+        // find some object with key 1 and key 2 both present and return a list of only those!
+        function search_results(obj, k1, k2) {
+            var objects = [];
+            for (var i in obj) {
+                if (!obj.hasOwnProperty(i)) continue;
+                if (typeof obj[i] == 'object') {
+                    objects = objects.concat(search_results(obj[i], k1, k2));
+                } else if (typeof obj[i] == 'list') {
+                    console.log('found list');
+                } else if (i == k1 && obj.hasOwnProperty(k2)) {
+                    console.log('found one!');
+                    objects.push(obj);
+                }
+            }
+            return objects;
+        }
+
+        console.log('here we go!');
+        
+        var widget_layout_id = {{ widget_layout_id }};
+
+        var col_1_key = "key";
+        var col_2_key = "value";
+        var col_1_header = "Id";
+        var col_2_header = "Value";
+        var list_title = "New List";
+
+        if (layout['widgets'][widget_layout_id]['widget_config'] != undefined) {
+            wc = layout['widgets'][widget_layout_id]['widget_config'];
+            col_1_key = wc['col_1_key'];
+            col_2_key = wc['col_2_key'];
+            col_1_header = wc['col_1_header'];
+            col_2_header = wc['col_2_header'];
+            list_title = wc['list_title'];
+
+            console.log(wc);
+        }
+
+        var url = '/tools/execute_template';
+
+        var params = {
+            'template_name': wc['preload_automation']
+        }
+
+        var post = $.post(url, params, function(response) {
+            console.log(response);
+
+            if ('output' in response) {
+                var r = JSON.parse(response.output);
+                var t = search_results(r, col_1_key, col_2_key);
+                console.log(t);
+
+                for (i in t) {
+                    o = t[i];
+                    var new_row = "<tr><td>" + o[col_1_key] + "</td><td>" + o[col_2_key] + "</td></tr>"
+                    $("#{{ widget_layout_id }}_list_body").append(new_row);
+                }
+            }
+            $('#widget_container_{{ widget_layout_id }}').css('height', 'initial');
+            $('#widget_container_{{ widget_layout_id }}').css('width', 'initial');
+
+            // fixme - move to onload function
+            $("#{{ widget_layout_id }}_col_1_header").html(col_1_header);
+            $("#{{ widget_layout_id }}_col_2_header").html(col_2_header);
+
+            $("#{{ widget_layout_id }}_list_title").html(list_title);
+
+        });
+
+</script>
+<td>
+    <table>
+        <tbody class="screen_box_header">
+            <td colspan="2" id="{{ widget_layout_id }}_list_title"></td>
+        </tbody>
+        <tbody>
+            <th id="{{ widget_layout_id }}_col_1_header"></th>
+            <th id="{{ widget_layout_id }}_col_2_header"></th>
+        </tbody>
+        <tbody id="{{ widget_layout_id }}_list_body"></tbody>
+    </table>
+</td>
+{% endblock %}

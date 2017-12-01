@@ -1,0 +1,95 @@
+{% extends "screens/widgets/widget_overlay.html" %}
+{% block overlay %}
+<script type="text/javascript">
+
+    console.log('{{ widget_layout_id }}');
+
+    var config_element = {}
+    var widget_layout_id = {{ widget_layout_id }};
+    var widget_id = '{{ widget_id }}';
+    if (layout['widgets'][widget_layout_id] == undefined) {
+        layout['widgets'][widget_layout_id] = {};
+    }
+
+    var config_element = layout['widgets'][widget_layout_id];
+
+    var list_options = {}
+
+    console.log(config_element);
+
+    if (config_element['list_options'] != undefined) {
+        list_options = config_element["list_options"];
+    }
+
+    console.log(list_options);
+
+    function set_list_config(){
+        // Every screen config should get the 'widget_config' and 'widget_id' at minimum
+        list_options['preload_automation'] = $("#list_autocomplete").val();
+        list_options['col_1_key'] = $("#col_1_key").val();
+        list_options['col_2_key'] = $("#col_2_key").val();
+        list_options['col_1_header'] = $("#col_1_header").val();
+        list_options['col_2_header'] = $("#col_2_header").val();
+        list_options['list_title'] = $("#list_title").val();
+
+        layout['widgets'][widget_layout_id]['widget_config'] = list_options;
+        layout['widgets'][widget_layout_id]['widget_id'] = '{{ widget_id }}';
+        console.log(layout['widgets'][widget_layout_id]);
+        close_overlay();
+        load_widget(widget_id, widget_layout_id);
+    }
+
+</script>
+Simple list output of the desired pre-loaded automation
+<br/>
+Title: <input type="text" name="list_title" size="35" id="list_title"
+       placeholder="List Title" value="">
+<br/>
+Pre-loaded Automation
+<input type="text" name="input_form_name" size="25" id="list_autocomplete"
+       placeholder="search automations" value="">
+<br/>
+<table>
+    <tr>
+        <td>
+            <input type="text" id="col_1_header" title="Column 1 Header" placeholder="column 1 header"/>
+        </td>
+        <td>
+            <input type="text" id="col_2_header" title="Column 2 Header" placeholder="column 2 header"/>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <input type="text" id="col_1_key" placeholder="Column 1 key"/>
+        </td>
+
+        <td>
+            <input type="text" id="col_2_key" placeholder="Column 2 key"/>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <input type="button" onclick="javascript: set_list_config()" value="OK"/>
+        </td>
+    </tr>
+</table>
+
+<script type="text/javascript">
+
+    $( "#list_autocomplete" ).autocomplete({
+        source: "/input_forms/searchStandalone",
+        focus: function(event, ui) {
+            event.preventDefault();
+            $("#list_autocomplete").val(ui.item.label);
+        },
+        select: function (event, ui) {
+            $("#list_autocomplete").val(ui.item.label);
+            return false;
+        }
+    });
+    $( "#list_autocomplete" ).attr('autocomplete', 'on');
+</script>
+
+{% endblock %}
+
+

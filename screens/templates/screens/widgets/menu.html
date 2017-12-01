@@ -1,7 +1,7 @@
 {% extends "screens/widgets/widget_base.html" %}
 {% block widget %}
 <td>
-    <ul id="menu_list_{{ widget_layout_id }}">
+    <ul id="menu_list_{{ widget_layout_id }}" style="list-style: none; margin-left: 15px; padding: 5px; font-size: 100%;">
 
 
     </ul>
@@ -20,7 +20,7 @@
 
         $(menu_list_options).each(function(i,s) {
             // create html fragment
-            var new_row = $('<li/>');
+            var new_row = $('<li style="padding: 5px;"/>');
             var new_link = $('<a/>');
             new_link.prop('href', s.value);
             new_link.html(s.name);

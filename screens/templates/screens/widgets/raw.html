@@ -1,5 +1,17 @@
 {% extends "screens/widgets/widget_base.html" %}
 {% block widget %}
+<script type="text/javascript">
+        console.log('here we go!');
+
+        var widget_layout_id = {{ widget_layout_id }};
+
+        if (layout['widgets'][widget_layout_id]['widget_config'] != undefined) {
+            wc = layout['widgets'][widget_layout_id]['widget_config'];
+            console.log(wc);
+        }
+
+
+</script>
 <td>
     <div>
         <pre>{{ automation_results }}</pre>

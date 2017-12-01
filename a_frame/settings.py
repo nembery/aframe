@@ -600,5 +600,12 @@ SCREEN_WIDGETS = (
         "id": "opennti_inline_graph",
         "render_template": "static_image.html",
         "consumes_automation": "grafana_all_interfaces_graph_url"
+    },
+    {
+        "label": "Simple List",
+        "configurable": True,
+        "configuration_template": "list_config.html",
+        "id": "simple_list",
+        "render_template": "list.html"
     }
 )
