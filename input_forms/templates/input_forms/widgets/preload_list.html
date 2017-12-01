@@ -1,0 +1,7 @@
+<td>
+    <select name="{{ j.name }}" id="{{ j.name }}">
+        {% for o in j.data %}
+        <option value="{{ o.value }}">{{ o.key }}</option>
+        {% endfor %}
+    </select>
+</td>
