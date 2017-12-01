@@ -156,6 +156,16 @@ def detail(request, input_form_id):
                 action_name = config_template.action_provider
                 action_options = json.loads(config_template.action_provider_options)
 
+                # let's load any secrets if necessary
+                provider_options = action_provider.get_options_for_provider(action_name)
+                for opt in provider_options:
+                    print opt
+                    if opt['type'] == 'secret':
+                        opt_name = opt['name']
+                        pw_lookup_key = action_options[opt_name]['value']
+                        pw_lookup_value = aframe_utils.lookup_secret(pw_lookup_key)
+                        action_options[opt_name]['value'] = pw_lookup_value
+
                 action = action_provider.get_provider_instance(action_name, action_options)
 
                 try:
