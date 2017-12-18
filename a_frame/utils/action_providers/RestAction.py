@@ -151,7 +151,13 @@ class RestAction(ActionBase):
                 request.add_header("Content-Type", self.content_type)
                 request.add_header("Content-Length", len(data))
 
-                result = self.__perform_post(request, data).read()
+                result_object = self.__perform_post(request, data)
+
+                if not hasattr(result_object, 'read'):
+                    # this is an error string
+                    return result_object
+
+                result = result_object.read()
 
                 if result != "":
                     return self.__format_results(result)
@@ -299,9 +305,18 @@ class RestAction(ActionBase):
         request.add_header("Content-Type", "application/json")
 
         try:
-            result = self.__perform_post(request, _auth_json).read()
-            json_results = json.loads(result)
-            self._auth_token = json_results['return'][0]['token']
+            result_object = self.__perform_post(request, _auth_json)
+            # catch the case where the result object is not a valid respone,
+            # i.e. an error string or None
+            if hasattr(result_object, "read"):
+                result = result_object.read()
+                json_results = json.loads(result)
+                if 'return' in json_results:
+                    self._auth_token = json_results['return'][0]['token']
+            else:
+                print 'No valid response!'
+                return False
+
         except HTTPError as he:
             print 'Could not auth to salt_api!'
             print str(he)
@@ -319,25 +334,39 @@ class RestAction(ActionBase):
 
     @staticmethod
     def __perform_post(request, data):
-        if hasattr(ssl, 'SSLContext'):
-            context = ssl.create_default_context()  # disables SSL cert checking!
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-            return urllib2.urlopen(request, data, context=context)
+        try:
+            if hasattr(ssl, 'SSLContext'):
+                context = ssl.create_default_context()  # disables SSL cert checking!
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+                return urllib2.urlopen(request, data, context=context)
 
-        else:
-            print "no ssl"
-            return urllib2.urlopen(request, data)
+            else:
+                print "no ssl"
+                return urllib2.urlopen(request, data)
+        except HTTPError as he:
+            print "HTTP Error performing get operation"
+            return str(he)
+        except IOError as io:
+            print "IOError performing get operations"
+            return str(io)
 
     @staticmethod
     def __perform_get(request):
-        if hasattr(ssl, 'SSLContext'):
-            context = ssl.create_default_context()  # disables SSL cert checking!
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-            return urllib2.urlopen(request, context=context).read()
-        else:
-            return urllib2.urlopen(request).read()
+        try:
+            if hasattr(ssl, 'SSLContext'):
+                context = ssl.create_default_context()  # disables SSL cert checking!
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+                return urllib2.urlopen(request, context=context).read()
+            else:
+                return urllib2.urlopen(request).read()
+        except HTTPError as he:
+            print "HTTP Error performing get operation"
+            return str(he)
+        except IOError as io:
+            print "IOError performing get operations"
+            return str(io)
 
     @staticmethod
     def __format_results(results):
@@ -347,12 +376,20 @@ class RestAction(ActionBase):
         :param results: string from urlopen
         :return: formatted string output
         """
+        if results is None:
+            print "no actual results to process"
+            return results
+
         # use pretty_print if we have an xml document returned
-        if results.startswith("<?xml"):
-            print "Found XML results - using pretty_print"
-            print results
-            xml = etree.fromstring(results)
-            return etree.tostring(xml, pretty_print=True)
+        try:
+            if type(results) == "str" and results.startswith("<?xml"):
+                print "Found XML results - using pretty_print"
+                print results
+                xml = etree.fromstring(results)
+                return etree.tostring(xml, pretty_print=True)
+        except etree.XMLSyntaxError:
+            print "Invalid XML response"
+            return results
 
         # is the result valid json?
         try:
