@@ -459,11 +459,12 @@ def apply_per_endpoint_template(request):
     for j in json_object:
         if '.' in j["name"]:
             # this is a json capable variable name
-            j_dict = aframe_utils.generate_dict(j["name"], str(request.POST[j["name"]]))
+            j_dict = aframe_utils.generate_dict(j["name"], str(request.POST.get(j["name"], '')))
             context.update(j_dict)
         else:
             logger.debug("setting context %s" % j["name"])
-            context[j["name"]] = str(request.POST[j["name"]])
+            # don't worry about null values here
+            context[j["name"]] = str(request.POST.get(j['name'], ''))
 
     context["af_endpoint_ip"] = endpoint["ip"]
     context["af_endpoint_id"] = endpoint["id"]
