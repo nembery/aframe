@@ -90,7 +90,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': '/var/log/aframe.log',
+            'filename': '/tmp/aframe.log',
         },
     },
     'loggers': {
