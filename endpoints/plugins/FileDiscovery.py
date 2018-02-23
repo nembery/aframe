@@ -28,7 +28,7 @@ class FileDiscovery(EndpointBase):
         return config
 
     def load_instance_config(self, config):
-        filename = config["file_path"]["value"]
+        filename = config[0]["value"]
         try:
             self.file_name = open(filename)
         except IOError:
