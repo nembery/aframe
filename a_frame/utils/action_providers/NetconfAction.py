@@ -134,7 +134,7 @@ class NetconfAction(ActionBase):
         elif re.search(r"^\s*(set|delete|replace|rename)\s", conf_string):
             print "found set style config"
             config_format = "set"
-        elif re.search(r"^[a-z:]*\s*\w+\s+{", conf_string, re.I) and re.search(r".*}\s*$", conf_string):
+        elif re.search(r"^[a-z:-]*\s*\w+\s+{", conf_string, re.I) and re.search(r".*}\s*$", conf_string):
             print "found a text style config"
             config_format = "text"
 
