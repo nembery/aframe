@@ -96,7 +96,7 @@ class SaltMinion(EndpointBase):
     def load_instance_config(self, config):
         """
         set the configuration on the object
-        :param instance_config: the configuration from the endpoint group settings
+        :param config: the configuration from the endpoint group settings
         """
         self.username = self.get_config_value("username")
         self.password = self.get_config_value("password")
@@ -132,9 +132,16 @@ class SaltMinion(EndpointBase):
         print "ID IS"
         print d
         device_id = str(d["id"])
-        name = str(d["nodename"])
+        if 'hostname' in d:
+            name = str(d['hostname'])
+        elif 'junos_facts' in d and 'hostname' in d['junos_facts']:
+            name = str(d['junos_facts']['hostname'])
+        else:
+            name = str(d["nodename"])
         if "fqdn_ip4" in d:
             ip = str(d["fqdn_ip4"][0])
+        elif 'host' in d:
+            ip = str(d['host'])
         else:
             ip = '0.0.0.0'
 

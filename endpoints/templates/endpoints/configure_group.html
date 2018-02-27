@@ -10,10 +10,10 @@
         var container = $('#provider_options_container');
 
         // grab all input text fields and the values that were entered by the user
-        container.find("[id *= 'text_input_']").each(
+        container.find("[id *= 'text_input_'],[id *= 'choices_']").each(
             function(a,r) {
-                for(j in provider_options_json) {
-                    var po = provider_options_json[j]
+                for(var j in provider_options_json) {
+                    var po = provider_options_json[j];
                     console.log(po);
 
                     if (po.name == r.name) {
@@ -144,7 +144,7 @@
                     </tbody>
                 </table>
                 {% else %}
-                <select name="{{ opts.name }}">
+                <select id="choices_{{ opts.name }}" name="{{ opts.name }}">
                     {% for c in opts.choices %}
                     <option value="{{ c.name }}">{{ c.label }}</option>
                     {% endfor %}

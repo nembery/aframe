@@ -194,7 +194,7 @@ class EndpointBase(object):
 
     def get_config_value(self, name):
         """
-         Continence method to search config list and return the value of the
+         Convenience method to search config list and return the value of the
          desired config element
 
          for config == [{"name": "findme", "value": "righthere" }, {"name": "another", "value": "anotherval" }]
