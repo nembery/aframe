@@ -101,6 +101,7 @@ class SaltMinion(EndpointBase):
         self.username = self.get_config_value("username")
         self.password = self.get_config_value("password")
         self.host = self.get_config_value("host")
+        self.protocol = self.get_config_value("protocol")
 
         self.load_iterator()
         return None
