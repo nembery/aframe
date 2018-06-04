@@ -1,0 +1,5 @@
+Django==1.9.2
+lxml==4.2.1
+netaddr==0.7.19
+python-nmap==0.6.1
+PyYAML==3.12
