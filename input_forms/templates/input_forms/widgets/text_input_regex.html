@@ -1,3 +1,23 @@
 <td>
-    <input type="text" name="{{ j.name }}" placeholder="{{ j.default }}">
+    <input type="text" name="{{ j.name }}" placeholder="{{ j.default }}"
+           onblur="javascript: check_text_regex_{{ j.name }}_{{ input_form.id }}(this);">
+    <script type="text/javascript">
+        function check_text_regex_{{ j.name }}_{{ input_form.id }}(obj) {
+            console.log('checking pattern');
+            let config = $.parseJSON('{{ j.widget_config_json|safe }}');
+            let regex = config["regex"];
+            console.log('found a regex to use');
+            console.log(regex);
+            let patt = new RegExp(regex);
+            console.log('got a pattern to use');
+            let res = patt.test(obj.value);
+            console.log('result is');
+            console.log(res);
+            if (! res) {
+                alert('This Text Input is not valid!\n' + config['hint']);
+                obj.value = 'Try_again';
+                return true;
+            }
+        }
+    </script>
 </td>

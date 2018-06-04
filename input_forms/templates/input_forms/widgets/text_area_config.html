@@ -1,8 +1,75 @@
 {% extends "input_forms/widgets/widget_overlay.html" %}
 {% block overlay %}
+    <script type="text/javascript">
+        console.log('{{ target_id }}');
+        let config_element = $('#{{ target_id }}_config');
 
-No configuration required for simple textarea input with no validation
-<br/>
-<input type="button" onclick="javascript: close_overlay()" value="OK"/>
-<br/>
+        if (config_element.val() != "") {
+
+            let j = JSON.parse(config_element.val());
+            console.log(j.sanitize);
+            $('#textarea_cols').val(j.cols);
+            $('#textarea_rows').val(j.rows);
+            $('#textarea_sanitize').val(j.sanitize);
+        } else {
+            $('#textarea_cols').val("35");
+            $('#textarea_rows').val("5");
+            $('#textarea_sanitize').val("no");
+
+            // save defaults in case user cloes window without save
+            let widget_config = {
+                "cols": "35",
+                "rows": "5",
+                "sanitize": "no"
+            };
+
+            let widget_config_text = JSON.stringify(widget_config, null, 0);
+            config_element.val(widget_config_text);
+        }
+
+        function set_textarea_config(target_id) {
+
+            console.log(target_id);
+            let config_element = $('#' + target_id + '_config');
+
+            console.log('#' + target_id + '_config');
+            let cols = $('#textarea_cols').val();
+            let rows = $('#textarea_rows').val();
+            let sanitize = $('#textarea_sanitize').val();
+
+            let widget_config = {
+                "cols": cols,
+                "rows": rows,
+                "sanitize": sanitize
+            };
+            console.log(widget_config);
+
+            let widget_config_text = JSON.stringify(widget_config, null, 0);
+            config_element.val(widget_config_text);
+            console.log(widget_config_text);
+            console.log('all done');
+            close_overlay();
+        }
+    </script>
+    TextArea Configuration. Configure the size of the widget using the rows and cols attributes. Sanitize will
+    'stringify' the variable contents before sending to the action. This can be useful to escape special characters
+    when using a REST API for example.
+
+    <br/>
+    Cols: <input type="text" id="textarea_cols" value="5" style="width: 100px;"/>
+    &nbsp; - &nbsp;
+    Rows: <input type="text" id="textarea_rows" value="10" style="width: 100px"/>
+    <br/>
+    <br/>
+    Sanitize Imput:
+    <select id="textarea_sanitize">
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+    </select>
+    <br/>
+    <br/>
+    <input type="button" onclick="set_textarea_config('{{ target_id }}')" value="OK"/>
+    <br/>
 {% endblock %}
+
+

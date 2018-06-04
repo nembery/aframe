@@ -1,41 +1,57 @@
 {% extends "input_forms/widgets/widget_overlay.html" %}
 {% block overlay %}
-<script type="text/javascript">
+    <script type="text/javascript">
 
-    console.log('{{ target_id }}');
-    var config_element = $('#{{ target_id }}_config');
+        console.log('{{ target_id }}');
+        var config_element = $('#{{ target_id }}_config');
 
-    if (config_element.val() != "") {
+        if (config_element.val() !== "") {
 
-        j = JSON.parse(config_element.val());
-        $('#regex_pattern').val(j.regex);
-    }
+            j = JSON.parse(config_element.val());
+            $('#regex_pattern').val(j.regex);
+            $('#regex_hint').val(j.hint);
+        } else {
 
-    function set_text_input_regex_config(target_id){
+            // set some defaults in case the user quits before saving!
+            let widget_config = {
+                "regex": "^[\\w+|_]+$" ,
+                "hint": "Only a-z 0-9 and _ are allowed characters"
+            };
 
-        var config_element = jQuery('#' + target_id + '_config');
-
-        console.log('#' + target_id + '_config');
-        var r = jQuery('#regex_pattern').val();
-
-        var widget_config = {
-            "regex": r
+            let widget_config_text = JSON.stringify(widget_config, null, 0);
+            config_element.val(widget_config_text);
         }
 
-        var widget_config_text = JSON.stringify(widget_config, null, 0);
-        config_element.val(widget_config_text);
-        console.log(widget_config_text);
-        console.log('all done');
-        close_overlay();
-    }
+        function set_text_input_regex_config(target_id) {
 
-</script>
-Regex Validation. The entered value must match this regex pattern
-<br/>
-Regex <input type="text" id="regex_pattern" value="" style="width: 150px"/>
-<br/>
-<input type="button" onclick="javascript: set_text_input_regex_config('{{ target_id }}')" value="OK"/>
-<br/>
+            let config_element = jQuery('#' + target_id + '_config');
+
+            console.log('#' + target_id + '_config');
+            let r = jQuery('#regex_pattern').val();
+            let m = jQuery('#regex_hint').val();
+
+            let widget_config = {
+                "regex": r,
+                "hint": m
+            };
+
+            let widget_config_text = JSON.stringify(widget_config, null, 0);
+            config_element.val(widget_config_text);
+            console.log(widget_config_text);
+            console.log('all done');
+            close_overlay();
+        }
+
+    </script>
+    Regex Validation. The entered value must match this regex pattern
+    <br/>
+    Regex <input type="text" id="regex_pattern" value="^[\\w+|_]+$" style="width: 150px"/>
+    <br/>
+    Failure Message
+    <input type="text" id="regex_hint" value="Only a-z 0-9 and _ are allowed characters" style="width: 350px"/>
+    <br/>
+    <input type="button" onclick="javascript: set_text_input_regex_config('{{ target_id }}')" value="OK"/>
+    <br/>
 {% endblock %}
 
 
