@@ -12,7 +12,13 @@
         </tr>
         <tr>
             <td>
-                <pre>{{ results }}</pre>
+                {% if cache_key != None %}
+                    <br/>
+                    <a href="{{ scheme }}://{{ host }}/tools/d/{{ cache_key }}">Download Binary Data</a>
+                    <br/>
+                {% else %}
+                    <pre>{{ results }}</pre>
+                {% endif %}
             </td>
         </tr>
         <tr>

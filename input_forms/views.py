@@ -544,6 +544,7 @@ def apply_standalone_template(request):
             context.update(j_dict)
         else:
             logger.debug("setting context %s" % j["name"])
+            print 'setting context %s' % j['name']
             context[j["name"]] = str(request.POST[j["name"]])
 
     config_template = input_form.script
@@ -595,7 +596,26 @@ def apply_standalone_template(request):
 
     action = action_provider.get_provider_instance(action_name, action_options)
     results = action.execute_template(completed_template)
-    context = {"results": results}
+    print type(results)
+    # the action is passing back extra information about the type of response
+    if type(results) is dict:
+        if 'display_inline' in results and results['display_inline'] is False:
+            if 'cache_key' in results:
+                # set extra data on the context so we can use it to build a download link downstream
+                context = {
+                    'results': 'Binary data',
+                    'cache_key': results['cache_key'],
+                    'scheme': request.scheme,
+                    'host': request.get_host()
+                }
+        else:
+            # fixme to ensure contents is always present in results when display_inline is true
+            # results['content'] is currently unimplemented!
+            context = {'results': results['contents']}
+
+    else:
+        # results is just a string object, so send it through
+        context = {"results": results}
 
     if "inline" in request.POST and request.POST["inline"] == 'yes_please':
         print "returning INLINE"

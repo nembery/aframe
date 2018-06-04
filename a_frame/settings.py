@@ -481,9 +481,9 @@ WIDGETS = (
     },
     {
         "label": "Text Area Input",
-        "configurable": False,
+        "configurable": True,
         "id": "text_area_input",
-        "configuration_template": None,
+        "configuration_template": "text_area_config.html",
         "render_template": "text_area_input.html"
     },
     {

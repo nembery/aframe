@@ -35,5 +35,7 @@ urlpatterns = [
         name="chain_template"),
     url(r"^test_api", views.test_api,
         name="test_api"),
+    url(r"^d/(?P<cache_key>[\w-]+)$", views.download_from_cache,
+        name="download_from_cache")
 
 ]

@@ -1,11 +1,14 @@
 import base64
 import json
 import platform
+import re
 import ssl
 import urllib
 import urllib2
+import uuid
 from urllib2 import HTTPError
 from lxml import etree
+from django.core.cache import cache
 from a_frame.utils.action_providers.action_base import ActionBase
 
 
@@ -37,7 +40,7 @@ class RestAction(ActionBase):
     request_type = "GET"
     content_type = "application/json"
     accepts_type = "application/json"
-
+    cache_timeout = 3600
     _keystone_auth_path = ":5000/v3/auth/tokens"
     _oauth2_auth_path = "/oauth2/token"
     _auth_token = ""
@@ -51,7 +54,7 @@ class RestAction(ActionBase):
         :param template: the completed template from the user or API
         :return Boolean based on execution outcome.
         """
-        # print "executing %s" % template
+        print "executing %s" % template
 
         if not self.url.startswith(':') and not self.url.startswith('/'):
             self.url = "/" + self.url
@@ -136,7 +139,14 @@ class RestAction(ActionBase):
 
         if self.request_type == "GET" or self.request_type == "DELETE":
             try:
-                results = self.__perform_get(request)
+                results_object = self.__perform_get(request)
+                if type(results_object) is str:
+                    results = results_object
+                else:
+                    results = results_object.read()
+
+                print results_object.info().getheader('Content-Type')
+
                 if results != "":
                     return self.__format_results(results)
                 else:
@@ -156,6 +166,26 @@ class RestAction(ActionBase):
                 if not hasattr(result_object, 'read'):
                     # this is an error string
                     return result_object
+
+                content_type = result_object.info().getheader('Content-Type')
+                print 'Found content_type of %s' % content_type
+
+                if not re.search('json|text|html|xml', content_type):
+                    # this is a binary response! We can't handle this inline, so let's cache the result
+                    # and notify the caller
+                    cache_key = str(uuid.uuid4())
+                    result = dict()
+                    res = result_object.read()
+                    # print res
+                    result['contents'] = res
+                    result['display_inline'] = False
+                    result['cache_key'] = cache_key
+
+                    cache_object = dict()
+                    cache_object['contents'] = res
+                    cache_object['content_type'] = content_type
+                    cache.set(cache_key, cache_object, self.cache_timeout)
+                    return result
 
                 result = result_object.read()
 
@@ -334,6 +364,8 @@ class RestAction(ActionBase):
 
     @staticmethod
     def __perform_post(request, data):
+        print "PERFORMING POST"
+        print data
         try:
             if hasattr(ssl, 'SSLContext'):
                 context = ssl.create_default_context()  # disables SSL cert checking!
@@ -358,9 +390,9 @@ class RestAction(ActionBase):
                 context = ssl.create_default_context()  # disables SSL cert checking!
                 context.check_hostname = False
                 context.verify_mode = ssl.CERT_NONE
-                return urllib2.urlopen(request, context=context).read()
+                return urllib2.urlopen(request, context=context)
             else:
-                return urllib2.urlopen(request).read()
+                return urllib2.urlopen(request)
         except HTTPError as he:
             print "HTTP Error performing get operation"
             return str(he)

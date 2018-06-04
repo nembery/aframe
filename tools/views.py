@@ -2,6 +2,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.template.base import VariableNode
+from django.core.cache import cache
 
 # from django.template.loader import get_template_from_string
 from django.template import engines
@@ -411,9 +412,8 @@ def chain_template(request):
 
     action = action_provider.get_provider_instance(action_name, action_options)
     if config_template.type == "per-endpoint":
-        required_fields = set(["af_endpoint_ip", "af_endpoint_username",
-                               "af_endpoint_password", "af_endpoint_password"]
-                              )
+        required_fields = ("af_endpoint_ip", "af_endpoint_username",
+                           "af_endpoint_password", "af_endpoint_password")
 
         if not required_fields.issubset(request.POST):
             error = {"output": "missing required authentication parameters", "status": 1}
@@ -440,3 +440,27 @@ def chain_template(request):
 
 def bind_automation(request):
     return render(request, "configTemplates/bind_automation.html")
+
+
+def download_from_cache(request, cache_key):
+    print 'ok %s' % cache_key
+    cache_object = cache.get(cache_key)
+    print cache_object
+    filename = 'aframe_archive'
+    if type(cache_object) is dict:
+        if 'content_type' in cache_object:
+            content_type = cache_object['content_type']
+            if 'zip' in content_type:
+                filename = 'aframe_archive.zip'
+
+        response = HttpResponse(content_type=cache_object['content_type'])
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+        response.write(cache_object['contents'])
+        return response
+    else:
+        response = HttpResponse(content_type='application/x-binary')
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+        response.write(cache_object)
+        return response
+
+
