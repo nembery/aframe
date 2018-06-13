@@ -29,25 +29,25 @@ function embed_template() {
     doc.css('cursor', 'progress');
 
     var params = {
-        "template_name" : template_name
+        "template_name": template_name
     }
 
     var url = "/tools/embedTemplate/"
 
-    var post = jQuery.post(url, params, function(response) {
+    var post = jQuery.post(url, params, function (response) {
         load_overlay(response);
     });
 
-    post.fail(function() {
+    post.fail(function () {
         alert('Could not perform request!');
     });
 
-    post.always(function() {
+    post.always(function () {
         doc.css('cursor', '');
     });
 }
 
-function load_widget_configs(w_id){
+function load_widget_configs(w_id) {
     // We will get the select object as the parameter
     // the value represents the choice the user has made
     // let's check the widget definition to see if there
@@ -64,8 +64,8 @@ function load_widget_configs(w_id){
     var obj = $("#" + w_id);
     var config_button = $("#" + obj.prop("id") + "_config_button");
 
-    $(widgets).each(function(i,w) {
-        console.log(w.id +  " == " + obj.val());
+    $(widgets).each(function (i, w) {
+        console.log(w.id + " == " + obj.val());
         if (w.id == obj.val()) {
             widget_config = w;
             // break out
@@ -90,53 +90,53 @@ function load_widget_configs(w_id){
     var doc = jQuery(document.documentElement);
     doc.css('cursor', 'progress');
 
-    var url = "/input_forms/loadWidgetConfig/"
+    var url = "/input_forms/loadWidgetConfig/";
 
     var params = {
         "widget_id": obj.val(),
         "target_id": obj.prop("id")
     }
 
-    var post = jQuery.post(url, params, function(response) {
+    var post = jQuery.post(url, params, function (response) {
         load_overlay(response);
     });
 
-    post.fail(function() {
+    post.fail(function () {
         alert('Could not perform request!');
     });
 
-    post.always(function() {
+    post.always(function () {
         doc.css('cursor', '');
     });
 }
 
-function load_widget_configs_manual(widget_id, widget_name) {
+function load_screen_widget_configs_manual(widget_id, widget_layout_id) {
 
-    var doc = jQuery(document.documentElement);
+    let doc = jQuery(document.documentElement);
     doc.css('cursor', 'progress');
 
-    var url = "/input_forms/loadWidgetConfig/"
+    let url = "/screens/load_widget_config";
 
-    var params = {
-        "widget_name": widget_name,
+    let params = {
+        "widget_layout_id": widget_layout_id,
         "widget_id": widget_id
-    }
+    };
 
-    var post = jQuery.post(url, params, function(response) {
+    let post = jQuery.post(url, params, function (response) {
         load_overlay(response);
     });
 
-    post.fail(function() {
+    post.fail(function () {
         alert('Could not perform request!');
     });
 
-    post.always(function() {
+    post.always(function () {
         doc.css('cursor', '');
     });
 }
 
 
-function set_preload_list_config(widget_id){
+function set_preload_list_config(widget_id) {
 
     var config_element = jQuery('#' + widget_id + '_config');
 
@@ -182,9 +182,41 @@ function reveal(object_id) {
 
 function check_ipv4_input(obj) {
     ip = obj.value;
-    if (! ip.match('^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')) {
+    if (!ip.match('^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')) {
         alert('IP format is not valid!');
         obj.value = '0.0.0.0';
         return true;
     }
+}
+
+function sticky_widget(widget_id) {
+    let w = $('#widget_container_' + widget_id);
+    let o = w.find('[class=overlay_menu]');
+    o.css("display", "none");
+}
+
+function set_global_sticky_widget(widget_id) {
+    let w = $('#widget_container_' + widget_id);
+    let o = w.find('[class=overlay_menu]');
+    // allow widgets to be moved and closed during config
+    if (show_widget_menu === true) {
+        o.css("display", "");
+    } else {
+        o.css("display", "none");
+    }
+}
+
+function sticky_all_widgets(toggle) {
+    let widgets = $('[id^=widget_container]');
+    widgets.each(function (i, w) {
+        let widget = $(w);
+        let o = widget.find('[class=overlay_menu]');
+        if (toggle) {
+            o.css("display", "none");
+        } else {
+            o.css("display", "");
+        }
+
+        widget.css('height', '');
+    });
 }

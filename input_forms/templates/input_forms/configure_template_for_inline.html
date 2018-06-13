@@ -1,72 +1,70 @@
-<div class="overlay_menu" style="text-align: right; border: 0px; padding: 0px; font-size: 50%; position: relative">
-    <a href="#" onclick="javascript: close_screen_form({{ input_form.id }})"
-       style="text-decoration: none">
-        X
-    </a>
+<div class="overlay_menu">
+    {{ input_form.name }}
+    <div class="overlay_close">
+        <a href="#" onclick="javascript: close_screen_form({{ input_form.id }})">
+            X
+        </a>
+    </div>
 </div>
 {% if inline_per_endpoint %}
-<form action="/input_forms/apply" id="form_{{ input_form.id }}">
+    <form action="/input_forms/apply" id="form_{{ input_form.id }}">
 {% else %}
-<form action="/input_forms/applyStandalone" id="form_{{ input_form.id }}">
+    <form action="/input_forms/applyStandalone" id="form_{{ input_form.id }}">
 {% endif %}
-    <table style="width: 100%">
-        <tbody class="screen_box_header">
-            <tr>
-                <td colspan="2">{{ input_form.name }}</td>
-            </tr>
-        </tbody>
-        {% if inline_per_endpoint %}
+<table style="width: 100%">
+
+    {% if inline_per_endpoint %}
         <tbody>
-            <tr>
-                <td>
-                    Endpoint
-                </td>
-                <td>
-                     <input type="text" size="25" id="endpoint_autocomplete_{{ input_form.id }}"
-                            placeholder="Search Endpoints"/>
+        <tr>
+            <td>
+                Endpoint
+            </td>
+            <td>
+                <input type="text" size="25" id="endpoint_autocomplete_{{ input_form.id }}"
+                       placeholder="Search Endpoints"/>
 
-                    <input type="hidden" id="endpoint_id_{{ input_form.id }}" name="endpoint_id"/>
-                    <input type="hidden" id="group_id_{{ input_form.id }}" name="group_id"/>
+                <input type="hidden" id="endpoint_id_{{ input_form.id }}" name="endpoint_id"/>
+                <input type="hidden" id="group_id_{{ input_form.id }}" name="group_id"/>
 
-                    <script type="text/javascript">
-                        $( "#endpoint_autocomplete_{{ input_form.id }}" ).autocomplete({
-                            source: "/endpoints/search",
-                            focus: function(event, ui) {
-                                event.preventDefault();
-                                $("#endpoint_autocomplete_{{ input_form.id }}").val(ui.item.label);
-                            },
-                            select: function (event, ui) {
-                                $("#endpoint_autocomplete_{{ input_form.id }}").val(ui.item.label);
-                                var return_value = ui.item.value;
-                                if (return_value.indexOf(':') > 0) {
-                                    var r_array = return_value.split(':');
-                                    var group_id = r_array[0];
-                                    var endpoint_id = r_array[1];
-                                    $("#endpoint_id_{{ input_form.id }}").val(endpoint_id);
-                                    $("#group_id_{{ input_form.id }}").val(group_id);
+                <script type="text/javascript">
+                    $("#endpoint_autocomplete_{{ input_form.id }}").autocomplete({
+                        source: "/endpoints/search",
+                        focus: function (event, ui) {
+                            event.preventDefault();
+                            $("#endpoint_autocomplete_{{ input_form.id }}").val(ui.item.label);
+                        },
+                        select: function (event, ui) {
+                            $("#endpoint_autocomplete_{{ input_form.id }}").val(ui.item.label);
+                            var return_value = ui.item.value;
+                            if (return_value.indexOf(':') > 0) {
+                                var r_array = return_value.split(':');
+                                var group_id = r_array[0];
+                                var endpoint_id = r_array[1];
+                                $("#endpoint_id_{{ input_form.id }}").val(endpoint_id);
+                                $("#group_id_{{ input_form.id }}").val(group_id);
 
-                                } else {
-                                    console.log('wut happened to mah data');
-                                }
-                                return false;
+                            } else {
+                                console.log('wut happened to mah data');
                             }
-                        });
-                        $( "#endpoint_autocomplete_{{ input_form.id }}" ).attr('autocomplete', 'on');
-                    </script>
-                </td>
-            </tr>
+                            return false;
+                        }
+                    });
+                    $("#endpoint_autocomplete_{{ input_form.id }}").attr('autocomplete', 'on');
+                </script>
+            </td>
+        </tr>
         </tbody>
-        {% endif %}
-        {% include "input_forms/input_form_body.html" %}
-        <tbody class="screen_box_menu">
-            <tr>
-                <td>
-                    <input type="hidden" name="input_form_id" value="{{ input_form.id }}"/>
-                    <input type="hidden" name="per_endpoint" value="{{ inline_per_endpoint }}"/>
-                    <input type="hidden" name="inline" value="yes_please"/>
-                    <input type="button" value="Apply" onclick="apply_inline(this)">
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    {% endif %}
+    {% include "input_forms/input_form_body.html" %}
+    <tbody class="screen_box_controls">
+    <tr>
+        <td colspan="2">
+            <input type="hidden" name="input_form_id" value="{{ input_form.id }}"/>
+            <input type="hidden" name="per_endpoint" value="{{ inline_per_endpoint }}"/>
+            <input type="hidden" name="inline" value="yes_please"/>
+            <input type="button" value="Apply" onclick="apply_inline(this)">
+        </td>
+    </tr>
+    </tbody>
+</table>
 </form>

@@ -2,6 +2,6 @@ from django.http import HttpResponseRedirect
 
 
 def index(request):
-    print "Redirecting to /endpoints"
-    return HttpResponseRedirect("/endpoints/")
+    print "Redirecting to /input_forms"
+    return HttpResponseRedirect("/input_forms/")
 

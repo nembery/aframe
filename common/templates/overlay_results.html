@@ -1,8 +1,11 @@
 <div class="overlay_box" style="overflow-y: auto">
+    <!-- overlay_results.html -->
     <div class="overlay_menu">
-        <a href="#" onclick="javascript: close_overlay();">X</a>
+        <div class="overlay_close">
+            <a href="#" onclick="javascript: close_overlay();">X</a>
+        </div>
     </div>
-    <table>
+    <table style="padding-bottom: 14px">
         <tr>
             <td>
                 Results for: {{ input_form_name }}
@@ -24,6 +27,11 @@
         <tr>
             <td>
                 ====================================================================
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <a href="#" onclick="window.location = ''">OK Great</a>
             </td>
         </tr>
     </table>

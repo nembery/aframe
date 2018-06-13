@@ -1,3 +1,7 @@
+.widget_box {
+    min-width: unset; !important;
+}
+
 .widget_toolbar {
     position: absolute;
     z-index: 9999;

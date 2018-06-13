@@ -1,12 +1,15 @@
 <div class="overlay_box">
+    <!-- widget_overlay.html -->
     <div class="overlay_menu">
-        <a href="#" onclick="javascript: close_overlay();">X</a>
+        <div class="overlay_close">
+            <a href="#" onclick="javascript: close_overlay();">X</a>
+        </div>
+        <table>
+            <tr>
+                <td>
+                    {% block overlay %}{% endblock %}
+                </td>
+            </tr>
+        </table>
     </div>
-    <table>
-        <tr>
-            <td>
-             {% block overlay %}{% endblock %}
-            </td>
-        </tr>
-    </table>
 </div>

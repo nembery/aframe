@@ -6,3 +6,7 @@ db.sqlite3.*
 .DS_Store
 .idea/.*
 .idea/
+conf/imports/themes/
+conf/imports/forms/
+conf/imports/screens/
+screens/templates/themes/test.html

@@ -1,0 +1,178 @@
+{% extends "screens/widgets/widget_overlay.html" %}
+{% block overlay %}
+    <script type="text/javascript">
+        console.log('{{ widget_layout_id }}');
+
+        let widget_layout_id = {{ widget_layout_id }};
+        let widget_id = '{{ widget_id }}';
+        let global_menu_list_options = [];
+
+        $(function () {
+            let wgcs = '{{ widget_global_config|safe }}';
+            if (wgcs === '') {
+                console.log('no global config found!');
+                return;
+            }
+            let wgc = $.parseJSON('{{ widget_global_config|safe }}');
+            console.log(wgc);
+
+            $(wgc).each(function (i, s) {
+
+                // create html fragment
+                let new_row_id = "global_menu_list_row_" + i + "_{{ widget_layout_id }}";
+                let new_row = $('<tr id="' + new_row_id + '"/>');
+
+                new_row.append('<td>' + s.name + '</td>');
+                new_row.append('<td>' + s.label + '</td>');
+                new_row.append('<td><a href="#" onclick="remove_global_menu_row(' + i + ')">X</a></td>');
+
+                // append the new_row html fragment to the new_rows tbody element
+                $('#menu_list_table_rows').append(new_row);
+
+                let new_global_menu_list_option = {};
+                new_global_menu_list_option["name"] = s.name;
+                new_global_menu_list_option["value"] = s.value;
+                new_global_menu_list_option["label"] = s.label;
+
+                global_menu_list_options.push(new_global_menu_list_option);
+
+            });
+        });
+
+        function add_global_menu_list_option() {
+
+            let i = global_menu_list_options.length;
+            console.log('ading new id ' + i);
+            let new_row_id = "global_menu_list_row_" + i + "_{{ widget_layout_id }}";
+            let option_name = $("#global_menu_list_option_name").val();
+            let option_value = $("#global_menu_list_option_value").val();
+            let option_label = $("#global_menu_list_option_label").val();
+
+            // create html fragment to show the item being added
+            let new_row = $('<tr id="' + new_row_id + '"/>');
+            new_row.append('<td>' + option_name + '</td>');
+            new_row.append('<td>' + option_label + '</td>');
+            new_row.append('<td><a href="#" onclick="remove_global_menu_row(' + i + ')">X</a></td>');
+
+            // append the new_row html fragment to the new_rows tbody element
+            $('#menu_list_table_rows').append(new_row);
+
+            let new_global_menu_list_option = {};
+            new_global_menu_list_option["name"] = option_name;
+            new_global_menu_list_option["value"] = option_value;
+            new_global_menu_list_option["label"] = option_label;
+
+            global_menu_list_options.push(new_global_menu_list_option);
+
+            $("#global_menu_list_option_name").val("");
+            $("#global_menu_list_option_label").val("");
+            $("#global_menu_list_option_value").val("");
+
+            // and debug log for developer sanity
+            console.log(global_menu_list_options);
+        }
+
+        function remove_global_menu_row(row_id) {
+
+            console.log('Removing row ' + row_id);
+            let new_row_id = "#global_menu_list_row_" + row_id + "_{{ widget_layout_id }}";
+            console.log(new_row_id);
+            $(new_row_id).remove();
+            console.log(global_menu_list_options);
+            // this is so wrong :-/
+            global_menu_list_options.splice(row_id, 1);
+            console.log(global_menu_list_options);
+        }
+
+        function set_global_menu_config() {
+            // save global widget config to the db
+            // global config is inherited by all widgets of this type on all screens / pages
+
+            var doc = $(document.documentElement);
+            doc.css('cursor', 'progress');
+
+            var url = "/screens/saveWidgetConfig";
+
+            let widget_type = "{{ widget_id }}";
+
+            let data = JSON.stringify(global_menu_list_options);
+
+            var params = {
+                "widget_type": widget_type,
+                "data": data
+            }
+
+            console.log(params);
+
+            let post = $.post(url, params, function (response) {
+                if (response['status'] == true) {
+                    // reveal('configure_topology_dialogue_' + widget_layout_id);
+                    load_widget(widget_type, widget_layout_id);
+                    close_overlay();
+                } else {
+                    alert(response['message']);
+                }
+            });
+
+            post.fail(function () {
+                alert('Could not perform request!');
+            });
+
+            post.always(function () {
+                doc.css('cursor', '');
+            });
+        }
+
+        $("#global_menu_list_option_label").autocomplete({
+            source: "/screens/search",
+            focus: function (event, ui) {
+                event.preventDefault();
+                $("#global_menu_list_option_label").val(ui.item.label);
+            },
+            select: function (event, ui) {
+                $("#global_menu_list_option_label").val(ui.item.label);
+                console.log(ui.item);
+                console.log(ui.item.value);
+                $("#global_menu_list_option_value").val(ui.item.value);
+                return false;
+            }
+        });
+
+    </script>
+    Static List of Options. Add options below to populate the list options widget
+    <br/>
+    <table>
+        <tr>
+            <th>Menu Label</th>
+            <th>Screen To load</th>
+            <th></th>
+        </tr>
+        <tbody id="menu_list_table_rows">
+        </tbody>
+        <tbody>
+        <tr>
+            <td>
+                <input type="text" id="global_menu_list_option_name"/>
+            </td>
+            <td>
+                <input type="hidden" id="global_menu_list_option_value"/>
+                <input type="text" name="screen_name" size="25" id="global_menu_list_option_label"
+                       placeholder="Search Screens">
+
+            </td>
+            <td>
+                <input type="button" onclick="add_global_menu_list_option()" value="Add"/>
+            </td>
+        </tr>
+        </tbody>
+        <tbody id="global_menu_list_controls">
+        <tr>
+            <td colspan="3">
+                <input type="button" onclick="set_global_menu_config()" value="OK"/>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+{% endblock %}
+
+

@@ -1,11 +1,20 @@
 <div class="overlay_box">
+    <!-- overlay_basic.html -->
     <div class="overlay_menu">
-        <a href="#" onclick="javascript: close_overlay();">X</a>
+        Results
+        <div class="overlay_close">
+            <a href="#" onclick="javascript: close_overlay();">X</a>
+        </div>
     </div>
-    <table style="width:100%">
+    <table style="width:100%; padding-bottom: 14px;">
         <tr>
             <td style="text-align: center">
                 {{ message }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <a href="#" onclick="window.location = ''">OK Great</a>
             </td>
         </tr>
     </table>

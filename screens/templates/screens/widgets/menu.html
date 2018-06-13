@@ -1,34 +1,35 @@
 {% extends "screens/widgets/widget_base.html" %}
 {% block widget %}
-<td>
-    <ul id="menu_list_{{ widget_layout_id }}" style="list-style: none; margin-left: 15px; padding: 5px; font-size: 100%;">
+    <td>
+        <ul id="menu_list_{{ widget_layout_id }}"
+            style="list-style: none; margin-left: 15px; padding: 5px; font-size: 100%;">
 
 
-    </ul>
+        </ul>
 
-    <script type="text/javascript">
+        <script type="text/javascript">
 
-        var widget_layout_id = {{ widget_layout_id }};
+            var widget_layout_id = {{ widget_layout_id }};
 
-        var menu_list_options = []
+            var menu_list_options = []
 
-        if (layout['widgets'][widget_layout_id]['widget_config'] != undefined) {
-            menu_list_options = layout['widgets'][widget_layout_id]['widget_config'];
-        }
+            if (layout['widgets'][widget_layout_id]['widget_config'] != undefined) {
+                menu_list_options = layout['widgets'][widget_layout_id]['widget_config'];
+            }
 
-        console.log(menu_list_options);
+            console.log(menu_list_options);
 
-        $(menu_list_options).each(function(i,s) {
-            // create html fragment
-            var new_row = $('<li style="padding: 5px;"/>');
-            var new_link = $('<a/>');
-            new_link.prop('href', s.value);
-            new_link.html(s.name);
-            new_row.append(new_link);
+            $(menu_list_options).each(function (i, s) {
+                // create html fragment
+                var new_row = $('<li style="padding: 5px;"/>');
+                var new_link = $('<a/>');
+                new_link.prop('href', s.value);
+                new_link.html(s.name);
+                new_row.append(new_link);
 
-            // append the new_row html fragment to the new_rows tbody element
-            $('#menu_list_{{ widget_layout_id }}').append(new_row);
-        });
-    </script>
-</td>
+                // append the new_row html fragment to the new_rows tbody element
+                $('#menu_list_{{ widget_layout_id }}').append(new_row);
+            });
+        </script>
+    </td>
 {% endblock %}

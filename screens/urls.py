@@ -39,4 +39,8 @@ urlpatterns = [
         name="get_widget_config"),
     url(r"^deleteWidgetConfig$", views.delete_widget_config,
         name="delete_widget_config"),
+    url(r"^export/(?P<screen_id>[^/]+)$", views.export_screen,
+        name="export_screen"),
+    url(r"^search$", views.search,
+        name="search"),
 ]

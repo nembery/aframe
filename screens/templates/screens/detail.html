@@ -1,258 +1,282 @@
-
-{% extends screen.theme  %}
+{% extends screen.theme %}
 {% block title %}A-Frame{% endblock %}
 {% block scripts %}
-<script type="text/javascript">
+    <script type="text/javascript">
 
-    var input_form_ids = $.parseJSON('{{ input_form_ids|safe }}');
+        var input_form_ids = $.parseJSON('{{ input_form_ids|safe }}');
 
-    var input_forms = $.parseJSON('{{ input_forms_json|safe }}');
+        var input_forms = $.parseJSON('{{ input_forms_json|safe }}');
 
-    var layout = $.parseJSON('{{ layout|safe }}');
+        var layout = $.parseJSON('{{ layout|safe }}');
 
-    var available_widgets = $.parseJSON('{{ available_widgets_json|safe }}');
+        var available_widgets = $.parseJSON('{{ available_widgets_json|safe }}');
 
-    console.log(available_widgets);
+        console.log(available_widgets);
 
-    var config_window_moved = false;
-    var theme_updated = false;
+        var config_window_moved = false;
+        var theme_updated = false;
 
-    var global_widget_configs = {};
+        var global_widget_configs = {};
 
-    function load_input_form(input_form_id) {
-        var doc = $(document.documentElement);
-        doc.css('cursor', 'progress');
+        // by default do not initially show widget menus
+        var show_widget_menu = false;
 
-        var url = '/input_forms/configureTemplateForScreen/' + input_form_id;
+        var loaded_widgets = {};
 
-        var post = $.get(url, function(response) {
-            var content = $(response);
-            var base_window = "";
-            var new_window = "";
+        function load_input_form(input_form_id) {
+            var doc = $(document.documentElement);
+            doc.css('cursor', 'progress');
 
-            base_window = $(" #screen_box_base" );
-            new_window = base_window.clone();
+            var url = '/input_forms/configureTemplateForScreen/' + input_form_id;
 
-            var new_window_id = "input_form_box_" + input_form_id;
-            new_window.prop("id", new_window_id);
-            new_window.draggable({
-                grid: [ 10, 10 ],
-                stop: function (event, ui ) {
-                    console.log(ui);
+            var post = $.get(url, function (response) {
+                var content = $(response);
+                var base_window = "";
+                var new_window = "";
 
-                },
-                handle: ".overlay_menu"
+                base_window = $(" #screen_box_base");
+                new_window = base_window.clone();
+
+                var new_window_id = "input_form_box_" + input_form_id;
+                new_window.prop("id", new_window_id);
+                new_window.draggable({
+                    grid: [10, 10],
+                    stop: function (event, ui) {
+                        console.log(ui);
+
+                    },
+                    handle: ".overlay_menu"
+                });
+
+                var input_form_hidden_field = new_window.find('[name = input_form_id]');
+                input_form_hidden_field.val(input_form_id);
+
+                $("body").append(new_window);
+
+                /*
+                var new_window_table = $("#" + new_window_id + " table tbody.screen_box_menu");
+                var new_window_header = $("#" + new_window_id + " table tbody.screen_box_header tr td");
+
+                if (input_form_id in input_forms) {
+                    var input_form_name = input_forms[input_form_id];
+                } else {
+                    var input_form_name = $("#template_autocomplete").val();
+                    console.log(input_form_name);
+                }
+                */
+
+                // new_window_header.empty().append(input_form_name);
+                new_window.prepend(content);
+
+                new_window.css("display", "inline-block");
+
+                new_window.css("position", "absolute");
+
+                if (input_form_id in layout['input_forms']) {
+                    let this_layout = layout['input_forms'][input_form_id]
+                    console.log(this_layout)
+
+                    new_window.css("left", this_layout["x"]);
+                    new_window.css("top", this_layout["y"]);
+                } else {
+                    // unknown or new window being added
+                    new_window.css("left", 30);
+                    new_window.css("top", 150);
+
+                    // make sure we have some values for it in the layout object
+                    this_layout = {}
+                    this_layout["x"] = 30;
+                    this_layout["y"] = 150;
+
+                    layout['input_forms'][input_form_id] = this_layout;
+                }
+
+                // let's make everything pretty and line up on 10 pixel boundaries
+                var height = new_window.css('height');
+                var height_num = parseInt(height);
+
+                while (height_num % 10 != 0) {
+                    height_num += 1;
+                }
+
+                console.log('resizing box to ' + height_num);
+                new_window.css('height', height_num);
+
             });
 
-            var input_form_hidden_field = new_window.find('[name = input_form_id]');
-            input_form_hidden_field.val(input_form_id);
-
-            $( "body" ).append(new_window);
-
-            /*
-            var new_window_table = $("#" + new_window_id + " table tbody.screen_box_menu");
-            var new_window_header = $("#" + new_window_id + " table tbody.screen_box_header tr td");
-
-            if (input_form_id in input_forms) {
-                var input_form_name = input_forms[input_form_id];
-            } else {
-                var input_form_name = $("#template_autocomplete").val();
-                console.log(input_form_name);
-            }
-            */
-
-            // new_window_header.empty().append(input_form_name);
-            new_window.prepend(content);
-
-            new_window.css("display", "inline-block");
-
-            new_window.css("position", "absolute");
-
-            if (input_form_id in layout['input_forms']) {
-                this_layout = layout['input_forms'][input_form_id]
-                console.log(this_layout)
-
-                new_window.css("left", this_layout["x"]);
-                new_window.css("top", this_layout["y"]);
-            } else {
-                // unknown or new window being added
-                new_window.css("left", 30);
-                new_window.css("top", 150);
-
-                // make sure we have some values for it in the layout object
-                this_layout = {}
-                this_layout["x"] = 30;
-                this_layout["y"] = 150;
-
-                layout['input_forms'][input_form_id] = this_layout;
-            }
-
-            // let's make everything pretty and line up on 10 pixel boundaries
-            var height = new_window.css('height');
-            var height_num = parseInt(height);
-
-            while ( height_num % 10 != 0  ) {
-                height_num += 1;
-            }
-
-            console.log('resizing box to ' + height_num);
-            new_window.css('height', height_num);
-
-        });
-
-        post.fail(function() {
-            alert('Could not perform request!');
-        });
-        post.always(function() {
-            doc.css('cursor', '');
-        });
-    }
-
-    function add_widget_config() {
-
-        var widget_id = $('#widget').val();
-        var widget_layout_id = generate_widget_layout_id();
-        if (layout['widgets'][widget_layout_id] == undefined) {
-            layout['widgets'][widget_layout_id] = {};
+            post.fail(function () {
+                alert('Could not perform request!');
+            });
+            post.always(function () {
+                doc.css('cursor', '');
+            });
         }
 
-        layout['widgets'][widget_layout_id]['widget_config'] = {};
-        layout['widgets'][widget_layout_id]['widget_id'] = widget_id;
+        function add_widget_config() {
 
-        for (w in available_widgets) {
-            var aw = available_widgets[w];
-            if (aw['id'] == widget_id) {
-                if (aw['configurable'] != true) {
-                     load_widget(widget_id, widget_layout_id);
-                     return;
+            let widget_id = $('#widget').val();
+            if (widget_id === '') {
+                console.log('Nope');
+                return;
+            }
+            let widget_layout_id = generate_widget_layout_id();
+            if (layout['widgets'][widget_layout_id] == undefined) {
+                layout['widgets'][widget_layout_id] = {};
+            }
+
+            layout['widgets'][widget_layout_id]['widget_config'] = {};
+            layout['widgets'][widget_layout_id]['widget_id'] = widget_id;
+
+            for (let w in available_widgets) {
+                let aw = available_widgets[w];
+                if (aw['id'] == widget_id) {
+                    if (aw['configurable'] != true) {
+                        load_widget(widget_id, widget_layout_id);
+                        return;
+                    }
                 }
             }
-        }
 
-        var doc = $(document.documentElement);
-        doc.css('cursor', 'progress');
+            let doc = $(document.documentElement);
+            doc.css('cursor', 'progress');
 
-        var url = '/screens/load_widget_config';
+            let url = '/screens/load_widget_config';
 
-        var params = {
-            'widget_id': widget_id,
-            'screen_id': {{ screen.id }},
-            'widget_layout_id': widget_layout_id
-        }
-
-        var post = $.post(url, params, function(response) {
-            var content = $(response);
-            var base_window = "";
-            var new_window = "";
-
-            load_overlay(content);
-        });
-
-        post.fail(function() {
-            alert('Could not perform request!');
-        });
-        post.always(function() {
-            doc.css('cursor', '');
-        });
-    }
-
-    function load_widget(widget_id, widget_layout_id, args={}) {
-        var doc = $(document.documentElement);
-        doc.css('cursor', 'progress');
-
-        var url = '/screens/load_widget';
-
-        var params = {
-            'widget_id': widget_id,
-            'widget_layout_id': widget_layout_id,
-            'screen_id': {{ screen.id }}
-        }
-
-        // pass along any extra arguments as well
-        for (arg in args) {
-            params[arg] = args[arg];
-        }
-
-        if (widget_layout_id == undefined) {
-            widget_layout_id = generate_widget_layout_id();
-        }
-
-        var post = $.post(url, params, function(response) {
-
-            var content = $(response);
-            var base_window = "";
-            var new_window = "";
-
-            base_window = $("#screen_box_base" );
-            new_window = base_window.clone();
-
-            var new_window_id = "widget_container_" + widget_layout_id;
-            new_window.prop("id", new_window_id);
-            new_window.draggable({
-                grid: [ 10, 10 ],
-                stop: function (event, ui ) {
-                    console.log(ui);
-                },
-                handle: ".overlay_menu"
-             });
-
-            $( "body" ).append(new_window);
-
-            // new_window_header.empty().append(input_form_name);
-            new_window.prepend(content);
-
-            new_window.css("display", "inline-block");
-
-            new_window.css("position", "absolute");
-
-            layout['widgets'][widget_layout_id] = layout['widgets'][widget_layout_id] || {};
-
-            if ('layout' in layout['widgets'][widget_layout_id]) {
-                this_layout = layout['widgets'][widget_layout_id]['layout'];
-
-                new_window.css("left", this_layout["x"]);
-                new_window.css("top", this_layout["y"]);
-            } else {
-                // unknown or new window being added
-                new_window.css("left", 30);
-                new_window.css("top", 150);
-
-                // make sure we have some values for it in the layout object
-                this_layout = {};
-                this_layout["x"] = 30;
-                this_layout["y"] = 150;
-
-                layout['widgets'][widget_layout_id]['layout'] = this_layout;
+            let params = {
+                'widget_id': widget_id,
+                'screen_id': {{ screen.id }},
+                'widget_layout_id': widget_layout_id
             }
 
+            let post = $.post(url, params, function (response) {
+                var content = $(response);
+                var base_window = "";
+                var new_window = "";
 
-            // let's make everything pretty and line up on 10 pixel boundaries
-            var height = new_window.css('height');
-            var height_num = parseInt(height);
+                load_overlay(content);
+            });
 
-            while ( height_num % 10 != 0  ) {
-                height_num += 1;
+            post.fail(function () {
+                alert('Could not perform request!');
+            });
+            post.always(function () {
+                doc.css('cursor', '');
+            });
+        }
+
+        function load_widget(widget_id, widget_layout_id, args = {}) {
+
+            if (loaded_widgets[widget_layout_id] !== undefined) {
+                console.log('This widget is already loaded!');
+                console.log(widget_layout_id);
+                return;
             }
 
-            console.log('resizing widget box to ' + height_num);
-            new_window.css('height', height_num);
+            var doc = $(document.documentElement);
+            doc.css('cursor', 'progress');
 
-            bring_window_to_front(new_window);
-        });
+            var url = '/screens/load_widget';
 
-        post.fail(function() {
-            alert('Could not perform request!');
-        });
-        post.always(function() {
-            doc.css('cursor', '');
-        });
-    }
+            var params = {
+                'widget_id': widget_id,
+                'widget_layout_id': widget_layout_id,
+                'screen_id': {{ screen.id }}
+            }
 
-    function show_config_window() {
-            var config_window = $( "#configuration_box" );
+            // pass along any extra arguments as well
+            for (arg in args) {
+                params[arg] = args[arg];
+            }
+
+            if (widget_layout_id == undefined) {
+                widget_layout_id = generate_widget_layout_id();
+            }
+
+            var post = $.post(url, params, function (response) {
+
+                var content = $(response);
+                var base_window = "";
+                var new_window = "";
+
+                base_window = $("#widget_box_base");
+                new_window = base_window.clone();
+
+                var new_window_id = "widget_container_" + widget_layout_id;
+                new_window.prop("id", new_window_id);
+                new_window.draggable({
+                    grid: [10, 10],
+                    stop: function (event, ui) {
+                        console.log(ui);
+                    },
+                    handle: ".overlay_menu"
+                });
+
+                $("body").append(new_window);
+
+                // new_window_header.empty().append(input_form_name);
+                new_window.prepend(content);
+
+                new_window.css("display", "inline-block");
+
+                new_window.css("position", "absolute");
+
+                layout['widgets'][widget_layout_id] = layout['widgets'][widget_layout_id] || {};
+
+                if ('layout' in layout['widgets'][widget_layout_id]) {
+                    let this_layout = layout['widgets'][widget_layout_id]['layout'];
+
+                    new_window.css("left", this_layout["x"]);
+                    new_window.css("top", this_layout["y"]);
+                } else {
+                    // unknown or new window being added
+                    new_window.css("left", 30);
+                    new_window.css("top", 150);
+
+                    // make sure we have some values for it in the layout object
+                    let this_layout = {};
+                    this_layout["x"] = 30;
+                    this_layout["y"] = 150;
+
+                    layout['widgets'][widget_layout_id]['layout'] = this_layout;
+                }
+
+
+                // let's make everything pretty and line up on 10 pixel boundaries
+                var height = new_window.css('height');
+                var height_num = parseInt(height);
+
+                while (height_num % 10 != 0) {
+                    height_num += 1;
+                }
+
+                console.log('resizing widget box to ' + height_num);
+                new_window.css('height', height_num);
+
+                bring_window_to_front(new_window);
+
+                set_global_sticky_widget(widget_layout_id);
+
+                // track which widgets are already loaded
+                loaded_widgets[widget_layout_id] = widget_id;
+
+            });
+
+            post.fail(function () {
+                alert('Could not perform request!');
+            });
+            post.always(function () {
+                doc.css('cursor', '');
+            });
+        }
+
+        function show_config_window() {
+            var config_window = $("#configuration_box");
+
+            // allow widgets to be moved and closed during config
+            show_widget_menu = true;
 
             config_window.draggable({
-                grid: [ 10, 10 ]
+                grid: [10, 10]
             });
 
 
@@ -266,352 +290,362 @@
             }
 
             bring_window_to_front(config_window);
-    }
 
-    function generate_widget_layout_id() {
-        var widget_layout_id = 0;
-
-        var all_ids = []
-        var minimum_id = 9999;
-        var minimum_gap = 0;
-        var maximum_id = 0;
-
-        var widget_configs = $(layout['widgets']);
-
-        console.log(layout['widgets']);
-        console.log('here we go');
-        // let's find the current max and min
-        for (id in layout['widgets']) {
-
-            var p = parseInt(id);
-            if (p < minimum_id) {
-                minimum_id = p;
-            }
-            if (p > maximum_id) {
-                maximum_id = p;
-            }
-            all_ids.push(p);
+            sticky_all_widgets(false);
         }
 
-        // simple case, no existing widgets, first id is 0
-        if (all_ids.length == 0) {
-            console.log('easy case');
-            return 0;
-        }
+        function generate_widget_layout_id() {
+            var widget_layout_id = 0;
 
-        // also very easy
-        if (minimum_id > all_ids.length - 1) {
-            console.log('easy case #2');
-            return 0;
-        }
+            var all_ids = []
+            var minimum_id = 9999;
+            var minimum_gap = 0;
+            var maximum_id = 0;
 
-        // if max == length, super easy, then length + 1
-        if (maximum_id == all_ids.length - 1) {
-            console.log('max + 1');
-            return widget_id = parseInt(maximum_id) + 1;
-        }
+            var widget_configs = $(layout['widgets']);
 
-        // a bit more complex, we have a gap in our id's, let's find and return it
-        // something like [0, 1, 2, 6, 7] - This should return 3
+            console.log(layout['widgets']);
+            console.log('here we go');
+            // let's find the current max and min
+            for (id in layout['widgets']) {
 
-        // WHY is JS so weird? need special function to sort numerically
-        all_ids.sort(function (a, b) {  return a - b;  });
-
-        var prev = 0;
-        for ( id in all_ids) {
-            var p = parseInt(all_ids[id]);
-            console.log('p is ' + p);
-            console.log('prev is ' + prev);
-
-            if (p - 1 > prev) {
-                // we found the minimum gap, let's go ahead and return it
-                return prev + 1;
-            }
-            // still no gap found, keep iterating over the list
-            prev = p;
-        }
-
-    }
-
-    function close_config_window() {
-        var config_window = $( "#configuration_box" );
-        config_window.css("display", "");
-    }
-
-    function theme_changed() {
-        theme_updated = true;
-    }
-
-    function find_highest_screen_box() {
-        var highest_z = 0;
-        $('.screen_box').each(function(k,v) {
-
-            var z = parseInt($(v).css('z-index'));
-            if (z == 'auto') {
-                z = 0;
+                var p = parseInt(id);
+                if (p < minimum_id) {
+                    minimum_id = p;
+                }
+                if (p > maximum_id) {
+                    maximum_id = p;
+                }
+                all_ids.push(p);
             }
 
-            if (z > highest_z) {
-                highest_z = z;
+            // simple case, no existing widgets, first id is 0
+            if (all_ids.length == 0) {
+                console.log('easy case');
+                return 0;
             }
-        });
-        return highest_z;
-    }
 
-    function bring_window_to_front(obj) {
-        var highest_z = find_highest_screen_box();
+            // also very easy
+            if (minimum_id > all_ids.length - 1) {
+                console.log('easy case #2');
+                return 0;
+            }
 
-        if (highest_z >= 99) {
-            console.log('reset z-index to safe levels again!');
-            $('.screen_box').each(function(k,v) {
-                $(v).css('z-index', 'auto');
+            // if max == length, super easy, then length + 1
+            if (maximum_id == all_ids.length - 1) {
+                console.log('max + 1');
+                return widget_id = parseInt(maximum_id) + 1;
+            }
+
+            // a bit more complex, we have a gap in our id's, let's find and return it
+            // something like [0, 1, 2, 6, 7] - This should return 3
+
+            // WHY is JS so weird? need special function to sort numerically
+            all_ids.sort(function (a, b) {
+                return a - b;
             });
-            $(obj).css('z-index', 2);
 
-        } else {
-            if ($(obj).css('z-index') != highest_z) {
-                console.log('new highest is ' + highest_z);
-                $(obj).css('z-index', highest_z + 1);
+            var prev = 0;
+            for (id in all_ids) {
+                var p = parseInt(all_ids[id]);
+                console.log('p is ' + p);
+                console.log('prev is ' + prev);
+
+                if (p - 1 > prev) {
+                    // we found the minimum gap, let's go ahead and return it
+                    return prev + 1;
+                }
+                // still no gap found, keep iterating over the list
+                prev = p;
             }
-        }
-    }
 
-    function close_screen_form(input_form_id) {
-        console.log('removing ' + input_form_id);
-        var screen_window = $("#input_form_box_" + input_form_id);
-        screen_window.remove();
-        screen_window = '';
-
-        input_form_id_int = parseInt(input_form_id);
-        var indx = input_form_ids.indexOf(input_form_id_int);
-        input_form_ids.splice(indx, 1);
-
-        delete layout['input_forms'][input_form_id];
-        delete input_forms[input_form_id];
-    }
-
-    function close_screen_widget(widget_layout_id) {
-        console.log('removing ' + widget_layout_id);
-        var screen_window = $("#widget_container_" + widget_layout_id);
-        screen_window.remove();
-        screen_window = '';
-
-        widget_layout_id_int = parseInt(widget_layout_id);
-        delete layout['widgets'][widget_layout_id];
-    }
-
-    function update_layout() {
-
-        console.log(input_form_ids);
-
-        for(i=0;i<input_form_ids.length;i++) {
-            var input_form_id = input_form_ids[i]
-            var input_form_box = $("#input_form_box_" + input_form_id);
-            var current_y = input_form_box.css("top");
-            var current_x = input_form_box.css("left");
-
-            this_layout = layout['input_forms'][input_form_id]
-            this_layout["x"] = current_x;
-            this_layout["y"] = current_y;
-            console.log('layout for input form here \/');
-            console.log(this_layout);
         }
 
-        for (w in layout['widgets']) {
-            var widget_box = $('#widget_container_' + w);
-            var current_y = widget_box.css('top');
-            var current_x = widget_box.css('left');
-
-            this_layout = layout['widgets'][w]['layout'];
-            console.log(this_layout);
-
-            this_layout["x"] = current_x;
-            this_layout["y"] = current_y;
-
-            console.log(this_layout);
+        function close_config_window() {
+            var config_window = $("#configuration_box");
+            config_window.css("display", "");
+            // allow widgets to be moved and closed during config
+            show_widget_menu = false;
+            sticky_all_widgets(true);
         }
 
-        var doc = $(document.documentElement);
-        doc.css('cursor', 'progress');
-
-        var url = "/screens/updateLayout/"
-        var theme = $("#theme").val();
-
-        var params = {
-            "screen_id": {{ screen.id }},
-            "layout": JSON.stringify(layout),
-            "theme": theme
+        function theme_changed() {
+            theme_updated = true;
         }
 
-        var post = $.post(url, params, function(response) {
-            console.log(response);
-            if (theme_updated) {
-                location.reload();
+        function find_highest_screen_box() {
+            var highest_z = 0;
+            $('.screen_box').each(function (k, v) {
+
+                var z = parseInt($(v).css('z-index'));
+                if (z == 'auto') {
+                    z = 0;
+                }
+
+                if (z > highest_z) {
+                    highest_z = z;
+                }
+            });
+            return highest_z;
+        }
+
+        function bring_window_to_front(obj) {
+            var highest_z = find_highest_screen_box();
+
+            if (highest_z >= 99) {
+                console.log('reset z-index to safe levels again!');
+                $('.screen_box').each(function (k, v) {
+                    $(v).css('z-index', 'auto');
+                });
+                $(obj).css('z-index', 2);
+
             } else {
-                close_config_window();
+                if ($(obj).css('z-index') != highest_z) {
+                    console.log('new highest is ' + highest_z);
+                    $(obj).css('z-index', highest_z + 1);
+                }
+            }
+        }
+
+        function close_screen_form(input_form_id) {
+            console.log('removing ' + input_form_id);
+            let screen_window = $("#input_form_box_" + input_form_id);
+            screen_window.remove();
+            delete screen_window;
+
+            let input_form_id_int = parseInt(input_form_id);
+            let indx = input_form_ids.indexOf(input_form_id_int);
+            if (indx < 0) {
+                console.log('input form id not found!');
+                console.log(input_form_id);
+                console.log(indx);
+                return;
+            }
+            input_form_ids.splice(indx, 1);
+            console.log(input_form_ids);
+
+            delete layout['input_forms'][input_form_id];
+            delete input_forms[input_form_id];
+        }
+
+        function close_screen_widget(widget_layout_id) {
+            console.log('removing ' + widget_layout_id);
+            let screen_window = $("#widget_container_" + widget_layout_id);
+            screen_window.remove();
+            delete screen_window;
+
+            // let widget_layout_id_int = parseInt(widget_layout_id);
+            delete layout['widgets'][widget_layout_id];
+        }
+
+        function update_layout() {
+
+            console.log(input_form_ids);
+            for (let i = 0; i < input_form_ids.length; i++) {
+                let input_form_id = input_form_ids[i];
+                let input_form_box = $("#input_form_box_" + input_form_id);
+                let current_y = input_form_box.css("top");
+                let current_x = input_form_box.css("left");
+
+                let this_layout = layout['input_forms'][input_form_id];
+                console.log(input_form_id);
+                console.log(this_layout);
+                this_layout["x"] = current_x;
+                this_layout["y"] = current_y;
+                console.log('layout for input form here \/');
+                console.log(this_layout);
+            }
+
+            for (w in layout['widgets']) {
+                let widget_box = $('#widget_container_' + w);
+                let current_y = widget_box.css('top');
+                let current_x = widget_box.css('left');
+
+                let this_layout = layout['widgets'][w]['layout'];
+                console.log(this_layout);
+
+                this_layout["x"] = current_x;
+                this_layout["y"] = current_y;
+
+                console.log(this_layout);
+            }
+
+            let doc = $(document.documentElement);
+            doc.css('cursor', 'progress');
+
+            let url = "/screens/updateLayout/";
+            let theme = $("#theme").val();
+
+            let params = {
+                "screen_id": {{ screen.id }},
+                "layout": JSON.stringify(layout),
+                "theme": theme
+            };
+
+            let post = $.post(url, params, function (response) {
+                if (theme_updated) {
+                    location.reload();
+                } else {
+                    close_config_window();
+                    load_overlay(response);
+                }
+            });
+
+            post.fail(function () {
+                alert('Could not perform request!');
+            });
+
+            post.always(function () {
+                doc.css('cursor', '');
+            });
+        }
+
+        function apply_inline(obj) {
+
+            var doc = $(document.documentElement);
+            doc.css("cursor", "progress");
+
+            // where were we clicked from?
+            var j = $(obj);
+            console.log(j);
+
+            var parent_form = j.parents('form');
+            console.log(parent_form);
+            console.log('the parent form was ^^');
+
+            console.log(parent_form.serialize());
+            //var url = '/input_forms/applyStandalone';
+            var url = parent_form.prop('action');
+
+            var post = $.post(url, parent_form.serialize(), function (response) {
+                console.log(response);
                 load_overlay(response);
+                doc.css("cursor", "");
+            });
+
+            post.fail(function () {
+                alert("Could not perform request!");
+            });
+
+            post.always(function () {
+                doc.css("cursor", "");
+            });
+
+        }
+
+        function add_automation() {
+            var input_form_id = $("#template_autocomplete_id").val();
+            var input_form_name = $("#template_autocomplete").val();
+
+            if (input_form_id in layout['input_forms']) {
+                console.log('Already added to this screen');
+            } else {
+                input_forms[input_form_id] = input_form_name;
+                let input_form_id_int = parseInt(input_form_id);
+
+                input_form_ids.push(input_form_id_int);
+                load_input_form(input_form_id);
+
             }
-        });
 
-        post.fail(function() {
-            alert('Could not perform request!');
-        });
+            $("#template_autocomplete_id").val("");
+            $("#template_autocomplete").val("");
 
-        post.always(function() {
-            doc.css('cursor', '');
-        });
-    }
-
-    function apply_inline(obj) {
-
-        var doc = $(document.documentElement);
-        doc.css("cursor", "progress");
-
-        // where were we clicked from?
-        var j = $(obj);
-        console.log(j);
-
-        var parent_form = j.parents('form');
-        console.log(parent_form);
-        console.log('the parent form was ^^');
-
-        console.log(parent_form.serialize());
-        //var url = '/input_forms/applyStandalone';
-        var url = parent_form.prop('action');
-
-        var post = $.post(url, parent_form.serialize(), function(response) {
-            console.log(response);
-            load_overlay(response);
-            doc.css("cursor", "");
-        });
-
-        post.fail(function() {
-            alert("Could not perform request!");
-        });
-
-         post.always(function() {
-            doc.css("cursor", "");
-        });
-
-    }
-
-    function add_automation() {
-        var input_form_id = $( "#template_autocomplete_id" ).val();
-        var input_form_name = $( "#template_autocomplete" ).val();
-
-        if (input_form_id in layout['input_forms']) {
-            console.log('Already added to this screen');
-        } else {
-            input_forms[input_form_id] = input_form_name;
-            input_form_id_int = parseInt(input_form_id)
-
-            input_form_ids.push(input_form_id_int);
-            load_input_form(input_form_id);
-
+            $("#template_autocomplete").focus();
         }
 
-        $( "#template_autocomplete_id" ).val("");
-        $( "#template_autocomplete" ).val("");
-
-        $( "#template_autocomplete" ).focus();
-    }
-
-    $(window).load(function() {
-        for(i=0;i<input_form_ids.length;i++) {
-            var ifi = input_form_ids[i];
-            console.log(ifi);
-            load_input_form(ifi);
-        }
-
-        for ( w in layout['widgets'] ) {
-            load_widget(layout['widgets'][w]['widget_id'], w);
-        }
-
-        $('#centered_box').css("height", "1000px");
-
-        $( "#template_autocomplete" ).autocomplete({
-            source: "/input_forms/searchAll",
-            focus: function(event, ui) {
-				event.preventDefault();
-		        $("#template_autocomplete").val(ui.item.label);
-			},
-            select: function (event, ui) {
-                $("#template_autocomplete").val(ui.item.label);
-                $("#template_autocomplete_id").val(ui.item.value);
-                return false;
+        $(window).load(function () {
+            for (i = 0; i < input_form_ids.length; i++) {
+                var ifi = input_form_ids[i];
+                console.log(ifi);
+                load_input_form(ifi);
             }
-        });
 
-    });
-</script>
+            for (w in layout['widgets']) {
+                load_widget(layout['widgets'][w]['widget_id'], w);
+            }
+
+            sticky_all_widgets(false);
+
+            $('#centered_box').css("height", "1000px");
+
+            $("#template_autocomplete").autocomplete({
+                source: "/input_forms/searchAll",
+                focus: function (event, ui) {
+                    event.preventDefault();
+                    $("#template_autocomplete").val(ui.item.label);
+                },
+                select: function (event, ui) {
+                    $("#template_autocomplete").val(ui.item.label);
+                    $("#template_autocomplete_id").val(ui.item.value);
+                    return false;
+                }
+            });
+
+        });
+    </script>
 {% endblock %}
 
 {% block content %}
 
-<h2>{{ screen.description }}</h2>
+    <h2>{{ screen.description }}</h2>
 
-<div class="screen_box" id="screen_box_base" onclick="javascript: bring_window_to_front(this)">
-</div>
+    <div class="screen_box" id="screen_box_base" onclick="javascript: bring_window_to_front(this)">
+    </div>
 
-<div class="screen_box" id="configuration_box" onclick="javascript: bring_window_to_front(this)">
-    <form action="/input_forms/applyStandalone">
-        <table style="width: 100%; margin-top: 0px; padding-top: 0px; padding: 5px; ">
-            <tbody class="screen_box_header">
-                <tr>
-                    <td colspan="2"
-                        style="text-align: right; border: 0px; padding: 0px; font-size: 50%;">
-                        <a href="#" onclick="javascript: close_config_window()" style="text-decoration: none">
-                            X
-                        </a>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2">Screen Configuration Controls</td>
-                </tr>
-            </tbody>
-            <tbody class="screen_box_menu">
+    <div class="screen_box widget_box" id="widget_box_base" onclick="javascript: bring_window_to_front(this)">
+    </div>
+
+    <div class="screen_box" id="configuration_box" onclick="javascript: bring_window_to_front(this)">
+        <div class="overlay_menu">
+            Screen Configuration
+            <div class="overlay_close">
+                <a href="#" onclick="close_config_window()">
+                    X
+                </a>
+            </div>
+        </div>
+        <form action="/input_forms/applyStandalone">
+            <table style="width: 100%; margin-top: 0px; padding-top: 0px; padding: 5px; ">
+                <tbody class="screen_box_menu">
                 <tr>
                     <td>
-                         <input type="text" size="25" id="template_autocomplete"
-                                            placeholder="Add Automation to Screen"/>
+                        <input type="text" size="25" id="template_autocomplete"
+                               placeholder="Add Automation to Screen"/>
+                    </td>
+                    <td>
                         <input type="hidden" id="template_autocomplete_id"/>
                         <input type="button" onclick="javascript: add_automation()" value="Add"/>
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="2">
-                        <br/>
+                    <td class="template_title">
+                        Add Widget:
+                    </td>
+                    <td>
+                        <select id="widget" onchange="add_widget_config();">
+                            <option value="">Add</option>
+                            {% for widget in available_widgets %}
+                                <option value="{{ widget.id }}">{{ widget.label }}</option>
+                            {% endfor %}
+                        </select>
                     </td>
                 </tr>
                 <tr>
+                    <td class="template_title">
+                        Update Theme:
+                    </td>
                     <td>
-                        Update Theme: &nbsp;
                         <select name="theme" id="theme" onchange="javascript: theme_changed()">
-                        {% for theme in themes %}
-                            {% if theme.base_template == screen.theme %}
-                            <option value="{{ theme.base_template }}" selected="selected">{{ theme.label }}</option>
-                            {% else %}
-                            <option value="{{ theme.base_template }}">{{ theme.label }}</option>
-                            {% endif %}
-                        {% endfor %}
+                            {% for theme in themes %}
+                                {% if theme.base_template == screen.theme %}
+                                    <option value="{{ theme.base_template }}"
+                                            selected="selected">{{ theme.label }}</option>
+                                {% else %}
+                                    <option value="{{ theme.base_template }}">{{ theme.label }}</option>
+                                {% endif %}
+                            {% endfor %}
                         </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        Add Widget: &nbsp;
-                        <select id="widget">
-                        {% for widget in available_widgets %}
-                            <option value="{{ widget.id }}">{{ widget.label }}</option>
-                        {% endfor %}
-                        </select>
-                        &nbsp;
-                        <input type="button" onclick="javascript: add_widget_config()" value="Add"/>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2">
-                        <br/>
                     </td>
                 </tr>
                 <tr>
@@ -619,16 +653,16 @@
                         <input type="button" onclick="javascript: update_layout()" value="Save Screen Layout"/>
                     </td>
                 </tr>
-            </tbody>
-        </table>
-    </form>
-</div>
+                </tbody>
+            </table>
+        </form>
+    </div>
 
-<div id="footer" style="position: absolute; bottom: 5px; left: 0; right: 0; text-align: center;">
-    <a href="/screens">A-Frame</a> -
-    <a href="#" onclick="javascript: show_config_window();" title="Configure Screen">
-        &#9881; Configure Screen
-    </a>
+    <div id="footer" style="position: absolute; bottom: 5px; left: 0; right: 0; text-align: center;">
+        <a href="/screens">A-Frame</a> -
+        <a href="#" onclick="javascript: show_config_window();" title="Configure Screen">
+            &#9881; Configure Screen
+        </a>
 
-</div>
+    </div>
 {% endblock %}

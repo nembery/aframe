@@ -549,6 +549,13 @@ SCREEN_WIDGETS = (
         "render_template": "menu.html"
     },
     {
+        "label": "Global Menu",
+        "configurable": True,
+        "id": "global_menu",
+        "configuration_template": "global_menu_config.html",
+        "render_template": "global_menu.html"
+    },
+    {
         "label": "Static Image",
         "configurable": True,
         "id": "static_image",

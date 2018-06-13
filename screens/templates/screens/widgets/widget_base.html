@@ -1,8 +1,16 @@
-
-<div class="overlay_menu" style="text-align: right; border: 0px; padding: 0px; font-size: 50%; position: relative">
-    <a href="#" onclick="javascript: close_screen_widget({{ widget_layout_id }})"
-       style="text-decoration: none">
-        X
-    </a>
+<div class="overlay_menu" style="display: none">
+    <!-- widget_base.html -->
+    Widget
+    <div class="overlay_close">
+        <a href="#" title="Configure"
+           onclick="sticky_widget({{ widget_layout_id }})">
+            &#9660;
+        </a>
+        <a href="#" title="Configure"
+           onclick="load_screen_widget_configs_manual('{{ widget_id }}', {{ widget_layout_id }})">
+            &#10033;
+        </a>
+        <a href="#" title="Close" onclick="close_screen_widget({{ widget_layout_id }})">X</a>
+    </div>
 </div>
 {% block widget %}{% endblock %}

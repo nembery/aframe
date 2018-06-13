@@ -232,30 +232,35 @@ def create(request):
 def export_form(request, input_form_id):
     logger.info("__ input_forms export_form __")
     logger.info("exporting %s" % input_form_id)
+
+    exported_json = aframe_utils.export_input_form(input_form_id)
+
     input_form = InputForm.objects.get(pk=input_form_id)
     config_template = input_form.script
+    #
+    # template_options = dict()
+    # template_options["name"] = config_template.name
+    # template_options["description"] = config_template.description
+    # template_options["action_provider"] = config_template.action_provider
+    # template_options["action_provider_options"] = config_template.action_provider_options
+    # template_options["type"] = config_template.type
+    # template_options["template"] = quote(config_template.template)
+    #
+    # form_options = dict()
+    # form_options["name"] = input_form.name
+    # form_options["description"] = input_form.description
+    # form_options["instructions"] = input_form.instructions
+    # form_options["json"] = quote(input_form.json)
+    #
+    # exported_object = dict()
+    # exported_object["template"] = template_options
+    # exported_object["form"] = form_options
+    #
+    # logger.debug(json.dumps(exported_object))
 
-    template_options = dict()
-    template_options["name"] = config_template.name
-    template_options["description"] = config_template.description
-    template_options["action_provider"] = config_template.action_provider
-    template_options["action_provider_options"] = config_template.action_provider_options
-    template_options["type"] = config_template.type
-    template_options["template"] = quote(config_template.template)
+    # response = HttpResponse(json.dumps(exported_object), content_type="application/json")
 
-    form_options = dict()
-    form_options["name"] = input_form.name
-    form_options["description"] = input_form.description
-    form_options["instructions"] = input_form.instructions
-    form_options["json"] = quote(input_form.json)
-
-    exported_object = dict()
-    exported_object["template"] = template_options
-    exported_object["form"] = form_options
-
-    logger.debug(json.dumps(exported_object))
-
-    response = HttpResponse(json.dumps(exported_object), content_type="application/json")
+    response = HttpResponse(exported_json, content_type="application/json")
     response['Content-Disposition'] = 'attachment; filename=' + 'aframe-' + str(config_template.name) + '.json'
 
     return response

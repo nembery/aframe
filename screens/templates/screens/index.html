@@ -1,25 +1,26 @@
-
 {% extends "base.html" %}
 {% block title %}A-Frame{% endblock %}
 {% block content %}
-<h2>Screens</h2>
-<table>
-    <tr>
-        <th>Name</th>
-        <th>Description</th>
-        <th>Options</th>
-    </tr>
-    {% for screen in screen_list %}
-    <tr>
-        <td><a href="{{ screen.id }}">{{ screen.name }}</a> </td>
-        <td>{{ screen.description }}</td>
-        <td>
-            <a href="delete/{{ screen.id }}">Delete</a>
-            &nbsp;
-            <a href="edit/{{ screen.id }}">Edit Screen</a>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
-<a href="/screens/new">Define new Screen</a>
+    <h2>Screens</h2>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Options</th>
+        </tr>
+        {% for screen in screen_list %}
+            <tr>
+                <td><a href="{{ screen.id }}">{{ screen.name }}</a></td>
+                <td>{{ screen.description }}</td>
+                <td>
+                    <a href="delete/{{ screen.id }}">Delete</a>
+                    &nbsp;
+                    <a href="edit/{{ screen.id }}">Edit</a>
+                    &nbsp;
+                    <a href="export/{{ screen.id }}">Export</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    <a href="/screens/new">Define new Screen</a>
 {% endblock %}

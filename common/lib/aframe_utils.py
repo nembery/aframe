@@ -3,28 +3,31 @@ import logging
 import os
 import re
 import socket
+from urllib import quote
+from urllib import unquote
 
 import yaml
 from django.template import engines
 from django.template.base import VariableNode
 
 from a_frame.utils import action_provider
+from input_forms.models import InputForm
 from tools.models import ConfigTemplate
 
 logger = logging.getLogger(__name__)
 
 
 def generate_dict(path, val):
-        d = dict()
-        path_array = path.split('.')
-        first = path_array[0]
-        if len(path_array) == 1:
-                d[first] = val
-                return d
-        else:
-                new_path = '.'.join(path_array[1:])
-                d[first] = generate_dict(new_path, val)
-                return d
+    d = dict()
+    path_array = path.split('.')
+    first = path_array[0]
+    if len(path_array) == 1:
+        d[first] = val
+        return d
+    else:
+        new_path = '.'.join(path_array[1:])
+        d[first] = generate_dict(new_path, val)
+        return d
 
 
 def get_value_from_json(path, json_object):
@@ -429,3 +432,89 @@ def get_input_parameters_for_template(config_template):
         input_parameters.append("af_endpoint_type")
 
     return template_usage
+
+
+def export_input_form(input_form_id):
+    input_form = InputForm.objects.get(pk=input_form_id)
+    config_template = input_form.script
+
+    template_options = dict()
+    template_options["name"] = config_template.name
+    template_options["description"] = config_template.description
+    template_options["action_provider"] = config_template.action_provider
+    template_options["action_provider_options"] = config_template.action_provider_options
+    template_options["type"] = config_template.type
+    template_options["template"] = quote(config_template.template)
+
+    form_options = dict()
+    form_options["name"] = input_form.name
+    form_options["description"] = input_form.description
+    form_options["instructions"] = input_form.instructions
+    form_options["json"] = quote(input_form.json)
+
+    exported_object = dict()
+    exported_object["template"] = template_options
+    exported_object["form"] = form_options
+    input_form_json = json.dumps(exported_object)
+    logger.debug(input_form_json)
+    return input_form_json
+
+
+def get_screen_themes():
+    """
+    Return a list of all theme files in the screens/templates/themes directory
+    :return: list of filenames ending with html
+    """
+    common_lib_dir = os.path.dirname(os.path.abspath(__file__))
+    themes_dir = os.path.abspath(os.path.join(common_lib_dir, '../../screens/templates/themes'))
+    themes = list()
+    for t in os.listdir(themes_dir):
+        if t.endswith('.html'):
+            th = dict()
+            th['label'] = t.replace('.html', '')
+            th['base_template'] = 'themes/%s' % t
+            themes.append(th)
+
+    print 'RETURNING THEMES'
+    print themes
+    return themes
+
+
+def import_form(jd):
+    """
+    Imports an input_from from serialized json data
+    :param jd: json_data object generated from the export_input_form function
+    :return: id of the input form or id of the input form if it already exists
+    """
+    template_options = jd["template"]
+    form_options = jd["form"]
+
+    if not ConfigTemplate.objects.filter(name=template_options['name']).exists():
+        template = ConfigTemplate()
+        template.name = template_options["name"]
+        template.description = template_options["description"]
+        template.action_provider = template_options["action_provider"]
+        template.action_provider_options = template_options["action_provider_options"]
+        template.type = template_options["type"]
+        template.template = unquote(template_options["template"])
+        logger.info("Imported template: %s" % template.name)
+        template.save()
+    else:
+        print 'ConfigTemplate %s already exists' % template_options['name']
+
+    if not InputForm.objects.filter(name=form_options['name']).exists():
+        input_form = InputForm()
+        input_form.name = form_options["name"]
+        input_form.description = form_options["description"]
+        input_form.instructions = form_options["instructions"]
+        input_form.json = unquote(form_options["json"])
+        input_form.script = template
+
+        logger.info("Import input form: %s" % input_form.name)
+        input_form.save()
+    else:
+        print 'Input form %s already exists' % form_options['name']
+        input_form = InputForm.objects.get(name=form_options['name'])
+
+    return input_form.id
+
