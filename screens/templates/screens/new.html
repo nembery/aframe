@@ -6,22 +6,25 @@
 
     var template_variables = [];
 
-    var selected_automations = []
+    var selected_automations = [];
 
-    var selected_screen_widgets = []
+    var selected_screen_widgets = [];
 
     function submit_form() {
 
-        var selected_automations_text = JSON.stringify(selected_automations, null, 2);
+        let selected_automations_text = JSON.stringify(selected_automations, null, 2);
         $("#input_forms").val(selected_automations_text);
         // submit the form here after we are all done
+        let selected_screen_widgets_text = JSON.stringify(selected_screen_widgets, null, 2);
+        $("#screen_widgets").val(selected_screen_widgets_text);
+
         $("#create_form").submit();
     }
 
     function add_automation() {
-        var automation_name = $( "#template_autocomplete" ).val();
+        let automation_name = $( "#template_autocomplete" ).val();
         selected_automations.push(automation_name);
-        var new_li = $("<li>")
+        let new_li = $("<li>")
         new_li.append(automation_name);
         $("#selected_automations_ui").append(new_li);
 
@@ -30,12 +33,12 @@
     }
 
     function add_screen_widget() {
-        var screen_widget_name = $('#screen_widget_select').val()
+        let screen_widget_name = $('#screen_widget_select').val();
 
         selected_screen_widgets.push(screen_widget_name);
-        var new_li = $("<li>")
+        let new_li = $("<li>")
         new_li.append(screen_widget_name);
-        $("#selected_screen_widget_ui").append(new_li);
+        $("#selected_screen_widgets_ui").append(new_li);
     }
 
     $(window).load(function() {
@@ -129,7 +132,7 @@
                 Screen Widgets:
             </td>
             <td>
-                <input type="hidden" name="input_forms" id="input_forms" value="">
+                <input type="hidden" name="screen_widgets" id="screen_widgets" value="">
                 <ul id="selected_screen_widgets_ui">
 
                 </ul>

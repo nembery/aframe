@@ -105,7 +105,7 @@ def detail(request, screen_id):
 
 def create(request):
     logger.info("__ screens create __")
-    required_fields = set(["name", "theme", "description", "input_forms"])
+    required_fields = set(["name", "theme", "description", "input_forms", "screen_widgets"])
     if not required_fields.issubset(request.POST):
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
@@ -113,6 +113,7 @@ def create(request):
     theme = request.POST["theme"]
     description = request.POST["description"]
     input_forms = request.POST["input_forms"]
+    widgets = request.POST['screen_widgets']
 
     screen = Screen()
     screen.name = name
@@ -126,6 +127,13 @@ def create(request):
         input_forms_data = json.loads(input_forms)
 
     print input_forms_data
+
+    if widgets == "":
+        widgets_data = []
+    else:
+        widgets_data = json.loads(widgets)
+
+    print widgets
 
     layout = dict()
     layout['input_forms'] = dict()
@@ -147,6 +155,24 @@ def create(request):
             xcounter = 160
 
         screen.input_forms.add(input_form)
+
+    indx = 0
+    for w in widgets_data:
+        widget_layout = dict()
+        widget_layout["x"] = xcounter
+        widget_layout["y"] = ycounter
+
+        layout['widgets'][indx] = dict()
+        layout['widgets'][indx]["layout"] = widget_layout
+        layout['widgets'][indx]["widget_id"] = w
+        layout['widgets'][indx]["widget_config"] = dict()
+        if xcounter <= 900:
+            xcounter += 360
+        else:
+            ycounter += 500
+            xcounter = 160
+
+        indx += 1
 
     screen.layout = json.dumps(layout)
     screen.save()
