@@ -193,7 +193,6 @@ def new_from_template(request, template_id):
             if variable_string not in available_tags:
                 if not variable_string.startswith("af_"):
                     available_tags.append(variable_string)
-
     widgets = settings.WIDGETS
     widgets_json = json.dumps(widgets)
     context = {
@@ -202,6 +201,31 @@ def new_from_template(request, template_id):
         "widgets": widgets,
         "widgets_json": widgets_json
     }
+
+    if 'cloned_templates' in request.session:
+        print 'found cloned templates'
+        cloned_templates = request.session['cloned_templates']
+        if template_id in cloned_templates:
+            print 'found this template_id'
+            if 'input_form_id' in cloned_templates[template_id]:
+                cloned_input_form_id = cloned_templates[template_id]['input_form_id']
+                try:
+                    input_form = InputForm.objects.get(pk=cloned_input_form_id)
+                    dolly = InputForm()
+                    dolly.name = config_template.name
+                    dolly.description = config_template.description
+                    dolly.instructions = input_form.instructions
+                    dolly.json = input_form.json
+                    dolly.script = config_template
+                    dolly.save()
+                    context['input_form'] = dolly
+                    return render(request, "input_forms/edit.html", context)
+                except ObjectDoesNotExist:
+                    print 'Could not find the input for for this cloned template'
+
+    else:
+        print 'no cloned templates found!'
+
     return render(request, "input_forms/new.html", context)
 
 
