@@ -1,11 +1,14 @@
 <td>
     <textarea cols="{{  j.widget_config.cols }}" rows="{{  j.widget_config.rows }}"
-              style="width: auto;" name="{{ j.name }}"
+              style="width: auto;" name="display_{{ j.name }}"
               onblur="check_textarea_sanitize_{{ j.name }}_{{ input_form.id }}(this);"
               onclick="check_textarea_sanitize_rollback_{{ j.name }}_{{ input_form.id }}(this);"
               placeholder="{{ j.default }}"></textarea>
+    <input type="hidden" id="{{ j.name }}" name="{{ j.name }}" value=""/>
     <input type="hidden" id="textarea_sanitize_rollback_{{ j.name }}_{{ input_form.id }}" value=""/>
     <script type="text/javascript">
+
+        let config = $.parseJSON('{{ j.widget_config_json|safe }}');
 
         function check_textarea_sanitize_rollback_{{ j.name }}_{{ input_form.id }}(obj) {
             let r = $('#textarea_sanitize_rollback_{{ j.name }}_{{ input_form.id }}');
@@ -18,20 +21,27 @@
 
         function check_textarea_sanitize_{{ j.name }}_{{ input_form.id }}(obj) {
             console.log('checking sanitize');
-            let config = $.parseJSON('{{ j.widget_config_json|safe }}');
+            if (config['sanitize'] === undefined) {
+                return;
+            }
+            console.log('more here');
             let sanitize = config["sanitize"];
+            console.log(sanitize);
             if (sanitize === "yes") {
                 let o  = $(obj);
                 // copy local changes to a hidden rollback element
-                let r = $('#textarea_sanitize_rollback_{{ j.name }}_{{ input_form.id }}');
-                r.val(o.val());
-                var sanitized = o.val();
-                console.log(sanitized);
-                sanitized = sanitized.replace('\r\n', '\n');
-                sanitized = sanitized.replace(/\n/g, '\\\\n');
+                //let r = $('#textarea_sanitize_rollback_{{ j.name }}_{{ input_form.id }}');
+                let s = '#' +  "{{ j.name }}";
+                console.log(s);
+                let r = $(s);
+                r.val(encodeURI(o.val()));
+                // var sanitized = o.val();
+                console.log(r.val());
+                // sanitized = sanitized.replace('\r\n', '\n');
+                // sanitized = sanitized.replace(/\n/g, '\\\\n');
                 // sanitized = sanitized.replace(/"/g, '\\\\"');
-                o.val(sanitized);
-                console.log(o.val());
+                //o.val(sanitized);
+                //console.log(o.val());
                 // o.prop('disabled', true);
                 return true;
             }

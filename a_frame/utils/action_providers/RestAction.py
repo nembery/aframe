@@ -145,8 +145,8 @@ class RestAction(ActionBase):
                 else:
                     results = results_object.read()
 
-                print results_object.info().getheader('Content-Type')
-
+                content_type = results_object.info().getheader('Content-Type')
+                print content_type
                 if results != "":
                     return self.__format_results(results)
                 else:
