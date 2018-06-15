@@ -144,9 +144,9 @@
 
             let params = {
                 'widget_id': widget_id,
-                'screen_id': {{ screen.id }},
+                'screen_id': "{{ screen.id }}",
                 'widget_layout_id': widget_layout_id
-            }
+            };
 
             let post = $.post(url, params, function (response) {
                 var content = $(response);
@@ -180,8 +180,8 @@
             var params = {
                 'widget_id': widget_id,
                 'widget_layout_id': widget_layout_id,
-                'screen_id': {{ screen.id }}
-            }
+                'screen_id': "{{ screen.id }}"
+            };
 
             // pass along any extra arguments as well
             for (arg in args) {
@@ -477,7 +477,7 @@
             let theme = $("#theme").val();
 
             let params = {
-                "screen_id": {{ screen.id }},
+                "screen_id": "{{ screen.id }}",
                 "layout": JSON.stringify(layout),
                 "theme": theme
             };

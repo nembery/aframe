@@ -68,10 +68,13 @@ class ScreensAppConfig(AppConfig):
                         form_data = json_data['input_forms']
 
                         # we will also export any global widget data that is found on widgets in the screen
-                        widget_data = json_data['widgets']
+                        if 'widgets' not in json_data:
+                            widget_data = dict()
+                        else:
+                            widget_data = json_data['widgets']
 
                         for w in widget_data:
-                            if not ScreenWidgetConfig.filter(widget_type=w).exists():
+                            if not ScreenWidgetConfig.objects.filter(widget_type=w).exists():
                                 widget_config = ScreenWidgetConfig()
 
                                 widget_config.widget_type = w
@@ -83,6 +86,9 @@ class ScreensAppConfig(AppConfig):
 
                         # create new layout object
                         new_layout = dict()
+                        if 'widgets' not in layout:
+                            layout['widgets'] = dict()
+
                         # we can just copy the widgets right in
                         new_layout['widgets'] = layout['widgets']
                         new_layout['input_forms'] = dict()
@@ -105,6 +111,7 @@ class ScreensAppConfig(AppConfig):
                             screen.name = screen_data['name']
                             screen.description = screen_data['description']
                             screen.theme = screen_data['theme']
+                            screen.id = screen_data['id']
                             screen.layout = json.dumps(new_layout)
                             screen.save()
                         else:

@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from django.db import models
 from input_forms.models import InputForm
+import uuid
 
 
 # class to hold global screen widget configuration
@@ -18,6 +19,7 @@ class ScreenWidget(models.Model):
 
 
 class Screen(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=32)
     description = models.TextField()
     input_forms = models.ManyToManyField(InputForm)
