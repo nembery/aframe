@@ -191,13 +191,13 @@ function check_ipv4_input(obj) {
 
 function sticky_widget(widget_id) {
     let w = $('#widget_container_' + widget_id);
-    let o = w.find('[class=overlay_menu]');
+    let o = w.find('[class=overlay_close]');
     o.css("display", "none");
 }
 
 function set_global_sticky_widget(widget_id) {
     let w = $('#widget_container_' + widget_id);
-    let o = w.find('[class=overlay_menu]');
+    let o = w.find('[class=overlay_close]');
     // allow widgets to be moved and closed during config
     if (show_widget_menu === true) {
         o.css("display", "");
@@ -210,7 +210,7 @@ function sticky_all_widgets(toggle) {
     let widgets = $('[id^=widget_container]');
     widgets.each(function (i, w) {
         let widget = $(w);
-        let o = widget.find('[class=overlay_menu]');
+        let o = widget.find('[class=overlay_close]');
         if (toggle) {
             o.css("display", "none");
         } else {

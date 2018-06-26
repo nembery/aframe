@@ -10,3 +10,5 @@ conf/imports/themes/
 conf/imports/forms/
 conf/imports/screens/
 screens/templates/themes/test.html
+screens/templates/themes/pan.html
+.gitignore

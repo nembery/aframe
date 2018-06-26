@@ -1,5 +1,6 @@
 .widget_box {
-    min-width: unset; !important;
+    min-width: unset;
+!important;
 }
 
 .widget_toolbar {
@@ -41,44 +42,51 @@
     background: #EEE;
     z-index: 1001;
     -webkit-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-       -moz-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-        -ms-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-         -o-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    -moz-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    -ms-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    -o-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 
     font-family: Verdana, Arial, Helvetica, sans-serif;
 }
+
 .context-menu-item {
     padding: 2px 2px 2px 2px;
     background-color: #EEE;
     position: relative;
     -webkit-user-select: none;
-       -moz-user-select: -moz-none;
-        -ms-user-select: none;
-            user-select: none;
+    -moz-user-select: -moz-none;
+    -ms-user-select: none;
+    user-select: none;
 }
+
 .context-menu-separator {
-    padding-bottom:0;
+    padding-bottom: 0;
     border-bottom: 1px solid #DDD;
 }
+
 .context-menu-item > label > input,
 .context-menu-item > label > textarea {
     -webkit-user-select: text;
-       -moz-user-select: text;
-        -ms-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
 }
+
 .context-menu-item.hover {
     cursor: pointer;
     background-color: #39F;
 }
+
 .context-menu-item.disabled {
     color: #666;
 }
+
 .context-menu-input.hover,
 .context-menu-item.disabled.hover {
     cursor: default;
     background-color: #EEE;
 }
+
 .context-menu-submenu:after {
     content: ">";
     color: #666;
@@ -87,14 +95,20 @@
     right: 3px;
     z-index: 1;
 }
-.context-menu-input > label > * { vertical-align: top; }
+
+.context-menu-input > label > * {
+    vertical-align: top;
+}
+
 .context-menu-input > label > input[type="checkbox"],
 .context-menu-input > label > input[type="radio"] {
     margin-left: -17px;
 }
+
 .context-menu-input > label > span {
     margin-left: 5px;
 }
+
 .context-menu-input > label,
 .context-menu-input > label > input[type="text"],
 .context-menu-input > label > textarea,
@@ -103,22 +117,38 @@
     width: 100%;
 
     -webkit-box-sizing: border-box;
-       -moz-box-sizing: border-box;
-        -ms-box-sizing: border-box;
-         -o-box-sizing: border-box;
-            box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    -o-box-sizing: border-box;
+    box-sizing: border-box;
 }
+
 .context-menu-input > label > textarea {
     height: 100px;
 }
+
 .context-menu-item > .context-menu-list {
     display: none;
     right: -5px;
     top: 5px;
 }
+
 .context-menu-item.hover > .context-menu-list {
     display: block;
 }
+
 .context-menu-accesskey {
     text-decoration: underline;
+}
+
+#footer {
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    right: 0;
+    text-align: center;
+}
+
+#footer a {
+    text-decoration: none;
 }

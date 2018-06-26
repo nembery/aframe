@@ -22,23 +22,28 @@
     }
 
     function add_automation() {
-        let automation_name = $( "#template_autocomplete" ).val();
+        let ta = $("#template_autocomplete");
+        let automation_name = ta.val();
+
         selected_automations.push(automation_name);
         let new_li = $("<li>")
         new_li.append(automation_name);
         $("#selected_automations_ui").append(new_li);
 
-        $( "#template_autocomplete" ).val("");
-        $( "#template_autocomplete" ).focus();
+        ta.val("");
+        ta.focus();
     }
 
     function add_screen_widget() {
         let screen_widget_name = $('#screen_widget_select').val();
-
+        if (screen_widget_name === 'none') {
+            return;
+        }
         selected_screen_widgets.push(screen_widget_name);
         let new_li = $("<li>")
         new_li.append(screen_widget_name);
         $("#selected_screen_widgets_ui").append(new_li);
+        $('#screen_widget_select').val('none');
     }
 
     $(window).load(function() {
@@ -51,6 +56,7 @@
             select: function (event, ui) {
                 $("#template_autocomplete").val(ui.item.label);
                 $("#template_autocomplete_id").val(ui.item.value);
+                add_automation();
                 return false;
             }
         });
@@ -95,12 +101,11 @@
 
         <tr>
             <td>
-                Add Automation Input Form:
+                Add Automation:
             </td>
             <td>
                 <input type="text" size="25" id="template_autocomplete"
-                       placeholder="search input form definitions"> &nbsp;
-                <input type="button" onclick="javascript: add_automation()" value="Add"/>
+                       placeholder="Choose Automation">
             </td>
         </tr>
         <tr>
@@ -119,12 +124,12 @@
                 Add Screen Widget:
             </td>
             <td>
-                <select id="screen_widget_select" name="screen_widget_add">
+                <select id="screen_widget_select" name="screen_widget_add" onchange="add_screen_widget()">
+                    <option value="none">Choose Widget</option>
                     {% for w in widgets %}
                     <option value="{{ w.id }}">{{ w.label }}</option>
                     {% endfor %}
                 </select>
-                <input type="button" onclick="javascript: add_screen_widget()" value="Add"/>
             </td>
         </tr>
         <tr>

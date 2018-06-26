@@ -1,31 +1,30 @@
 {% extends "screens/widgets/widget_base.html" %}
 {% block widget %}
-    <div style="min-width: 450px;">
-            <ul id="global_menu_list_{{ widget_layout_id }}"
-                style="list-style: none; margin-left: 15px; padding: 5px; font-size: 100%;">
-            </ul>
+    <ul id="global_menu_list_{{ widget_layout_id }}"
+        class="global_menu_ul">
 
-            <script type="text/javascript">
+    </ul>
 
-                $(function () {
-                    let wgc = $.parseJSON('{{ widget_global_config|safe }}');
-                    console.log(wgc);
+    <script type="text/javascript">
 
-                    $(wgc).each(function (i, s) {
-                        // create html fragment
-                        var new_row = $('<li style="padding: 5px;"/>');
-                        var new_link = $('<a/>');
-                        new_link.prop('href', s.value);
-                        new_link.html(s.name);
-                        new_row.append(new_link);
+        $(function () {
+            let wgc = $.parseJSON('{{ widget_global_config|safe }}');
+            console.log(wgc);
 
-                        // append the new_row html fragment to the new_rows tbody element
-                        $('#global_menu_list_{{ widget_layout_id }}').append(new_row);
-                    });
+            $(wgc).each(function (i, s) {
+                // create html fragment
+                var new_row = $('<li/>');
+                var new_link = $('<a/>');
+                new_link.prop('href', s.value);
+                new_link.html(s.name);
+                new_row.append(new_link);
 
-                    $('#widget_container_' + {{ widget_layout_id }}).css('height', '');
-                    console.log( 'set height' );
-                });
-            </script>
-    </div>
+                // append the new_row html fragment to the new_rows tbody element
+                $('#global_menu_list_{{ widget_layout_id }}').append(new_row);
+            });
+
+            $('#widget_container_' + {{ widget_layout_id }}).css('height', '');
+            console.log('set height');
+        });
+    </script>
 {% endblock %}
