@@ -42,7 +42,7 @@
         function add_global_menu_list_option() {
 
             let i = global_menu_list_options.length;
-            console.log('ading new id ' + i);
+            console.log('adding new id ' + i);
             let new_row_id = "global_menu_list_row_" + i + "_{{ widget_layout_id }}";
             let option_name = $("#global_menu_list_option_name").val();
             let option_value = $("#global_menu_list_option_value").val();
@@ -158,7 +158,6 @@
                 <input type="hidden" id="global_menu_list_option_value"/>
                 <input type="text" name="screen_name" size="25" id="global_menu_list_option_label"
                        placeholder="Search Screens">
-
             </td>
             <td>
                 <input type="button" onclick="add_global_menu_list_option()" value="Add"/>
