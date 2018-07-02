@@ -91,15 +91,19 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': '/tmp/aframe.log',
         },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler'
+        },
     },
     'loggers': {
         'django': {
-            'handlers': ['file'],
+            'handlers': ['file', 'console'],
             'level': 'WARN',
             'propagate': True,
         },
         '': {
-            'handlers': ['file'],
+            'handlers': ['file', 'console'],
             'level': 'DEBUG',
         },
     },
@@ -663,5 +667,12 @@ SCREEN_WIDGETS = (
         "configuration_template": "list_config.html",
         "id": "simple_list",
         "render_template": "list.html"
+    },
+    {
+        "label": "Raw HTML",
+        "configurable": True,
+        "configuration_template": "html_config.html",
+        "id": "html_contents",
+        "render_template": "html.html"
     }
 )

@@ -1,0 +1,76 @@
+{% extends "screens/widgets/widget_overlay.html" %}
+{% block overlay %}
+    <script type="text/javascript">
+
+        $(function () {
+            // on load
+            let config_element;
+            let widget_layout_id = {{ widget_layout_id }};
+            let widget_id = '{{ widget_id }}';
+            if (layout['widgets'][widget_layout_id] === undefined) {
+                layout['widgets'][widget_layout_id] = {};
+            }
+
+            config_element = layout['widgets'][widget_layout_id];
+
+            console.log(config_element);
+
+            if (config_element['widget_config'] !== undefined
+                && config_element['widget_config']['contents'] !== undefined)
+            {
+                let unquoted = decodeURI(config_element['widget_config']['contents']);
+                let title = config_element['widget_config']['title'];
+                console.log(unquoted);
+                $('#html_contents').val(unquoted);
+                $('#html_title').val(title);
+            }
+
+        });
+
+        function set_html_config() {
+
+            let config = {};
+            config['contents'] = encodeURI($('#html_contents').val());
+            config['title'] = $('#html_title').val();
+
+            let widget_layout_id = {{ widget_layout_id }};
+            let widget_id = '{{  widget_id }}';
+
+            // Every screen config should get the 'widget_config' and 'widget_id' at minimum
+            layout['widgets'][widget_layout_id]['widget_config'] = config;
+            layout['widgets'][widget_layout_id]['widget_id'] = '{{ widget_id }}';
+            console.log(layout['widgets'][widget_layout_id]);
+            close_overlay();
+            load_widget(widget_id, widget_layout_id);
+        }
+
+    </script>
+    <table>
+        <tr>
+            <td colspan="2">
+                Raw HTML Widget. All HTML code entered here will be rendered in the widget as desired.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Title:
+            </td>
+            <td>
+                <input type="text" id="html_title" placeholder="Widget Title"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Contents:
+            </td>
+            <td>
+                <textarea title="Raw HTML input" id="html_contents" rows="10" cols="65"></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <input type="button" onclick="set_html_config()" value="OK"/>
+            </td>
+        </tr>
+    </table>
+{% endblock %}
