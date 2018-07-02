@@ -11,13 +11,13 @@
 
             var url = '{{ automation_results.output|safe }}';
 
-            if (layout['widgets'][widget_layout_id] == undefined) {
+            if (layout['widgets'][widget_layout_id] === undefined) {
                 layout['widgets'][widget_layout_id] = {};
                 layout['widgets'][widget_layout_id]['widget_config'] = {};
                 layout['widgets'][widget_layout_id]['widget_config']['url'] = url;
             }
 
-            if (layout['widgets'][widget_layout_id]['widget_config'] != undefined) {
+            if (layout['widgets'][widget_layout_id]['widget_config'] !== undefined) {
                 config = layout['widgets'][widget_layout_id]['widget_config'];
                 console.log(layout['widgets'][widget_layout_id]['widget_config']);
                 var d = new Date().getTime()
@@ -32,11 +32,10 @@
 
                 $('#static_image_{{ widget_layout_id }}').prop('src', u + t + d);
 
-                if (config['title'] != undefined) {
+                if (config['title'] !== undefined) {
                     console.log('setting title');
                     $('#image_title_{{ widget_layout_id }}').html('<h3>' + config['title'] + '</h3>');
                 }
-
             }
 
             $('#static_image_{{ widget_layout_id }}').on('load', function() {
@@ -44,9 +43,9 @@
                 $('#widget_container_{{ widget_layout_id }}').css('width', 'initial');
             });
 
-            if (config['refresh'] != undefined) {
+            if (config['refresh'] !== undefined) {
                 var refresh = config['refresh'];
-                if (refresh != 0) {
+                if (refresh !== 0) {
                     setInterval(function() {
                         var d = new Date().getTime()
                         var u = config['url'];

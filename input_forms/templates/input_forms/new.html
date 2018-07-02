@@ -150,7 +150,7 @@
                             {{ t }}
                         </td>
                         <td>
-                            <input type="text" id="{{ t }}_label" name="{{ t }}_label" value="{{ t }}"
+                            <input type="text" id="{{ t }}_label" name="{{ t }}_label" value="{{ t|capfirst }}"
                                    style="width: 150px"
                             />
                         </td>
@@ -169,7 +169,7 @@
                             <input type="hidden" name="{{ t }}_widget_config" id="{{ t }}_widget_config" value=""/>
                             <input type="button" id="{{ t }}_widget_config_button" value="Configure"
                                    onclick="javascript: load_widget_configs('{{ t }}_widget')"
-                                   style="display: none; width: 75px;"/>
+                                   style="display: none;"/>
                         </td>
                     </tr>
                     {% endfor %}

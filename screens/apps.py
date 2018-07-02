@@ -15,7 +15,7 @@ class ScreensAppConfig(AppConfig):
 
     def ready(self):
 
-        print 'Checking for imported screens'
+        print('Checking for imported screens')
         from screens.models import Screen
         from screens.models import ScreenWidgetConfig
 
@@ -23,6 +23,7 @@ class ScreensAppConfig(AppConfig):
 
         common_lib_dir = os.path.dirname(os.path.abspath(__file__))
         imports_dir = os.path.abspath(os.path.join(common_lib_dir, '../conf/imports/themes'))
+        images_dir = os.path.abspath(os.path.join(common_lib_dir, '../conf/imports/images'))
         screens_dir = os.path.abspath(os.path.join(common_lib_dir, '../conf/imports/screens'))
 
         themes_dir = os.path.abspath(os.path.join(common_lib_dir, '../screens/templates/themes'))
@@ -40,9 +41,9 @@ class ScreensAppConfig(AppConfig):
 
         if os.path.exists(screens_dir):
             for f in os.listdir(screens_dir):
-                print 'checking to import screen %s' % f
+                print('checking to import screen %s' % f)
                 if f.endswith(".json"):
-                    print 'Importing json file'
+                    print('Importing json file')
                     logger.debug("Found a screen to import!")
                     s = os.path.join(screens_dir, f)
                     with open(s, 'r') as fo:
@@ -50,7 +51,7 @@ class ScreensAppConfig(AppConfig):
                         try:
                             json_data = json.loads(json_string)
                         except ValueError:
-                            print 'Could not load json from screen file!'
+                            print('Could not load json from screen file!')
                             logger.error('Could not load json file in import directory')
                             continue
 
@@ -60,7 +61,7 @@ class ScreensAppConfig(AppConfig):
                         screen_data = json_data['screen']
 
                         if Screen.objects.filter(name=screen_data['name']).exists():
-                            print 'Skipping existing screen %s' % screen_data['name']
+                            print('Skipping existing screen %s' % screen_data['name'])
                             continue
 
                         # 'input_forms' holds all the referenced input_forms in that screen
@@ -103,7 +104,7 @@ class ScreensAppConfig(AppConfig):
                             new_id = aframe_utils.import_form(screen_form_data)
                             # these should absolutely already exist in the layout
                             if sid in layout['input_forms'].keys():
-                                print 'updating layout %s to %s' % (sid, new_id)
+                                print('updating layout %s to %s' % (sid, new_id))
                                 new_layout['input_forms'][new_id] = layout['input_forms'][sid]
 
                         if not Screen.objects.filter(name=screen_data['name']).exists():
@@ -115,10 +116,10 @@ class ScreensAppConfig(AppConfig):
                             screen.layout = json.dumps(new_layout)
                             screen.save()
                         else:
-                            print 'Screen already exists!'
+                            print('Screen already exists!')
 
                     except KeyError as ke:
-                        print 'some keyerror'
-                        print ke
+                        print('some keyerror')
+                        print(ke)
                         logger.error('Could not import screen!')
                         continue
