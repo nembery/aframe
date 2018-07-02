@@ -7,7 +7,7 @@ def index(request):
     print(conf)
     if 'default_screen' in conf and conf['default_screen'] != '':
         print("Redirecting to initial screen")
-        return HttpResponseRedirect("/screens/$s" % conf['default_screen'])
+        return HttpResponseRedirect("/screens/%s" % conf['default_screen'])
 
     print("Redirecting to /input_forms")
     return HttpResponseRedirect("/input_forms/")
