@@ -8,7 +8,7 @@
     <input type="hidden" id="textarea_sanitize_rollback_{{ j.name }}_{{ input_form.id }}" value=""/>
     <script type="text/javascript">
 
-        let config = $.parseJSON('{{ j.widget_config_json|safe }}');
+
 
         function check_textarea_sanitize_rollback_{{ j.name }}_{{ input_form.id }}(obj) {
             let r = $('#textarea_sanitize_rollback_{{ j.name }}_{{ input_form.id }}');
@@ -20,6 +20,7 @@
         }
 
         function check_textarea_sanitize_{{ j.name }}_{{ input_form.id }}(obj) {
+            let config = $.parseJSON('{{ j.widget_config_json|safe }}');
             console.log('checking sanitize');
             if (config['sanitize'] === undefined) {
                 return;
