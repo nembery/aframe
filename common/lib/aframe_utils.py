@@ -284,7 +284,10 @@ def lookup_secret(key):
     """
     secrets = _load_secrets()
     if 'secrets' in secrets:
-        return secrets['secrets'][key]['value']
+        if key in secrets['secrets']:
+            return secrets['secrets'][key]['value']
+        else:
+            logger.warn('desired secret key was not found!')
 
     return 'password123'
 
@@ -518,3 +521,17 @@ def import_form(jd):
 
     return input_form.id
 
+
+def load_config():
+    common_lib_dir = os.path.dirname(os.path.abspath(__file__))
+    conf_dir = os.path.abspath(os.path.join(common_lib_dir, '../../conf'))
+    conf_file_path = os.path.join(conf_dir, 'aframe.conf')
+    with open(conf_file_path, 'r') as conf_file:
+        try:
+            conf = yaml.load(conf_file)
+        except yaml.scanner.ScannerError as se:
+            logger.error('Could not parse conf file!')
+            logger.error(se)
+            conf = {'default_screen': ''}
+
+    return conf

@@ -196,7 +196,7 @@ ACTION_PROVIDERS = (
     {
         "name": "SSHRemoteExecution",
         "class": "SSHRemoteExecution",
-        "label": "SSH Remote Execution",
+        "label": "Remote/SSH Shell Script",
         "options": [
             {
                 "label": "Request Type",
@@ -268,7 +268,7 @@ ACTION_PROVIDERS = (
     {
         "name": "ShellExecution",
         "class": "ShellExecution",
-        "label": "Executes Template in a Shell on the local server",
+        "label": "Local Shell Script",
         "options": []
     },
     {
