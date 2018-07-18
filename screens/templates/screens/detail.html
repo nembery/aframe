@@ -24,20 +24,18 @@
         var loaded_widgets = {};
 
         function load_input_form(input_form_id) {
-            var doc = $(document.documentElement);
+            let doc = $(document.documentElement);
             doc.css('cursor', 'progress');
 
-            var url = '/input_forms/configureTemplateForScreen/' + input_form_id;
+            let url = '/input_forms/configureTemplateForScreen/' + input_form_id;
 
-            var post = $.get(url, function (response) {
-                var content = $(response);
-                var base_window = "";
-                var new_window = "";
+            let post = $.get(url, function (response) {
+                let content = $(response);
 
-                base_window = $(" #screen_box_base");
-                new_window = base_window.clone();
+                let base_window = $(" #screen_box_base");
+                let new_window = base_window.clone();
 
-                var new_window_id = "input_form_box_" + input_form_id;
+                let new_window_id = "input_form_box_" + input_form_id;
                 new_window.prop("id", new_window_id);
                 new_window.draggable({
                     grid: [10, 10],
@@ -48,7 +46,7 @@
                     handle: ".overlay_menu"
                 });
 
-                var input_form_hidden_field = new_window.find('[name = input_form_id]');
+                let input_form_hidden_field = new_window.find('[name = input_form_id]');
                 input_form_hidden_field.val(input_form_id);
 
                 $("body").append(new_window);
@@ -73,8 +71,8 @@
                 new_window.css("position", "absolute");
 
                 if (input_form_id in layout['input_forms']) {
-                    let this_layout = layout['input_forms'][input_form_id]
-                    console.log(this_layout)
+                    let this_layout = layout['input_forms'][input_form_id];
+                    console.log(this_layout);
 
                     new_window.css("left", this_layout["x"]);
                     new_window.css("top", this_layout["y"]);
@@ -84,7 +82,7 @@
                     new_window.css("top", 150);
 
                     // make sure we have some values for it in the layout object
-                    this_layout = {}
+                    let this_layout = {};
                     this_layout["x"] = 30;
                     this_layout["y"] = 150;
 
@@ -92,10 +90,10 @@
                 }
 
                 // let's make everything pretty and line up on 10 pixel boundaries
-                var height = new_window.css('height');
-                var height_num = parseInt(height);
+                let height = new_window.css('height');
+                let height_num = parseInt(height);
 
-                while (height_num % 10 != 0) {
+                while (height_num % 10 !== 0) {
                     height_num += 1;
                 }
 
@@ -129,8 +127,8 @@
 
             for (let w in available_widgets) {
                 let aw = available_widgets[w];
-                if (aw['id'] == widget_id) {
-                    if (aw['configurable'] != true) {
+                if (aw['id'] === widget_id) {
+                    if (aw['configurable'] !== true) {
                         load_widget(widget_id, widget_layout_id);
                         return;
                     }
@@ -149,10 +147,7 @@
             };
 
             let post = $.post(url, params, function (response) {
-                var content = $(response);
-                var base_window = "";
-                var new_window = "";
-
+                let content = $(response);
                 load_overlay(content);
             });
 
