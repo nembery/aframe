@@ -467,15 +467,16 @@ def bind_automation(request):
 
 
 def download_from_cache(request, cache_key):
-    print('ok %s' % cache_key)
+    print('downloading cache object: %s' % cache_key)
     cache_object = cache.get(cache_key)
-    print(cache_object)
     filename = 'aframe_archive'
     if type(cache_object) is dict:
         if 'content_type' in cache_object:
             content_type = cache_object['content_type']
             if 'zip' in content_type:
                 filename = 'aframe_archive.zip'
+            elif 'iso' in content_type:
+                filename = 'aframe_archive.iso'
 
         response = HttpResponse(content_type=cache_object['content_type'])
         response['Content-Disposition'] = 'attachment; filename=%s' % filename
