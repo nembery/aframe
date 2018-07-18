@@ -15,7 +15,7 @@ class ScreensAppConfig(AppConfig):
 
     def ready(self):
 
-        logger.info('Checking for imported screens')
+        logger.info('Checking for screens to import')
         from screens.models import Screen
         from screens.models import ScreenWidgetConfig
 
@@ -27,6 +27,18 @@ class ScreensAppConfig(AppConfig):
         screens_dir = os.path.abspath(os.path.join(common_lib_dir, '../conf/imports/screens'))
 
         themes_dir = os.path.abspath(os.path.join(common_lib_dir, '../screens/templates/themes'))
+        images_dest_dir = os.path.abspath(os.path.join(common_lib_dir, '../common/static/images'))
+
+        if os.path.exists(images_dir):
+            for f in os.listdir(images_dir):
+                if f.endswith(".png") or f.endswith('.jpg'):
+                    logger.debug("Found an image file to import!")
+                    fs = os.path.join(images_dir, f)
+                    fd = os.path.join(images_dest_dir, f)
+                    if not os.path.exists(fd):
+                        copyfile(fs, fd)
+                    else:
+                        logger.info('image already exists in themes dir')
 
         if os.path.exists(imports_dir):
             for f in os.listdir(imports_dir):
