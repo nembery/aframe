@@ -185,7 +185,7 @@ class RestAction(ActionBase):
 
                 result_object = self.__perform_post(request, data)
 
-                if not hasattr(result_object, 'read'):
+                if not hasattr(result_object, 'info'):
                     # this is an error string
                     return result_object
 
