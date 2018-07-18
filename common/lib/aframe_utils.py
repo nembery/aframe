@@ -38,15 +38,15 @@ def get_value_from_json(path, json_object):
     :param json_object: the json object to search
     :return: value of data["test"]["name"]
     """
-    print "checking path %s" % path
+    print("checking path %s" % path)
     path_array = path.split('.')
     element = str(path_array[0])
     if element in json_object:
-        print "Found %s" % element
+        print("Found %s" % element)
         # we have it!
         if len(path_array) == 1:
-            print "returning last element %s " % element
-            print "it is %s" % json_object[element]
+            print("returning last element %s " % element)
+            print("it is %s" % json_object[element])
             return json_object[element]
         else:
             new_json_object = json_object[element]
@@ -73,7 +73,7 @@ def get_path_for_value_from_json(data_structure, target, path):
                 return "%s[%s]" % (path, data_structure.index(v))
             else:
                 new_path = "%s[%s]" % (path, data_structure.index(v))
-                print "recursively searching %s" % new_path
+                print("recursively searching %s" % new_path)
                 r = get_path_for_value_from_json(v, target, new_path)
                 if r is not None:
                     return r
@@ -87,7 +87,7 @@ def get_path_for_value_from_json(data_structure, target, path):
                 return "%s[\"%s\"]" % (path, k)
             else:
                 new_path = "%s[\"%s\"]" % (path, k)
-                print "recursing %s" % new_path
+                print("recursing %s" % new_path)
                 r = get_path_for_value_from_json(v, target, new_path)
                 if r is not None:
                     return r
@@ -116,7 +116,7 @@ def get_path_for_key_from_json(data_structure, target, path):
     if type(data_structure) == list:
         for v in data_structure:
             new_path = "%s[%s]" % (path, data_structure.index(v))
-            print "recursively searching %s" % new_path
+            print("recursively searching %s" % new_path)
             r = get_path_for_key_from_json(v, target, new_path)
             if r is not None:
                 return r
@@ -130,7 +130,7 @@ def get_path_for_key_from_json(data_structure, target, path):
                 return "%s[\"%s\"]" % (path, k)
             else:
                 new_path = "%s[\"%s\"]" % (path, k)
-                print "recursively searching %s" % new_path
+                print("recursively searching %s" % new_path)
                 r = get_path_for_key_from_json(v, target, new_path)
                 if r is not None:
                     return r
@@ -167,12 +167,12 @@ def get_list_from_json(key, value, data_structure, kv_list=[], depth=0):
 
     if type(data_structure) == list:
         for v in data_structure:
-            print "recursively searching %s" % str(v)
+            print("recursively searching %s" % str(v))
             depth += 1
             r = get_list_from_json(key, value, v, kv_list, depth)
             if r is None:
                 return r
-        print "returning from list none %s" % depth
+        print("returning from list none %s" % depth)
         return kv_list
 
     elif type(data_structure) == dict:
@@ -180,23 +180,23 @@ def get_list_from_json(key, value, data_structure, kv_list=[], depth=0):
             d = dict()
             d["key"] = data_structure[key]
             d["value"] = data_structure[value]
-            print "returning %s" % depth
+            print("returning %s" % depth)
             kv_list.append(d)
             return kv_list
         else:
             for k in data_structure:
                 v = data_structure[k]
-                print "recursively searching %s" % str(v)
+                print("recursively searching %s" % str(v))
                 depth += 1
                 r = get_list_from_json(key, value, v, kv_list, depth)
                 if r is not None:
-                    print "returning from dict with success %s" % depth
+                    print("returning from dict with success %s" % depth)
                     return r
 
-            print "returning from dict none %s" % depth
+            print("returning from dict none %s" % depth)
             return None
 
-    print "finally: " + str(depth)
+    print("finally: " + str(depth))
     if depth == 0:
         return kv_list
     else:
@@ -218,7 +218,7 @@ def get_value_for_key_from_json(key, data_structure):
 
     if type(data_structure) == list:
         for v in data_structure:
-            # print "recursively searching %s" % str(v)
+            # print("recursively searching %s" % str(v))
             r = get_value_for_key_from_json(key, v)
             if r is not None:
                 return r
@@ -231,7 +231,7 @@ def get_value_for_key_from_json(key, data_structure):
         else:
             for k in data_structure:
                 v = data_structure[k]
-                # print "recursively searching %s" % str(v)
+                # print("recursively searching %s" % str(v))
                 r = get_value_for_key_from_json(key, v)
                 if r is not None:
                     return r
@@ -307,7 +307,7 @@ def execute_template(post_vars):
         config_template = ConfigTemplate.objects.get(pk=template_id)
     else:
         template_name = str(post_vars['template_name'])
-        print "GETTING %s" % template_name
+        print("GETTING %s" % template_name)
         config_template = ConfigTemplate.objects.get(name=template_name)
 
     template_api = get_input_parameters_for_template(config_template)
@@ -315,15 +315,15 @@ def execute_template(post_vars):
     context = dict()
 
     try:
-        print str(template_api["input_parameters"])
+        print(str(template_api["input_parameters"]))
         input_parameters = template_api["input_parameters"]
 
         for j in input_parameters:
-            print "setting context %s" % j
+            print("setting context %s" % j)
             context[j] = str(post_vars[j])
 
     except Exception as ex:
-        print str(ex)
+        print(str(ex))
         error = {"output": "missing required parameters", "status": 1}
         return error
 
@@ -331,22 +331,22 @@ def execute_template(post_vars):
     # compiled_template = get_template_from_string(config_template.template)
     completed_template = str(compiled_template.render(context))
 
-    print completed_template
+    print(completed_template)
     action_name = config_template.action_provider
     action_options = json.loads(config_template.action_provider_options)
 
-    print post_vars
+    print(post_vars)
 
     for ao in action_options:
-        print 'checking ' + str(ao)
+        print('checking ' + str(ao))
         if "action_options_" + str(ao) in post_vars:
-            print "found a match!"
+            print("found a match!")
             new_val = post_vars["action_options_" + str(ao)]
-            print new_val
+            print(new_val)
             current_value = action_options[ao]["value"]
-            print current_value
+            print(current_value)
             action_options[ao]["value"] = re.sub("{{ .* }}", new_val, current_value)
-            print action_options[ao]["value"]
+            print(action_options[ao]["value"])
 
     # let's load any secrets if necessary
     provider_options = action_provider.get_options_for_provider(action_name)
@@ -357,7 +357,7 @@ def execute_template(post_vars):
             pw_lookup_value = lookup_secret(pw_lookup_key)
             action_options[opt_name]['value'] = pw_lookup_value
 
-    print "action name is: " + action_name
+    print("action name is: " + action_name)
 
     action = action_provider.get_provider_instance(action_name, action_options)
     if config_template.type == "per-endpoint":
@@ -381,7 +381,7 @@ def execute_template(post_vars):
         response = {"output": results.strip(), "status": 0}
 
     except Exception as ex:
-        print str(ex)
+        print(str(ex))
         response = {"output": "Error executing template", "status": 1}
 
     return response
@@ -394,7 +394,7 @@ def get_input_parameters_for_template(config_template):
     for node in t.template.nodelist:
         defined_tags = node.get_nodes_by_type(VariableNode)
         for v in defined_tags:
-            print "adding %s as an available tag" % v.filter_expression
+            print("adding %s as an available tag" % v.filter_expression)
             variable_string = str(v.filter_expression)
             if variable_string not in input_parameters:
                 if not variable_string.startswith("af_"):
@@ -411,7 +411,7 @@ def get_input_parameters_for_template(config_template):
     for action_option in action_options:
         opts = action_options[action_option]
         if "variable" in opts and opts["variable"] != '':
-            print action_option
+            print(action_option)
             item = dict()
             item['name'] = 'action_options_' + opts['name']
             item['default'] = opts['variable']
@@ -426,7 +426,7 @@ def get_input_parameters_for_template(config_template):
         "action_option_variables": action_option_variables
     }
 
-    print config_template.type
+    print(config_template.type)
 
     if config_template.type == "per-endpoint":
         input_parameters.append("af_endpoint_ip")
@@ -478,8 +478,8 @@ def get_screen_themes():
             th['base_template'] = 'themes/%s' % t
             themes.append(th)
 
-    print 'RETURNING THEMES'
-    print themes
+    print('RETURNING THEMES')
+    print(themes)
     return themes
 
 
@@ -503,7 +503,7 @@ def import_form(jd):
         logger.info("Imported template: %s" % template.name)
         template.save()
     else:
-        print 'ConfigTemplate %s already exists' % template_options['name']
+        print('ConfigTemplate %s already exists' % template_options['name'])
 
     if not InputForm.objects.filter(name=form_options['name']).exists():
         input_form = InputForm()
@@ -516,7 +516,7 @@ def import_form(jd):
         logger.info("Import input form: %s" % input_form.name)
         input_form.save()
     else:
-        print 'Input form %s already exists' % form_options['name']
+        print('Input form %s already exists' % form_options['name'])
         input_form = InputForm.objects.get(name=form_options['name'])
 
     return input_form.id
