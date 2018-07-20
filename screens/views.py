@@ -3,12 +3,13 @@ import logging
 from urllib import quote
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, HttpResponseRedirect, HttpResponse
 from django.template import TemplateDoesNotExist
-from django.db.models import Q
 
 from a_frame import settings
 from common.lib import aframe_utils
+from forms import ImportForm
 from input_forms.models import InputForm
 from models import Screen
 from models import ScreenWidgetConfig
@@ -86,6 +87,14 @@ def detail(request, screen_id):
 
     available_widgets_json = json.dumps(available_widgets)
 
+    # Grab all the screens metadata. This allows a Theme to show a menu of all screens if desired
+    screens = Screen.objects.values('id', 'name', 'tag')
+    tags = list()
+    for s in screens:
+        t = s['tag']
+        if t not in tags:
+            tags.append(t)
+
     context = {'screen': screen,
                'input_forms_json': input_forms_json,
                'input_form_ids': ifi_json,
@@ -94,19 +103,22 @@ def detail(request, screen_id):
                'layout': screen.layout,
                'available_widgets': available_widgets,
                'available_widgets_json': available_widgets_json,
-               'themes': themes}
+               'themes': themes,
+               'tags': tags,
+               'screens': screens}
 
     return render(request, "screens/detail.html", context)
 
 
 def create(request):
     logger.info("__ screens create __")
-    required_fields = set(["name", "theme", "description", "input_forms", "screen_widgets"])
+    required_fields = set(["name", "theme", "description", "input_forms", "screen_widgets", "tag"])
     if not required_fields.issubset(request.POST):
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
 
     name = request.POST["name"]
     theme = request.POST["theme"]
+    tag = request.POST["tag"]
     description = request.POST["description"]
     input_forms = request.POST["input_forms"]
     widgets = request.POST['screen_widgets']
@@ -114,6 +126,7 @@ def create(request):
     screen = Screen()
     screen.name = name
     screen.theme = theme
+    screen.tag = tag
     screen.description = description
     screen.save()
 
@@ -172,14 +185,16 @@ def create(request):
     return HttpResponseRedirect("/screens/" + str(screen_id))
 
 
-def edit(request):
+def edit(request, screen_id):
     logger.info("__ screens edit __")
-    return HttpResponseRedirect("/screens")
+    screen = get_object_or_404(Screen, pk=screen_id)
+    context = {'screen': screen}
+    return render(request, "screens/edit.html", context)
 
 
 def update(request):
     logger.info("__ screens update __")
-    required_fields = set(["screen_id", "screen_id", "name", "description", "json"])
+    required_fields = {"screen_id", "tag", "name", "description"}
     if not required_fields.issubset(request.POST):
         logger.error("Did no find all required fields in request")
         return render(request, "error.html", {"error": "Invalid Parameters in POST"})
@@ -187,17 +202,13 @@ def update(request):
     screen_id = request.POST["screen_id"]
     name = request.POST["name"]
     description = request.POST["description"]
-    json_data = request.POST["json"]
-    instructions = request.POST["instructions"]
+    tag = request.POST["tag"]
 
     screen = get_object_or_404(Screen, pk=screen_id)
 
-    screen.id = screen_id
     screen.name = name
     screen.description = description
-    screen.instructions = instructions
-    screen.json = json_data
-    screen.script = screen
+    screen.tag = tag
     screen.save()
     return HttpResponseRedirect("/screens")
 
@@ -279,12 +290,33 @@ def export_screen(request, screen_id):
     exported_data['screen']['theme'] = screen.theme
     exported_data['screen']['layout'] = screen.layout
     exported_data['screen']['id'] = str(screen.id)
+    exported_data['screen']['tag'] = screen.tag
 
     exported_json = json.dumps(exported_data)
     response = HttpResponse(exported_json, content_type="application/json")
     response['Content-Disposition'] = 'attachment; filename=' + 'aframe-' + str(screen.name) + '.json'
 
     return response
+
+
+def import_screen(request):
+    logger.info("__ input_forms import_form __")
+    if request.method == "POST":
+        json_file = request.FILES['file']
+        json_string = json_file.read()
+        json_data = json.loads(json_string)
+
+        aframe_utils.import_screen(json_data)
+
+        if 'screen' in json_data and 'id' in json_data['screen']:
+            screen_id = json_data['screen']['id']
+            return HttpResponseRedirect("/screens/{}".format(screen_id))
+
+        return HttpResponseRedirect("/screens")
+    else:
+        form = ImportForm()
+        context = {'form': form}
+        return render(request, 'screens/import.html', context)
 
 
 def load_widget_config(request):

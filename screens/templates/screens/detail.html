@@ -265,7 +265,7 @@
         }
 
         function show_config_window() {
-            var config_window = $("#configuration_box");
+            let config_window = $("#configuration_box");
 
             // allow widgets to be moved and closed during config
             show_widget_menu = true;
@@ -274,11 +274,10 @@
                 grid: [10, 10]
             });
 
-
             config_window.css("display", "inline-block");
             config_window.css("position", "absolute");
 
-            if (config_window_moved == false) {
+            if (config_window_moved === false) {
                 config_window.css("top", 90);
                 config_window.css("left", 580);
                 config_window_moved = true;
@@ -451,7 +450,7 @@
                 console.log(this_layout);
             }
 
-            for (w in layout['widgets']) {
+            for (let w in layout['widgets']) {
                 let widget_box = $('#widget_container_' + w);
                 let current_y = widget_box.css('top');
                 let current_x = widget_box.css('left');
@@ -550,13 +549,13 @@
         }
 
         $(window).load(function () {
-            for (i = 0; i < input_form_ids.length; i++) {
-                var ifi = input_form_ids[i];
+            for (let i = 0; i < input_form_ids.length; i++) {
+                let ifi = input_form_ids[i];
                 console.log(ifi);
                 load_input_form(ifi);
             }
 
-            for (w in layout['widgets']) {
+            for (let w in layout['widgets']) {
                 load_widget(layout['widgets'][w]['widget_id'], w);
             }
 
@@ -583,7 +582,7 @@
 
 {% block content %}
 
-    <h2>{{ screen.description }}</h2>
+    <h2>{{ screen.name }}</h2>
 
     <div class="screen_box" id="screen_box_base" onclick="javascript: bring_window_to_front(this)">
     </div>
@@ -645,7 +644,7 @@
                 </tr>
                 <tr>
                     <td colspan="2">
-                        <input type="button" onclick="javascript: update_layout()" value="Save Screen Layout"/>
+                        <input type="button" onclick="update_layout()" value="Save Screen Layout"/>
                     </td>
                 </tr>
                 </tbody>

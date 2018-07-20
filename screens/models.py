@@ -25,6 +25,7 @@ class Screen(models.Model):
     input_forms = models.ManyToManyField(InputForm)
     screen_widgets = models.ManyToManyField(ScreenWidget)
     layout = models.TextField()
+    tag = models.TextField(default="aframe")
     theme = models.CharField(max_length=32)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)

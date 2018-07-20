@@ -17,6 +17,8 @@ urlpatterns = [
         name="edit"),
     url(r"^new$", views.new,
         name="new"),
+    url(r"^import$", views.import_screen,
+        name="import_screen"),
     url(r"^load_widget_config$", views.load_widget_config,
         name="load_widget_config"),
     url(r"^load_widget$", views.load_widget,

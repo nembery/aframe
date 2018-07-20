@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}A-Frame{% endblock %}
+{% block scripts %}
+{% endblock%}
+{% block content %}
+<h2>Edit Screen</h2>
+<form method="POST" action="/screens/update" id="create_form">
+    <table>
+        <tr>
+            <td>
+                Name:
+            </td>
+            <td>
+                <input type="text" name="name" id="name" size="50" value="{{ screen.name }}"
+                       onblur="return clean_string_no_special(this);"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Tag:
+            </td>
+            <td>
+                <input type="text" size="50" name="tag" value="{{ screen.tag }}"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Description:
+            </td>
+            <td>
+                <textarea rows="5" cols="60" name="description" id="description">{{ screen.description }}</textarea>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <input type="hidden" name="screen_id" value="{{ screen.id }}"/>
+                <input type="submit" value="Update"/>
+            </td>
+        </tr>
+    </table>
+</form>
+{% endblock %}

@@ -12,6 +12,9 @@ from django.template.base import VariableNode
 
 from a_frame.utils import action_provider
 from input_forms.models import InputForm
+from screens.models import Screen
+from screens.models import ScreenWidgetConfig
+
 from tools.models import ConfigTemplate
 
 logger = logging.getLogger(__name__)
@@ -535,3 +538,76 @@ def load_config():
             conf = {'default_screen': ''}
 
     return conf
+
+
+def import_screen(json_data):
+    try:
+        # screen export creates a dict with two keys 'screen' and 'input_forms'
+        # 'screen' key holds metadata about the screen
+        screen_data = json_data['screen']
+
+        if Screen.objects.filter(name=screen_data['name'], description=screen_data['description']) \
+                .exists():
+            logger.info('Skipping existing screen %s' % screen_data['name'])
+            return None
+
+        # 'input_forms' holds all the referenced input_forms in that screen
+        # each of these is 'exported' in whole, serialized, and kept here
+        form_data = json_data['input_forms']
+
+        # we will also export any global widget data that is found on widgets in the screen
+        if 'widgets' not in json_data:
+            widget_data = dict()
+        else:
+            widget_data = json_data['widgets']
+
+        for w in widget_data:
+            if not ScreenWidgetConfig.objects.filter(widget_type=w).exists():
+                widget_config = ScreenWidgetConfig()
+
+                widget_config.widget_type = w
+                widget_config.data = unquote(widget_data[w])
+                widget_config.save()
+
+        # we need to update the layout with new input form ids after we import those
+        layout = json.loads(screen_data['layout'])
+
+        # create new layout object
+        new_layout = dict()
+        if 'widgets' not in layout:
+            layout['widgets'] = dict()
+
+        # we can just copy the widgets right in
+        new_layout['widgets'] = layout['widgets']
+        new_layout['input_forms'] = dict()
+
+        # iterate over all exported input forms
+        for sid in form_data.keys():
+            # let's get the entire form that was previously exported in full
+            screen_form = form_data[sid]
+            # convert back from json
+            screen_form_data = json.loads(screen_form)
+            # do the import here and get it's updated ID
+            new_id = import_form(screen_form_data)
+            # these should absolutely already exist in the layout
+            if sid in layout['input_forms'].keys():
+                logger.info('updating layout %s to %s' % (sid, new_id))
+                new_layout['input_forms'][new_id] = layout['input_forms'][sid]
+
+        if 'tag' not in screen_data:
+            screen_data['tag'] = 'aframe'
+
+        screen = Screen()
+        screen.name = screen_data['name']
+        screen.description = screen_data['description']
+        screen.theme = screen_data['theme']
+        screen.id = screen_data['id']
+        screen.tag = screen_data['tag']
+        screen.layout = json.dumps(new_layout)
+        screen.save()
+
+    except KeyError as ke:
+        logger.info('some keyerror')
+        logger.info(ke)
+        logger.error('Could not import screen!')
+        return None
