@@ -308,6 +308,7 @@ def get_template_input_parameters_overlay(request):
 
     config_template = get_object_or_404(ConfigTemplate, name=template_name)
     template_usage = get_input_parameters_for_template(config_template)
+    template_usage['a_frame_url'] = '{}://{}/tools/execute_template'.format(request.scheme, request.get_host())
 
     return render(request, "configTemplates/overlay.html", template_usage)
 
@@ -408,7 +409,7 @@ def chain_template(request):
         template_id = request.POST["template_id"]
         config_template = ConfigTemplate.objects.get(pk=template_id)
         template_api = get_input_parameters_for_template(config_template)
-
+        template_api['a_frame_url'] = '{}://{}/tools/execute_template'.format(request.scheme, request.get_host())
         context = dict()
 
         try:
@@ -471,12 +472,10 @@ def download_from_cache(request, cache_key):
     cache_object = cache.get(cache_key)
     filename = 'aframe_archive'
     if type(cache_object) is dict:
-        if 'content_type' in cache_object:
-            content_type = cache_object['content_type']
-            if 'zip' in content_type:
-                filename = 'aframe_archive.zip'
-            elif 'iso' in content_type:
-                filename = 'aframe_archive.iso'
+        if 'filename' in cache_object:
+            print('Found a filename to use')
+            filename = cache_object['filename']
+            print(filename)
 
         response = HttpResponse(content_type=cache_object['content_type'])
         response['Content-Disposition'] = 'attachment; filename=%s' % filename

@@ -192,7 +192,23 @@ class RestAction(ActionBase):
                 content_type = result_object.info().getheader('Content-Type')
                 print('Found content_type of %s' % content_type)
 
+                # check if this is a binary file
                 if not re.search('json|text|html|xml', content_type):
+                    attachment = result_object.info().getheader('Content-Disposition')
+                    print(attachment)
+                    print(type(attachment))
+                    if attachment is not None and 'filename=' in attachment:
+                        print('GOT A FILENAME')
+                        filename = attachment.split('filename=')[1]
+                        print(filename)
+                    else:
+                        if 'zip' in content_type:
+                            filename = 'aframe_archive.zip'
+                        elif 'iso' in content_type:
+                            filename = 'aframe_archive.iso'
+                        else:
+                            filename = 'aframe_archive'
+
                     # this is a binary response! We can't handle this inline, so let's cache the result
                     # and notify the caller
                     cache_key = str(uuid.uuid4())
@@ -205,6 +221,7 @@ class RestAction(ActionBase):
 
                     cache_object = dict()
                     cache_object['contents'] = res
+                    cache_object['filename'] = filename
                     cache_object['content_type'] = content_type
                     cache.set(cache_key, cache_object, self.cache_timeout)
                     return result
