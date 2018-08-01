@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}A-Frame{% endblock %}
+{% block scripts %}
+    <script type="text/javascript">
+        function submit_form() {
+
+            $('#search_results').children().each(function(i, v){
+                $(v).remove();
+            });
+
+            let doc = $(document.documentElement);
+            doc.css('cursor', 'progress');
+
+            let terms_elements = $("[name^='term']");
+            let terms = [];
+            terms_elements.each(function (i, v) {
+                let term_el = $(v);
+                let term_val = term_el.val();
+                if (term_val !== '') {
+                    terms.push(term_el.val());
+                } else {
+                    let p = term_el.closest('.automation_search_term');
+                    console.log(p);
+                    p.remove();
+                }
+            });
+            console.log(terms);
+
+            let params = {
+                "terms": terms
+            };
+            let url = "/input_forms/searchMulti";
+            let post = $.post(url, params, function (response) {
+                console.log(response);
+                for (let i in response) {
+                    console.log('adding i');
+                    console.log(i);
+                    let r = response[i];
+                    console.log(r);
+                    add_result(r);
+                }
+            });
+
+            post.fail(function () {
+                alert('Could not perform request!');
+            });
+
+            post.always(function () {
+                doc.css('cursor', '');
+            });
+        }
+
+        function add_term() {
+            let new_term = $('<tr class="automation_search_term"/>');
+            new_term.append('<td>And:</td><td><input type="text" name="terms" size="50"/></td>');
+            $('#search_terms').append(new_term);
+        }
+
+        function add_result(result) {
+            let new_row = $('<tr class="automation_search_result"/>');
+            new_row.append('<td><a href="/input_forms/' + result.value + '">' + result.label +
+                '</a></td><td>' + result.description + '</td>');
+            $('#search_results').append(new_row);
+        }
+    </script>
+{% endblock %}
+{% block content %}
+    <h2>Search Automations</h2>
+    <form method="POST" action="/input_forms/searchMulti" id="search_multi_form">
+        <table>
+            <tbody id="search_terms">
+            <tr>
+                <td>
+                   Automation Name Contains:
+                </td>
+                <td>
+                    <input type="text" name="terms" size="50"/>
+                </td>
+            </tr>
+            </tbody>
+            <tbody>
+            <tr>
+                <td colspan="2">
+                    <input type="button" onclick="add_term()" value="Add Search Term"/>
+                    &nbsp;
+                    <input type="button" onclick="submit_form()" value="Search"/>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+    <br/>
+    <h2>Search Results</h2>
+    <table>
+        <tbody id="search_results"></tbody>
+    </table>
+{% endblock %}

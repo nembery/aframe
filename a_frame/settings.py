@@ -324,7 +324,7 @@ ACTION_PROVIDERS = (
             {
                 "label": "Password",
                 "name": "password",
-                "type": "secret",
+                "type": "text",
                 "default": "password"
             },
             {
@@ -615,52 +615,52 @@ SCREEN_WIDGETS = (
         "configuration_template": "static_image_config.html",
         "render_template": "static_image.html"
     },
-    {
-        "label": "Open-NTI Graph",
-        "configurable": True,
-        "id": "opennti_graph",
-        "configuration_template": "opennti_graph_config.html",
-        "render_template": "static_image.html",
-        "consumes_input_form": "grafana_interfaces_graph_url"
-    },
-    {
-        "label": "Network Topology",
-        "configurable": False,
-        "id": "network_topology",
-        "render_template": "network_topology.html"
-    },
-    {
-        "label": "Minion Status",
-        "configurable": False,
-        "transient": True,
-        "id": "minion_status",
-        "render_template": "salt_minion_status.html",
-        "consumes_automation": "get_salt_minion_status"
-    },
-    {
-        "label": "Proxy List",
-        "configurable": False,
-        "transient": False,
-        "id": "minion_list",
-        "render_template": "salt_proxy_list.html",
-        "consumes_automation": "get_salt_proxy_list"
-    },
-    {
-        "label": "Minion Config",
-        "configurable": False,
-        "transient": True,
-        "id": "minion_config",
-        "render_template": "salt_minion_config.html",
-        "consumes_automation": "get_salt_minion_config"
-    },
-    {
-        "label": "Open-NTI Graph",
-        "configurable": False,
-        "transient": True,
-        "id": "opennti_inline_graph",
-        "render_template": "static_image.html",
-        "consumes_automation": "grafana_all_interfaces_graph_url"
-    },
+    # {
+    #     "label": "Open-NTI Graph",
+    #     "configurable": True,
+    #     "id": "opennti_graph",
+    #     "configuration_template": "opennti_graph_config.html",
+    #     "render_template": "static_image.html",
+    #     "consumes_input_form": "grafana_interfaces_graph_url"
+    # },
+    # {
+    #     "label": "Network Topology",
+    #     "configurable": False,
+    #     "id": "network_topology",
+    #     "render_template": "network_topology.html"
+    # },
+    # {
+    #     "label": "Minion Status",
+    #     "configurable": False,
+    #     "transient": True,
+    #     "id": "minion_status",
+    #     "render_template": "salt_minion_status.html",
+    #     "consumes_automation": "get_salt_minion_status"
+    # },
+    # {
+    #     "label": "Proxy List",
+    #     "configurable": False,
+    #     "transient": False,
+    #     "id": "minion_list",
+    #     "render_template": "salt_proxy_list.html",
+    #     "consumes_automation": "get_salt_proxy_list"
+    # },
+    # {
+    #     "label": "Minion Config",
+    #     "configurable": False,
+    #     "transient": True,
+    #     "id": "minion_config",
+    #     "render_template": "salt_minion_config.html",
+    #     "consumes_automation": "get_salt_minion_config"
+    # },
+    # {
+    #     "label": "Open-NTI Graph",
+    #     "configurable": False,
+    #     "transient": True,
+    #     "id": "opennti_inline_graph",
+    #     "render_template": "static_image.html",
+    #     "consumes_automation": "grafana_all_interfaces_graph_url"
+    # },
     {
         "label": "Simple List",
         "configurable": True,

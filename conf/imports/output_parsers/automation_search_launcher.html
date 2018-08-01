@@ -1,0 +1,26 @@
+<script type="text/javascript">
+    $(function () {
+        let results_string = `{{ results|safe }}`;
+
+        try {
+            let results = $.parseJSON(results_string.replace('\n', ''));
+            console.log(results);
+            if (!results instanceof Array) {
+                alert('Could not parse results!');
+                return;
+            }
+            if (results.length > 0) {
+                let first_form = results[0];
+                console.log(first_form);
+                close_all_input_forms();
+                load_input_form(first_form['value'], 370, 110);
+            } else {
+                alert('Found an empty list!');
+            }
+            close_overlay();
+        } catch {
+            alert('No results found! Decode Error');
+        }
+    });
+</script>
+

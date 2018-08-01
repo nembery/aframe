@@ -1,0 +1,101 @@
+<script type="text/javascript">
+
+    var new_tags = [];
+    var deleted_tags = [];
+    var all_tags = JSON.parse('{{ tags|safe }}');
+
+
+    function configure_tags() {
+
+        let configured_tags = JSON.stringify(new_tags, null, 2);
+        let deleted_tags_string = JSON.stringify(deleted_tags, null, 2);
+        $("#new_tags").val(configured_tags);
+        $("#deleted_tags").val(deleted_tags_string);
+        // submit the form here after we are all done
+        $("#tag_editor_form").submit();
+    }
+
+    function add_tag() {
+        let tag_name_sel = $('#new_tag_name');
+        let tag_name = tag_name_sel.val();
+        tag_name_sel.val('');
+
+        let tag_value_sel = $('#new_tag_value');
+        let tag_value = tag_value_sel.val();
+        tag_value_sel.val('');
+
+        new_tags.push({'name': tag_name, 'value': tag_value});
+        let existing_tags_sel = $('#existing_tags');
+        let new_row = $('<tr/>');
+        new_row.append('<td>' + tag_name + '</td><td>' + tag_value + '</td>');
+        existing_tags_sel.append(new_row);
+    }
+
+    function delete_tag(name, value) {
+        deleted_tags.push({'name': name, 'value': value});
+        $('#tag_' + name).remove();
+    }
+
+    $(function () {
+        $("#new_tag_name").autocomplete({
+            source: all_tags
+        });
+    });
+
+</script>
+
+<form method="POST" action="/input_forms/configureTags" id="tag_editor_form">
+    <div class="overlay_box">
+        <div class="overlay_menu">
+            <a href="#" onclick="close_overlay();">X</a>
+        </div>
+        <h2>
+            Configure Tags for: {{ input_form.name }}
+        </h2>
+        <table>
+            <tbody>
+            <tr>
+                <th>Tag</th>
+                <th>Value</th>
+                <th>X</th>
+            </tr>
+            </tbody>
+            <tbody id="existing_tags">
+            {% for t in assigned_tags %}
+                <tr id="tag_{{ t.name }}">
+                    <td>
+                        {{ t.name }}
+                    </td>
+                    <td>
+                        {{ t.value }}
+                    </td>
+                    <td>
+                        <a href="#" onclick="delete_tag('{{ t.name }}', '{{ t.value }}')">X</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            <tbody>
+            <tr>
+                <td>
+                    <input type="text" id="new_tag_name" placeholder="Tag Name"/>&nbsp;
+                </td>
+                <td>
+                    <input type="text" id="new_tag_value" placeholder="Tag Value"/>&nbsp;
+                </td>
+                <td>
+                    <input type="button" onclick="add_tag()" value="Add"/>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <input type="button" onclick="configure_tags()" value="Submit"/>
+                    <input type="hidden" name="new_tags" id="new_tags"/>
+                    <input type="hidden" name="deleted_tags" id="deleted_tags"/>
+                    <input type="hidden" name="input_form_id" value="{{ input_form.id }}"/>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</form>
