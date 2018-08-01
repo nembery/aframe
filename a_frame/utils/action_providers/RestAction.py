@@ -416,10 +416,12 @@ class RestAction(ActionBase):
                 print("no ssl")
                 return urllib2.urlopen(request, data)
         except HTTPError as he:
-            print("HTTP Error performing get operation")
+            print("HTTP Error performing POST operation")
+            print(he)
             return str(he)
         except IOError as io:
-            print("IOError performing get operations")
+            print("IOError performing POST operations")
+            print(io)
             return str(io)
 
     @staticmethod
