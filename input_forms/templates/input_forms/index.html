@@ -1,33 +1,34 @@
-
 {% extends "base.html" %}
 {% block title %}A-Frame{% endblock %}
 {% block content %}
-<h2>Network Automations</h2>
-<table>
-    <tr>
-        <th>Name</th>
-        <th>Description</th>
-        <th>Options</th>
-    </tr>
-    {% for input_form in input_form_list %}
-    <tr>
-        <td><a href="{{ input_form.id }}">{{ input_form.name }}</a> </td>
-        <td>{{ input_form.description }}</td>
-        <td>
-            <a href="/tools/delete/{{ input_form.script.id }}">Delete</a>
-            &nbsp;
-            <a href="edit/{{ input_form.id }}">Edit Form</a>
-            &nbsp;
-            <a href="/tools/edit/{{ input_form.script.id }}/">Edit Template</a>
-            &nbsp;
-            <a href="/tools/clone/{{ input_form.script.id }}">Clone</a>
-            &nbsp;
-            <a href="export/{{ input_form.id }}">Export</a>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
-<a href="/tools/newTemplate/">Define new Automation</a>
-&nbsp;
-<a href="import">Import Automation</a>
+    <h2>Network Automations</h2>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Options</th>
+        </tr>
+        {% for input_form in input_form_list %}
+            <tr>
+                <td><a href="{{ input_form.id }}">{{ input_form.name }}</a></td>
+                <td>{{ input_form.description }}</td>
+                <td>
+                    <a href="/tools/delete/{{ input_form.script.id }}">Delete</a>
+                    &nbsp;
+                    <a href="edit/{{ input_form.id }}">Edit Form</a>
+                    &nbsp;
+                    <a href="/tools/edit/{{ input_form.script.id }}/">Edit Template</a>
+                    &nbsp;
+                    <a href="/tools/clone/{{ input_form.script.id }}">Clone</a>
+                    &nbsp;
+                    <a href="export/{{ input_form.id }}">Export</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    <a href="/tools/newTemplate/">Define new Automation</a>
+    &nbsp;
+    <a href="import">Import Automation</a>
+    &nbsp;
+    <a href="searchForm">Search Automations</a>
 {% endblock %}

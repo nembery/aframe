@@ -11,7 +11,7 @@ from django.template import engines
 from django.template.base import VariableNode
 
 from a_frame.utils import action_provider
-from input_forms.models import InputForm
+from input_forms.models import InputForm, InputFormTags
 from screens.models import Screen
 from screens.models import ScreenWidgetConfig
 
@@ -429,8 +429,6 @@ def get_input_parameters_for_template(config_template):
         "action_option_variables": action_option_variables
     }
 
-    print(config_template.type)
-
     if config_template.type == "per-endpoint":
         input_parameters.append("af_endpoint_ip")
         input_parameters.append("af_endpoint_username")
@@ -443,6 +441,7 @@ def get_input_parameters_for_template(config_template):
 def export_input_form(input_form_id):
     input_form = InputForm.objects.get(pk=input_form_id)
     config_template = input_form.script
+    tags = InputFormTags.objects.filter(input_forms__id=input_form_id)
 
     template_options = dict()
     template_options["name"] = config_template.name
@@ -458,9 +457,18 @@ def export_input_form(input_form_id):
     form_options["instructions"] = input_form.instructions
     form_options["json"] = quote(input_form.json)
 
+    tag_list = list()
+    for t in tags:
+        td = dict()
+        td["name"] = t.name
+        td["value"] = t.value
+        tag_list.append(td)
+
     exported_object = dict()
     exported_object["template"] = template_options
     exported_object["form"] = form_options
+    exported_object["tags"] = tag_list
+
     input_form_json = json.dumps(exported_object)
     logger.debug(input_form_json)
     return input_form_json
@@ -486,6 +494,28 @@ def get_screen_themes():
     return themes
 
 
+def get_output_parsers():
+    """
+    Return a list of all app specific widget files in the screens/templates/screens/output_parsers directory
+    :return: list of file names ending with html
+    """
+    common_lib_dir = os.path.dirname(os.path.abspath(__file__))
+    output_parsers_dir = os.path.abspath(
+        os.path.join( common_lib_dir, '../../input_forms/templates/input_forms/output_parsers')
+    )
+    output_parsers = list()
+    for t in os.listdir(output_parsers_dir):
+        if t.endswith('.html'):
+            th = dict()
+            th['value'] = t
+            th['label'] = t.replace('.html', '')
+            output_parsers.append(th)
+
+    print('Returning imported output_parsers')
+    print(output_parsers)
+    return output_parsers
+
+
 def import_form(jd):
     """
     Imports an input_from from serialized json data
@@ -494,6 +524,7 @@ def import_form(jd):
     """
     template_options = jd["template"]
     form_options = jd["form"]
+    tags = jd.get('tags', [])
 
     if not ConfigTemplate.objects.filter(name=template_options['name']).exists():
         template = ConfigTemplate()
@@ -514,6 +545,7 @@ def import_form(jd):
         input_form.description = form_options["description"]
         input_form.instructions = form_options["instructions"]
         input_form.json = unquote(form_options["json"])
+        input_form.output_parser = form_options.get('output_parser', 'default.html')
         input_form.script = template
 
         logger.info("Import input form: %s" % input_form.name)
@@ -521,6 +553,17 @@ def import_form(jd):
     else:
         print('Input form %s already exists' % form_options['name'])
         input_form = InputForm.objects.get(name=form_options['name'])
+
+    for t in tags:
+        if not InputFormTags.objects.filter(name=t["name"], value=t["value"]).exists():
+            input_form_tag = InputFormTags()
+            input_form_tag.name = t["name"]
+            input_form_tag.value = t["value"]
+            input_form_tag.save()
+        else:
+            input_form_tag = InputFormTags.objects.get(name=t["name"], value=t["value"])
+
+        input_form_tag.input_forms.add(input_form)
 
     return input_form.id
 

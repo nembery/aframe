@@ -1,225 +1,251 @@
 {% extends "base.html" %}
 {% block title %}A-Frame{% endblock %}
 {% block scripts %}
-<script type="text/javascript">
+    <script type="text/javascript">
 
-    var tags = [];
-    var j;
+        var tags = [];
+        var j;
 
-    var widgets = $.parseJSON('{{ widgets_json|safe }}');
+        var widgets = $.parseJSON('{{ widgets_json|safe }}');
 
-    function submit_form() {
-        var json = $("#json");
-        var template__variable__configs = $("#tag_configurator");
+        function submit_form() {
+            let json = $("#json");
+            let template__variable__configs = $("#tag_configurator");
 
-        var name = $("#name").val();
-        var description = $("#description").val();
+            let name = $("#name").val();
+            let description = $("#description").val();
 
-        if (name == "" || description == "") {
-            alert("You must provide a valid name and description");
-            $("#name").focus();
-            return false;
-        }
+            if (name === "" || description === "") {
+                alert("You must provide a valid name and description");
+                $("#name").focus();
+                return false;
+            }
 
-        template__variable__configs.find('[id ^= "template__variable__"]').each(
-            function(a,r) {
-                var row = $("#" + r.id);
-                var name_label = row.find('[name $= "_label"]');
-                console.log(name_label);
-                var name = name_label.attr("id").replace("_label", "");
-                var label = name_label.val();
+            template__variable__configs.find('[id ^= "template__variable__"]').each(
+                function (a, r) {
+                    let row = $("#" + r.id);
+                    let name_label = row.find('[name $= "_label"]');
+                    console.log(name_label);
+                    let name = name_label.attr("id").replace("_label", "");
+                    let label = name_label.val();
 
-                var default_value = row.find('[id $= "_default"]').val();
+                    let default_value = row.find('[id $= "_default"]').val();
 
-                // now use the 'ends with' selector to get the widget_config value form element and value
-                var widget = row.find('[id $= "_widget"]').val();
+                    // now use the 'ends with' selector to get the widget_config value form element and value
+                    let widget = row.find('[id $= "_widget"]').val();
 
-                // now use the 'ends with' selector to get the widget_config value form element and value
-                var widget_config = row.find('[id $= "_widget_config"]').val();
+                    // now use the 'ends with' selector to get the widget_config value form element and value
+                    let widget_config = row.find('[id $= "_widget_config"]').val();
 
-                // verify we have something to work with
-                if (widget_config === "") {
-                    widget_config = "{}";
-                }
+                    // verify we have something to work with
+                    if (widget_config === "") {
+                        widget_config = "{}";
+                    }
 
-                // widget_config is a JSON string stored on the DOM
-                // convert it back to a data structure here before serializing the whole thing back to a string
-                // FIXME - should this be surrounded with try/catch?
-                var widget_config_object = JSON.parse(widget_config);
+                    // widget_config is a JSON string stored on the DOM
+                    // convert it back to a data structure here before serializing the whole thing back to a string
+                    // FIXME - should this be surrounded with try/catch?
+                    let widget_config_object = JSON.parse(widget_config);
 
-                // let's log it here for the dev again
-                console.log("name is: " + name);
-                console.log("default is: " + default_value);
-                console.log("label is: " + label);
+                    // let's log it here for the dev again
+                    console.log("name is: " + name);
+                    console.log("default is: " + default_value);
+                    console.log("label is: " + label);
 
-                // construct a simple object and add to the 'template_variables' array
-                t = {
-                        "name" : name,
-                        "label" : label,
+                    // construct a simple object and add to the 'template_letiables' array
+                    let t = {
+                        "name": name,
+                        "label": label,
                         "default": default_value,
                         "widget": widget,
                         "widget_config": widget_config_object
-                };
-                tags.push(t);
-            }
-        );
-        var json_text = JSON.stringify(tags, null, 2);
-
-        $("#json").val(json_text);
-        console.log(json_text);
-        $("#update_form").submit();
-    }
-
-    function get_tag_config(tag_name) {
-        for(i=0; i<j.length; i++) {
-            var tag = j[i];
-            if (tag["name"] == tag_name) {
-                return tag;
-            }
-        }
-        console.log("COULD NOT FIND TAG WITH NAME: " + tag_name);
-        return null;
-    }
-
-    $(window).load(function() {
-
-        var json_data = $("#json_data").val();
-        j = eval(json_data);
-        console.log("got json tag configs");
-        console.log(j);
-
-        if(j.length == 0) {
-            console.log("no json data available, bailing out!");
-            return;
-        }
-
-        var template__variable__configs = $("#tag_configurator");
-        template__variable__configs.find('[id ^= "template__variable__"]').each(
-            function(a,r) {
-                var row = $("#" + r.id);
-                var name_label = row.find('[name $= "_label"]');
-                var name = name_label.attr("id").replace("_label", "");
-                t_config = get_tag_config(name);
-                if (t_config == null) {
-                    // jquery .each doesn't have a continue statement
-                    // so return true instead
-                    return true;
+                    };
+                    tags.push(t);
                 }
-                name_label.val(t_config["label"]);
+            );
+            let json_text = JSON.stringify(tags, null, 2);
 
-                var default_value = row.find('[id $= "_default"]');
-                default_value.val(t_config["default"]);
+            $("#json").val(json_text);
+            console.log(json_text);
+            $("#update_form").submit();
+        }
 
-                var widget = row.find('[id $= "_widget"]');
-                var widget_config = row.find('[id $= "_widget_config"]');
+        function get_tag_config(tag_name) {
+            for (let i = 0; i < j.length; i++) {
+                let tag = j[i];
+                if (tag["name"] === tag_name) {
+                    return tag;
+                }
+            }
+            console.log("COULD NOT FIND TAG WITH NAME: " + tag_name);
+            return null;
+        }
 
-                if(t_config.hasOwnProperty("widget")) {
-                    widget.val(t_config["widget"]);
+        $(window).load(function () {
 
+            let json_data = $("#json_data").val();
+            // load global var j to hold our json data
+            j = eval(json_data);
+            console.log("got json tag configs");
+            console.log(j);
 
-                    var widget_config_string = JSON.stringify(t_config["widget_config"], null, 0);
+            if (j.length === 0) {
+                console.log("no json data available, bailing out!");
+                return;
+            }
 
-                    widget_config.val(widget_config_string);
-
-                    console.log(t_config["widget_config"]);
-                    if (t_config["widget_config"] != "{}") {
-                        var widget_config_button = row.find('[id $= "_widget_config_button"]');
-                        widget_config_button.css("display", "");
+            let template__variable__configs = $("#tag_configurator");
+            template__variable__configs.find('[id ^= "template__variable__"]').each(
+                function (a, r) {
+                    let row = $("#" + r.id);
+                    let name_label = row.find('[name $= "_label"]');
+                    let name = name_label.attr("id").replace("_label", "");
+                    let t_config = get_tag_config(name);
+                    if (t_config == null) {
+                        // jquery .each doesn't have a continue statement
+                        // so return true instead
+                        return true;
                     }
-                } else {
-                    widget.val("text_input");
-                    widget_config.val("{}");
-                }
-            }
-        );
-    });
-</script>
-{% endblock%}
-{% block content %}
-<h2>Edit Input Form</h2>
-<form method="POST" action="/input_forms/update" id="update_form">
-    <table>
-        <tr>
-            <td>
-                Name:
-            </td>
-            <td>
-                <input type="text" name="name" id="name" value="{{ input_form.name }}"
-                       onblur="return clean_string_no_special(this);"/>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                Description:
-            </td>
-            <td>
-                <input type="text" name="description" id="description"  value="{{ input_form.description }}" />
-            </td>
-        </tr>
-        <tr>
-            <td>
-                Instructions:
-            </td>
-            <td>
-                <textarea rows="5" cols="65" name="instructions" id="instructions">{{ input_form.instructions }}</textarea>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                Template:
-            </td>
-            <td>
-                <a href="/tools/{{ config_template.id }}">{{ config_template.name }}</a>
-            </td>
-        </tr>
+                    name_label.val(t_config["label"]);
 
-        <tr>
-            <td>
-                Available Tags:
-            </td>
-            <td>
-                <table id="tag_configurator">
-                    <th>Variable</th>
-                    <th>Label</th>
-                    <th>Default Value</th>
-                    <th>UI Widget</th>
-                    {% for t in available_tags %}
-                    <tr id="template__variable__{{ forloop.counter }}">
-                        <td>
-                            {{ t }}
-                        </td>
-                        <td>
-                            <input type="text" id="{{ t }}_label" name="{{ t }}_label" value="{{ t }}"/>
-                        </td>
-                        <td>
-                            <input type="text" id="{{ t }}_default" name="{{ t }}_default" value="none"/>
-                        </td>
-                        <td>
-                            <select name="{{ t }}_widget" id="{{ t }}_widget"
-                                    onchange="javascript: load_widget_configs('{{ t }}_widget')">
-                                {% for w in widgets %}
-                                <option value="{{ w.id }}">{{ w.label }}</option>
-                                {% endfor %}
-                            </select>
-                            <input type="hidden" name="{{ t }}_widget_config" id="{{ t }}_widget_config"/>
-                            <input type="button" id="{{ t }}_widget_config_button" value="Configure"
-                                   onclick="javascript: load_widget_configs('{{ t }}_widget')"
-                                   style="display: none;"/>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </table>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <input type="hidden" name="json" id="json"/>
-                <input type="hidden" name="json_data" id="json_data" value="{{ input_form.json }}"/>
-                <input type="hidden" name="config_template_id" value="{{ config_template.id }}"/>
-                <input type="hidden" name="input_form_id" value="{{ input_form.id }}"/>
-                <input type="button" onclick="submit_form()" value="Save"/>
-            </td>
-        </tr>
-    </table>
-</form>
+                    let default_value = row.find('[id $= "_default"]');
+                    default_value.val(t_config["default"]);
+
+                    let widget = row.find('[id $= "_widget"]');
+                    let widget_config = row.find('[id $= "_widget_config"]');
+
+                    if (t_config.hasOwnProperty("widget")) {
+                        widget.val(t_config["widget"]);
+
+
+                        let widget_config_string = JSON.stringify(t_config["widget_config"], null, 0);
+
+                        widget_config.val(widget_config_string);
+
+                        console.log(t_config["widget_config"]);
+                        if (t_config["widget_config"] !== "{}") {
+                            let widget_config_button = row.find('[id $= "_widget_config_button"]');
+                            widget_config_button.css("display", "");
+                        }
+                    } else {
+                        widget.val("text_input");
+                        widget_config.val("{}");
+                    }
+                }
+            );
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    <h2>Edit Input Form</h2>
+    <form method="POST" action="/input_forms/update" id="update_form">
+        <table>
+            <tr>
+                <td>
+                    Name:
+                </td>
+                <td>
+                    <input type="text" name="name" id="name" value="{{ input_form.name }}"
+                           onblur="return clean_string_no_special(this);"/>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Description:
+                </td>
+                <td>
+                    <input type="text" name="description" id="description" value="{{ input_form.description }}"/>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Instructions:
+                </td>
+                <td>
+                    <textarea rows="5" cols="65" name="instructions"
+                              id="instructions">{{ input_form.instructions }}</textarea>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Output Parser:
+                </td>
+                <td>
+                    <select name="output_parser" id="output_parser">
+                        {% for op in output_parsers %}
+                            {% if op.value == input_form.output_parser %}
+                                <option value="{{ op.value }}" selected="selected">{{ op.label }}</option>
+                            {% else %}
+                                <option value="{{ op.value }}">{{ op.label }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Tags:
+                </td>
+                <td>
+                    <a href="#" onclick="load_tag_editor('{{ input_form.id }}')">&#9881;</a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Template:
+                </td>
+                <td>
+                    <a href="/tools/{{ config_template.id }}">{{ config_template.name }}</a>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    Defined Variables:
+                </td>
+                <td>
+                    <table id="tag_configurator">
+                        <th>Variable</th>
+                        <th>Label</th>
+                        <th>Default Value</th>
+                        <th>UI Widget</th>
+                        {% for t in available_tags %}
+                            <tr id="template__variable__{{ forloop.counter }}">
+                                <td>
+                                    {{ t }}
+                                </td>
+                                <td>
+                                    <input type="text" id="{{ t }}_label" name="{{ t }}_label" value="{{ t }}"/>
+                                </td>
+                                <td>
+                                    <input type="text" id="{{ t }}_default" name="{{ t }}_default" value="none"/>
+                                </td>
+                                <td>
+                                    <select name="{{ t }}_widget" id="{{ t }}_widget"
+                                            onchange="javascript: load_widget_configs('{{ t }}_widget')">
+                                        {% for w in widgets %}
+                                            <option value="{{ w.id }}">{{ w.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <input type="hidden" name="{{ t }}_widget_config" id="{{ t }}_widget_config"/>
+                                    <input type="button" id="{{ t }}_widget_config_button" value="Configure"
+                                           onclick="javascript: load_widget_configs('{{ t }}_widget')"
+                                           style="display: none;"/>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <input type="hidden" name="json" id="json"/>
+                    <input type="hidden" name="json_data" id="json_data" value="{{ input_form.json }}"/>
+                    <input type="hidden" name="config_template_id" value="{{ config_template.id }}"/>
+                    <input type="hidden" name="input_form_id" value="{{ input_form.id }}"/>
+                    <input type="button" onclick="submit_form()" value="Save"/>
+                </td>
+            </tr>
+        </table>
+    </form>
 {% endblock %}

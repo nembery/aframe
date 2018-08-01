@@ -1,11 +1,13 @@
 import json
 import logging
 import re
-from urllib import quote, unquote
+from urllib import unquote
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, HttpResponseRedirect, HttpResponse
-from django.template import TemplateSyntaxError, TemplateDoesNotExist
+from django.template import TemplateDoesNotExist
+from django.template import TemplateSyntaxError
 from django.template import engines
 from django.template.base import VariableNode
 
@@ -13,8 +15,8 @@ from a_frame import settings
 from a_frame.utils import action_provider
 from common.lib import aframe_utils
 from endpoints import endpoint_provider
-from input_forms.forms import ImportForm
-from input_forms.models import InputForm
+from forms import ImportForm
+from input_forms.models import InputForm, InputFormTags
 from tools.models import ConfigTemplate
 
 logger = logging.getLogger(__name__)
@@ -25,6 +27,11 @@ def index(request):
     input_form_list = InputForm.objects.all().order_by("name")
     context = {"input_form_list": input_form_list}
     return render(request, "input_forms/index.html", context)
+
+
+def search_form(request):
+    logger.info("__ input_forms search_form__")
+    return render(request, "input_forms/search.html")
 
 
 def search(request):
@@ -89,6 +96,100 @@ def search_standalone(request):
     return HttpResponse(json.dumps(results), content_type="application/json")
 
 
+def search_multi(request):
+    """
+    used for UI autocomplete searches. Filter out per-endpoint type templates
+    :param request:
+    :return:
+    """
+    logger.info("__ input_forms search_multi__")
+
+    terms = request.POST.getlist("terms[]")
+    if not terms:
+        if request.method == "POST":
+            try:
+                body = json.loads(request.body)
+                terms = body.get('terms', [])
+            except ValueError as ve:
+                print(ve)
+                print("Could not parse json")
+                return []
+
+    query = Q()
+    for t in terms:
+        if t != "":
+            print('adding term {0}'.format(t))
+            query.add(Q(name__contains=t), Q.AND)
+
+    input_form_list = InputForm.objects.filter(query)
+    results = []
+    for input_form in input_form_list:
+        if input_form.script.type == "standalone":
+            r = dict()
+            r["value"] = input_form.id
+            r["label"] = input_form.name
+            r["description"] = input_form.description
+            results.append(r)
+
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+
+def search_tags(request):
+    """
+    search automations by multiple tags
+    :param request:
+    :return:
+    """
+    logger.info("__ input_forms search_tags__")
+
+    data = dict()
+    # handle url-form-encoded request if possible
+    terms = request.POST.keys()
+
+    if not terms:
+        # if not, use the body instead
+        if request.method == "POST":
+            try:
+                data = json.loads(request.body)
+                print(terms)
+            except ValueError as ve:
+                print(ve)
+                print("Could not parse json")
+                return []
+
+    else:
+        for k in request.POST.keys():
+            data[k] = request.POST[k]
+
+    terms = data.keys()
+    all_objects = InputForm.objects
+    for t in terms:
+        query = Q()
+        if t != "":
+            v = str(data[t])
+            if v != "":
+                # we won't search for blank values
+                print('adding term {0}'.format(t))
+                print('adding value {0}'.format(v))
+                query.add(Q(inputformtags__name=t), Q.AND)
+                query.add(Q(inputformtags__value=v), Q.AND)
+                # will this work?
+                all_objects = all_objects.filter(query)
+
+    input_form_list = all_objects.all()
+
+    results = []
+    for input_form in input_form_list:
+        if input_form.script.type == "standalone":
+            r = dict()
+            r["value"] = input_form.id
+            r["label"] = input_form.name
+            r["description"] = input_form.description
+            results.append(r)
+
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+
 def edit(request, input_form_id):
     logger.info("__ input_forms edit __")
     input_form = InputForm.objects.get(pk=input_form_id)
@@ -116,12 +217,14 @@ def edit(request, input_form_id):
 
     widgets = settings.WIDGETS
     widgets_json = json.dumps(widgets)
+    output_parsers = aframe_utils.get_output_parsers()
     context = {
         "input_form": input_form,
         "config_template": config_template,
         "available_tags": available_tags,
         "widgets": widgets,
-        "widgets_json": widgets_json
+        "widgets_json": widgets_json,
+        "output_parsers": output_parsers
     }
     return render(request, "input_forms/edit.html", context)
 
@@ -150,9 +253,9 @@ def detail(request, input_form_id):
     action_options = json.loads(config_template.action_provider_options)
 
     inline_per_endpoint = False
-
+    output_parsers = aframe_utils.get_output_parsers()
     context = {"input_form": input_form, "json_object": json_object, 'action_options': action_options,
-               'inline_per_endpoint': inline_per_endpoint}
+               'inline_per_endpoint': inline_per_endpoint, "output_parsers": output_parsers}
 
     if input_form.script.type == "standalone":
         return render(request, "input_forms/configure_standalone_template.html", context)
@@ -170,7 +273,8 @@ def delete(request, input_form_id):
 def new(request):
     logger.info("__ input_forms new __")
     config_templates = ConfigTemplate.objects.all().order_by("name")
-    context = {"config_templates": config_templates}
+    output_parsers = aframe_utils.get_output_parsers()
+    context = {"config_templates": config_templates, "output_parsers": output_parsers}
     return render(request, "input_forms/new.html", context)
 
 
@@ -195,18 +299,21 @@ def new_from_template(request, template_id):
                     available_tags.append(variable_string)
     widgets = settings.WIDGETS
     widgets_json = json.dumps(widgets)
+
+    output_parsers = aframe_utils.get_output_parsers()
+
     context = {
         "config_template": config_template,
         "available_tags": available_tags,
         "widgets": widgets,
-        "widgets_json": widgets_json
+        "widgets_json": widgets_json,
+        "output_parsers": output_parsers
     }
 
     if 'cloned_templates' in request.session:
-        print 'found cloned templates'
+        print('found cloned templates')
         cloned_templates = request.session['cloned_templates']
         if template_id in cloned_templates:
-            print 'found this template_id'
             if 'input_form_id' in cloned_templates[template_id]:
                 cloned_input_form_id = cloned_templates[template_id]['input_form_id']
                 try:
@@ -217,14 +324,19 @@ def new_from_template(request, template_id):
                     dolly.instructions = input_form.instructions
                     dolly.json = input_form.json
                     dolly.script = config_template
+                    dolly.output_parser = input_form.output_parser
                     dolly.save()
+
+                    for t in input_form.inputformtags_set.all():
+                        t.input_forms.add(dolly)
+
                     context['input_form'] = dolly
                     return render(request, "input_forms/edit.html", context)
                 except ObjectDoesNotExist:
-                    print 'Could not find the input for for this cloned template'
+                    print('Could not find the input for for this cloned template')
 
     else:
-        print 'no cloned templates found!'
+        print('no cloned templates found!')
 
     return render(request, "input_forms/new.html", context)
 
@@ -240,6 +352,7 @@ def create(request):
     description = request.POST["description"]
     json_data = request.POST["json"]
     instructions = request.POST["instructions"]
+    output_parser = request.POST['output_parser']
 
     config_template = get_object_or_404(ConfigTemplate, pk=template_id)
 
@@ -249,6 +362,8 @@ def create(request):
     input_form.instructions = instructions
     input_form.json = json_data
     input_form.script = config_template
+    input_form.output_parser = output_parser
+
     input_form.save()
     return HttpResponseRedirect("/input_forms")
 
@@ -261,28 +376,6 @@ def export_form(request, input_form_id):
 
     input_form = InputForm.objects.get(pk=input_form_id)
     config_template = input_form.script
-    #
-    # template_options = dict()
-    # template_options["name"] = config_template.name
-    # template_options["description"] = config_template.description
-    # template_options["action_provider"] = config_template.action_provider
-    # template_options["action_provider_options"] = config_template.action_provider_options
-    # template_options["type"] = config_template.type
-    # template_options["template"] = quote(config_template.template)
-    #
-    # form_options = dict()
-    # form_options["name"] = input_form.name
-    # form_options["description"] = input_form.description
-    # form_options["instructions"] = input_form.instructions
-    # form_options["json"] = quote(input_form.json)
-    #
-    # exported_object = dict()
-    # exported_object["template"] = template_options
-    # exported_object["form"] = form_options
-    #
-    # logger.debug(json.dumps(exported_object))
-
-    # response = HttpResponse(json.dumps(exported_object), content_type="application/json")
 
     response = HttpResponse(exported_json, content_type="application/json")
     response['Content-Disposition'] = 'attachment; filename=' + 'aframe-' + str(config_template.name) + '.json'
@@ -296,28 +389,8 @@ def import_form(request):
         json_file = request.FILES['file']
         json_string = json_file.read()
         json_data = json.loads(json_string)
-
-        template_options = json_data["template"]
-        form_options = json_data["form"]
-
-        template = ConfigTemplate()
-        template.name = template_options["name"]
-        template.description = template_options["description"]
-        template.action_provider = template_options["action_provider"]
-        template.action_provider_options = template_options["action_provider_options"]
-        template.type = template_options["type"]
-        template.template = unquote(template_options["template"])
-
-        template.save()
-
-        input_form = InputForm()
-        input_form.name = form_options["name"]
-        input_form.description = form_options["description"]
-        input_form.instructions = form_options["instructions"]
-        input_form.json = unquote(form_options["json"])
-        input_form.script = template
-
-        input_form.save()
+        input_form_id = aframe_utils.import_form(json_data)
+        logger.info('Imported Input Form with Id: {0}'.format(input_form_id))
 
         return HttpResponseRedirect("/input_forms")
     else:
@@ -339,6 +412,7 @@ def update(request):
     description = request.POST["description"]
     json_data = request.POST["json"]
     instructions = request.POST["instructions"]
+    output_parser = request.POST['output_parser']
 
     input_form = get_object_or_404(InputForm, pk=input_form_id)
     config_template = get_object_or_404(ConfigTemplate, pk=template_id)
@@ -349,6 +423,8 @@ def update(request):
     input_form.instructions = instructions
     input_form.json = json_data
     input_form.script = config_template
+    input_form.output_parser = output_parser
+
     input_form.save()
     return HttpResponseRedirect("/input_forms")
 
@@ -532,7 +608,6 @@ def apply_per_endpoint_template(request):
     # let's load any secrets if necessary
     provider_options = action_provider.get_options_for_provider(action_name)
     for opt in provider_options:
-        print opt
         if opt['type'] == 'secret':
             opt_name = opt['name']
             pw_lookup_key = action_options[opt_name]['value']
@@ -545,7 +620,7 @@ def apply_per_endpoint_template(request):
     context = {"results": results}
 
     if "inline" in request.POST and request.POST["inline"] == 'yes_please':
-        print "returning INLINE"
+        print("returning INLINE")
         context["input_form_name"] = input_form.name
         context["input_form_id"] = input_form_id
         return render(request, "overlay_results.html", context)
@@ -573,7 +648,7 @@ def apply_standalone_template(request):
             context.update(j_dict)
         else:
             logger.debug("setting context %s" % j["name"])
-            print 'setting context %s' % j['name']
+            print('setting context %s' % j['name'])
             context[j["name"]] = str(request.POST[j["name"]])
 
     config_template = input_form.script
@@ -605,27 +680,27 @@ def apply_standalone_template(request):
         if "action_options_" + str(ao) in request.POST:
             logger.debug("Found a customized action option!")
             new_val = request.POST["action_options_" + str(ao)]
-            print new_val
+            print(new_val)
             current_value = action_options[ao]["value"]
-            print current_value
+            print(current_value)
             action_options[ao]["value"] = re.sub("{{ .* }}", new_val, current_value)
             logger.debug(action_options[ao]["value"])
 
     # let's load any secrets if necessary
     provider_options = action_provider.get_options_for_provider(action_name)
     for opt in provider_options:
-        print opt
+        print(opt)
         if opt['type'] == 'secret':
             opt_name = opt['name']
             pw_lookup_key = action_options[opt_name]['value']
             pw_lookup_value = aframe_utils.lookup_secret(pw_lookup_key)
             action_options[opt_name]['value'] = pw_lookup_value
 
-    print "action name is: " + action_name
+    print("action name is: " + action_name)
 
     action = action_provider.get_provider_instance(action_name, action_options)
     results = action.execute_template(completed_template)
-    print type(results)
+    print(type(results))
     # the action is passing back extra information about the type of response
     if type(results) is dict:
         if 'display_inline' in results and results['display_inline'] is False:
@@ -647,12 +722,13 @@ def apply_standalone_template(request):
         context = {"results": results}
 
     if "inline" in request.POST and request.POST["inline"] == 'yes_please':
-        print "returning INLINE"
+        print("returning INLINE")
         context["input_form_name"] = input_form.name
         context["input_form_id"] = input_form_id
-        return render(request, "overlay_results.html", context)
+        print('Using {0}'.format(input_form.output_parser))
+        return render(request, "input_forms/output_parsers/" + input_form.output_parser, context)
     else:
-        print "returning full results"
+        print("returning full results")
         return render(request, "input_forms/results.html", context)
 
 
@@ -793,6 +869,97 @@ def load_widget_config(request):
                       {"error": "Could not load widget configuration"})
 
 
+def load_tag_editor(request):
+    """
+    Load the tag editor overlay
+    :param request: http request
+    :return: html template
+    """
+    logger.info("__ input_forms load_tag_editor__")
+    required_fields = set(["input_form_id"])
+    if not required_fields.issubset(request.POST):
+        logger.error("Did no find all required fields in request")
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
+    input_form_id = request.POST["input_form_id"]
+
+    try:
+        input_form = InputForm.objects.get(pk=input_form_id)
+    except ObjectDoesNotExist:
+        logger.info("requested object id does not exist")
+        return render(request, "input_forms/widgets/overlay_error.html",
+                      {"error": "Could not find the Input Form!"})
+
+    tags_queryset = InputFormTags.objects.values('name')
+    tags = list()
+    for t in tags_queryset:
+        print(t['name'])
+        tags.append(t["name"])
+
+    tags_string = json.dumps(tags)
+
+    # get all tags for this input for
+    assigned_tags = list()
+    for tg in InputFormTags.objects.filter(input_forms=input_form):
+        print(tg)
+        assigned_tags.append(tg)
+
+    context = {'input_form': input_form, 'tags': tags_string, 'assigned_tags': assigned_tags}
+    return render(request, "input_forms/tag_editor.html", context)
+
+
+def configure_tags(request):
+    logger.info("__ input_forms configure_tags")
+    required_fields = set(["input_form_id", "new_tags", "deleted_tags"])
+    if not required_fields.issubset(request.POST):
+        logger.error("Did no find all required fields in request")
+        return render(request, "error.html", {"error": "Invalid Parameters in POST"})
+
+    input_form_id = request.POST["input_form_id"]
+    new_tags_string = request.POST['new_tags']
+    deleted_tags_string = request.POST['deleted_tags']
+
+    try:
+        new_tags = json.loads(new_tags_string)
+        deleted_tags = json.loads(deleted_tags_string)
+    except ValueError:
+        logger.error("No tags were found!")
+        return render(request, "error.html", {"error": "No Tags were found"})
+
+    try:
+        input_form = InputForm.objects.get(pk=input_form_id)
+    except ObjectDoesNotExist:
+        logger.info("requested object id does not exist")
+        return render(request, "input_forms/widgets/overlay_error.html",
+                      {"error": "Could not find the Input Form!"})
+
+    for dt in deleted_tags:
+        name = dt['name']
+        value = dt['value']
+        try:
+            tag = InputFormTags.objects.filter(name=name, value=value).first()
+            tag.input_forms.remove(input_form)
+        except ObjectDoesNotExist:
+            logger.info('Could not find tag to delete, hmmm')
+
+    for t in new_tags:
+        name = t['name']
+        value = t['value']
+
+        if not InputFormTags.objects.filter(name=name, value=value).exists():
+            tag = InputFormTags()
+            tag.name = name
+            tag.value = value
+            tag.save()
+            tag.input_forms.add(input_form)
+        else:
+            tag = InputFormTags.objects.filter(name=name, value=value).first()
+            tag.input_forms.add(input_form)
+            tag.save()
+
+    return HttpResponseRedirect("/input_forms/edit/%s" % input_form.id)
+
+
 def _configure_widget_options(j):
     '''
     Configures widget specific options if necessary
@@ -838,14 +1005,10 @@ def _configure_widget_options(j):
 
         try:
             results = action.execute_template(config_template.template.strip().replace('\r\n', '\n'))
-            print results
             results_object = json.loads(results)
-            print key
-            print value
             d = aframe_utils.get_list_from_json(key, value, results_object, list(), 0)
-            print d
             j["widget_data"] = d
 
         except Exception as ex:
-            print str(ex)
+            print(str(ex))
             return j

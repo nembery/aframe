@@ -7,6 +7,7 @@ class InputForm(models.Model):
     description = models.TextField()
     json = models.TextField()
     instructions = models.TextField()
+    output_parser = models.CharField(max_length=64, default='default.html')
     script = models.ForeignKey(
         "tools.ConfigTemplate",
         on_delete=models.CASCADE,
@@ -17,3 +18,10 @@ class InputForm(models.Model):
     class Meta:
         verbose_name = "InputForm"
         verbose_name_plural = "InputForms"
+
+
+class InputFormTags(models.Model):
+    name = models.CharField(max_length=32)
+    value = models.CharField(max_length=32)
+    input_forms = models.ManyToManyField(InputForm)
+

@@ -110,6 +110,32 @@ function load_widget_configs(w_id) {
     });
 }
 
+
+function load_tag_editor(input_form_id) {
+    // simple function to load the tag config editor for a given input form
+    let doc = jQuery(document.documentElement);
+    doc.css('cursor', 'progress');
+
+    let url = "/input_forms/loadTagEditor/";
+
+    let params = {
+        "input_form_id": input_form_id
+    };
+
+    let post = jQuery.post(url, params, function (response) {
+        load_overlay(response);
+    });
+
+    post.fail(function () {
+        alert('Could not perform request!');
+    });
+
+    post.always(function () {
+        doc.css('cursor', '');
+    });
+}
+
+
 function load_screen_widget_configs_manual(widget_id, widget_layout_id) {
 
     let doc = jQuery(document.documentElement);
@@ -178,6 +204,32 @@ function reveal(object_id) {
     $('#' + object_id).toggle('blind');
 }
 
+function toggle_screen_form_help(input_form_id) {
+    console.log('toggle form help');
+    let help_container = $('#form_help_' + input_form_id);
+    if(help_container.html().trim() === "") {
+        help_container.html('Click Apply to execute this automation');
+    }
+    help_container.toggle({'effect': 'blind', 'complete': function() { recalculate_height(input_form_id) }});
+
+}
+
+function recalculate_height(input_form_id) {
+
+    let container = $('#input_form_box_' + input_form_id);
+    container.css('height', '');
+
+    // let's make everything pretty and line up on 10 pixel boundaries
+    let height = container.css('height');
+    let height_num = parseInt(height);
+
+    while (height_num % 10 !== 0) {
+        height_num += 1;
+    }
+    container.css('height', height_num);
+    //container.effect('size', {'to': {'height': height_num}});
+}
+
 // ======================= Widget Validation ======================= //
 
 function check_ipv4_input(obj) {
@@ -219,4 +271,14 @@ function sticky_all_widgets(toggle) {
 
         widget.css('height', '');
     });
+}
+
+function close_all_input_forms() {
+    $(input_form_ids).each(
+        function (i, v) {
+            console.log(v);
+            close_screen_form(v);
+        }
+    );
+
 }

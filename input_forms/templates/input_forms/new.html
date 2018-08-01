@@ -133,6 +133,18 @@
                 {{ config_template.name }}
             </td>
         </tr>
+        <tr>
+            <td>
+                Output Parser:
+            </td>
+            <td>
+                <select name="output_parser" id="output_parser">
+                    {% for op in output_parsers %}
+                    <option name="{{ op.value }}">{{ op.label }}</option>
+                    {%  endfor %}
+                </select>
+            </td>
+        </tr>
 
         <tr>
             <td>

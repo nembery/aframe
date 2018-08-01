@@ -23,7 +23,7 @@
 
         var loaded_widgets = {};
 
-        function load_input_form(input_form_id) {
+        function load_input_form(input_form_id, left=30, top=150) {
             let doc = $(document.documentElement);
             doc.css('cursor', 'progress');
 
@@ -78,13 +78,13 @@
                     new_window.css("top", this_layout["y"]);
                 } else {
                     // unknown or new window being added
-                    new_window.css("left", 30);
-                    new_window.css("top", 150);
+                    new_window.css("left", left);
+                    new_window.css("top", top);
 
                     // make sure we have some values for it in the layout object
                     let this_layout = {};
-                    this_layout["x"] = 30;
-                    this_layout["y"] = 150;
+                    this_layout["x"] = left;
+                    this_layout["y"] = top;
 
                     layout['input_forms'][input_form_id] = this_layout;
                 }
@@ -118,7 +118,7 @@
                 return;
             }
             let widget_layout_id = generate_widget_layout_id();
-            if (layout['widgets'][widget_layout_id] == undefined) {
+            if (layout['widgets'][widget_layout_id] === undefined) {
                 layout['widgets'][widget_layout_id] = {};
             }
 

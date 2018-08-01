@@ -1,9 +1,14 @@
+<!-- configure_template_for_inline.html -->
 <div class="overlay_menu">
     {{ input_form.name }}
     <div class="overlay_close">
-        <a href="#" onclick="javascript: close_screen_form({{ input_form.id }})">
+        <a href="#" onclick="toggle_screen_form_help({{ input_form.id }})">?</a>
+        <a href="#" onclick="close_screen_form({{ input_form.id }})">
             X
         </a>
+    </div>
+    <div class="overlay_help" id="form_help_{{ input_form.id }}" style="display: none">
+        {{ input_form.instructions }}
     </div>
 </div>
 {% if inline_per_endpoint %}
