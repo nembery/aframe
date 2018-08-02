@@ -463,10 +463,6 @@ def chain_template(request):
     return HttpResponse(json.dumps(response), content_type="application/json")
 
 
-def bind_automation(request):
-    return render(request, "configTemplates/bind_automation.html")
-
-
 def download_from_cache(request, cache_key):
     print('downloading cache object: %s' % cache_key)
     cache_object = cache.get(cache_key)
