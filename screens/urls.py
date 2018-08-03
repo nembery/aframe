@@ -15,6 +15,8 @@ urlpatterns = [
         name="delete"),
     url(r"^edit/(?P<screen_id>[^/]+)/$", views.edit,
         name="edit"),
+    url(r"^clone/(?P<screen_id>[^/]+)/$", views.clone_screen,
+        name="clone_screen"),
     url(r"^new$", views.new,
         name="new"),
     url(r"^import$", views.import_screen,

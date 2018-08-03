@@ -1,5 +1,6 @@
 import json
 import logging
+import uuid
 from urllib import quote
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -325,10 +326,7 @@ def update_layout(request):
     return render(request, "overlay_basic.html", {"message": "Layout Updated successfully!"})
 
 
-def export_screen(request, screen_id):
-    logger.info("__ screens export __")
-
-    screen = get_object_or_404(Screen, pk=screen_id)
+def _serialize_screen(screen):
     layout = screen.layout
     layout_obj = json.loads(layout)
 
@@ -362,13 +360,42 @@ def export_screen(request, screen_id):
         label_dict = dict()
         label_dict["name"] = label.name
         label_dict["value"] = label.value
-        exported_data['labels'].append(label)
+        exported_data['labels'].append(label_dict)
 
-    exported_json = json.dumps(exported_data)
+    return exported_data
+
+
+def export_screen(request, screen_id):
+    logger.info("__ screens export __")
+
+    screen = get_object_or_404(Screen, pk=screen_id)
+    screen_data = _serialize_screen(screen)
+    exported_json = json.dumps(screen_data)
     response = HttpResponse(exported_json, content_type="application/json")
     response['Content-Disposition'] = 'attachment; filename=' + 'aframe-' + str(screen.name) + '.json'
 
     return response
+
+
+def clone_screen(request, screen_id):
+    logger.info("__ screens clone __")
+
+    screen = get_object_or_404(Screen, pk=screen_id)
+
+    original_name = screen.name
+    screen.name = '{} Clone'.format(original_name)
+
+    screen_data = _serialize_screen(screen)
+
+    # set a new screen id for this cloned screen
+    if 'screen' in screen_data and 'id' in screen_data['screen']:
+        screen_data['screen']['id'] = str(uuid.uuid4())
+
+    screen_id = aframe_utils.import_screen(screen_data)
+    if screen_id is None:
+        return HttpResponseRedirect("/screens/")
+
+    return HttpResponseRedirect("/screens/edit/" + str(screen_id))
 
 
 def import_screen(request):
@@ -834,4 +861,3 @@ def search_labels(request):
         results.append(r)
 
     return HttpResponse(json.dumps(results), content_type="application/json")
-
