@@ -13,7 +13,7 @@ from django.template.base import VariableNode
 from a_frame.utils import action_provider
 from input_forms.models import InputForm, InputFormTags
 from screens.models import Screen
-from screens.models import ScreenWidgetConfig
+from screens.models import ScreenWidgetConfig, ScreenLabel
 
 from tools.models import ConfigTemplate
 
@@ -649,8 +649,18 @@ def import_screen(json_data):
         screen.layout = json.dumps(new_layout)
         screen.save()
 
+        labels = screen_data.get('labels', [])
+        for label in labels:
+            if not ScreenLabel.objects.filter(name=label["name"], value=label["value"]).exists():
+                screen_label = ScreenLabel()
+                screen_label.name = label["name"]
+                screen_label.value = label["name"]
+            else:
+                screen_label = ScreenLabel.objects.get(name=label["name"], value=label["value"])
+
+            screen.labels.add(screen_label)
+
     except KeyError as ke:
-        logger.info('some keyerror')
-        logger.info(ke)
         logger.error('Could not import screen!')
+        logger.error(ke)
         return None

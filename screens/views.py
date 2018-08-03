@@ -335,6 +335,7 @@ def export_screen(request, screen_id):
     exported_data = dict()
     exported_data['input_forms'] = dict()
     exported_data['widgets'] = dict()
+    exported_data['labels'] = list()
 
     for input_form_id in layout_obj['input_forms'].keys():
         input_form_json = aframe_utils.export_input_form(input_form_id)
@@ -356,6 +357,12 @@ def export_screen(request, screen_id):
     exported_data['screen']['layout'] = screen.layout
     exported_data['screen']['id'] = str(screen.id)
     exported_data['screen']['tag'] = screen.tag
+
+    for label in screen.labels.all():
+        label_dict = dict()
+        label_dict["name"] = label.name
+        label_dict["value"] = label.value
+        exported_data['labels'].append(label)
 
     exported_json = json.dumps(exported_data)
     response = HttpResponse(exported_json, content_type="application/json")
