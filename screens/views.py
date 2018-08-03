@@ -12,6 +12,7 @@ from common.lib import aframe_utils
 from forms import ImportForm
 from input_forms.models import InputForm
 from models import Screen
+from models import ScreenLabel
 from models import ScreenWidgetConfig
 from models import ScreenWidgetData
 
@@ -41,6 +42,11 @@ def delete(request, screen_id):
     screen = get_object_or_404(Screen, pk=screen_id)
     screen.delete()
     return HttpResponseRedirect("/screens")
+
+
+def search_form(request):
+    logger.info("__ screens search_form__")
+    return render(request, "screens/search.html")
 
 
 def detail(request, screen_id):
@@ -92,7 +98,7 @@ def detail(request, screen_id):
     tags = list()
     for s in screens:
         t = s['tag']
-        if t not in tags:
+        if t not in tags and t != '':
             tags.append(t)
 
     tags.sort()
@@ -184,6 +190,29 @@ def create(request):
     screen.layout = json.dumps(layout)
     screen.save()
     screen_id = screen.id
+
+    new_labels_string = request.POST.get('new_labels', [])
+
+    try:
+        new_labels = json.loads(new_labels_string)
+    except ValueError:
+        logger.error("No labels were found!")
+        return render(request, "error.html", {"error": "No labels were found"})
+
+    for l in new_labels:
+        name = l['name']
+        value = l['value']
+
+        if not ScreenLabel.objects.filter(name=name, value=value).exists():
+            label = ScreenLabel()
+            label.name = name
+            label.value = value
+            label.save()
+            screen.labels.add(label)
+        else:
+            label = ScreenLabel.objects.filter(name=name, value=value).first()
+            screen.labels.add(label)
+
     return HttpResponseRedirect("/screens/" + str(screen_id))
 
 
@@ -212,6 +241,40 @@ def update(request):
     screen.description = description
     screen.tag = tag
     screen.save()
+
+    deleted_labels_string = request.POST.get('deleted_labels', [])
+    new_labels_string = request.POST.get('new_labels', [])
+
+    try:
+        new_labels = json.loads(new_labels_string)
+        deleted_labels = json.loads(deleted_labels_string)
+    except ValueError:
+        logger.error("No labels were found!")
+        return render(request, "error.html", {"error": "No labels were found"})
+
+    for dl in deleted_labels:
+        name = dl['name']
+        value = dl['value']
+        try:
+            label = ScreenLabel.objects.filter(name=name, value=value).first()
+            screen.labels.remove(label)
+        except ObjectDoesNotExist:
+            logger.info('Could not find label to delete, hmmm')
+
+    for l in new_labels:
+        name = l['name']
+        value = l['value']
+
+        if not ScreenLabel.objects.filter(name=name, value=value).exists():
+            label = ScreenLabel()
+            label.name = name
+            label.value = value
+            label.save()
+            screen.labels.add(label)
+        else:
+            label = ScreenLabel.objects.filter(name=name, value=value).first()
+            screen.labels.add(label)
+
     return HttpResponseRedirect("/screens")
 
 
@@ -709,3 +772,59 @@ def search(request):
         results.append(r)
 
     return HttpResponse(json.dumps(results), content_type="application/json")
+
+
+def search_labels(request):
+    """
+    search screens by multiple tags. Returned list will match all labels
+    :param request: list of key value terms to search.
+    :return: json list of screens matching query
+    """
+    logger.info("__ screens search_labels__")
+
+    data = dict()
+    # handle url-form-encoded request if possible
+    terms = request.POST.keys()
+
+    if not terms:
+        # if not, use the body instead
+        if request.method == "POST":
+            try:
+                data = json.loads(request.body)
+                print(terms)
+            except ValueError as ve:
+                print(ve)
+                print("Could not parse json")
+                return []
+
+    else:
+        for k in request.POST.keys():
+            data[k] = request.POST[k]
+
+    terms = data.keys()
+    all_objects = Screen.objects
+    for t in terms:
+        query = Q()
+        if t != "":
+            v = str(data[t])
+            if v != "":
+                # we won't search for blank values
+                print('adding term {0}'.format(t))
+                print('adding value {0}'.format(v))
+                query.add(Q(labels__name=t), Q.AND)
+                query.add(Q(labels__value=v), Q.AND)
+                # will this work?
+                all_objects = all_objects.filter(query)
+
+    screens_list = all_objects.all()
+
+    results = []
+    for screen in screens_list:
+        r = dict()
+        r["value"] = str(screen.id)
+        r["label"] = screen.name
+        r["description"] = screen.description
+        results.append(r)
+
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
