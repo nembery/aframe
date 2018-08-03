@@ -43,6 +43,10 @@ urlpatterns = [
         name="export_screen"),
     url(r"^search$", views.search,
         name="search"),
+    url(r"^searchForm$", views.search_form,
+        name="search_form"),
+    url(r"^searchLabels$", views.search_labels,
+        name="search_labels"),
     url(r"^(?P<screen_id>[^/]+)$", views.detail,
         name="detail"),
 ]

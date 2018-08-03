@@ -1,164 +1,202 @@
-
 {% extends "base.html" %}
 {% block title %}A-Frame{% endblock %}
 {% block scripts %}
-<script type="text/javascript">
+    <script type="text/javascript">
 
-    var template_variables = [];
+        var template_variables = [];
 
-    var selected_automations = [];
+        var selected_automations = [];
 
-    var selected_screen_widgets = [];
+        var selected_screen_widgets = [];
 
-    function submit_form() {
+        var new_labels = [];
 
-        let selected_automations_text = JSON.stringify(selected_automations, null, 2);
-        $("#input_forms").val(selected_automations_text);
-        // submit the form here after we are all done
-        let selected_screen_widgets_text = JSON.stringify(selected_screen_widgets, null, 2);
-        $("#screen_widgets").val(selected_screen_widgets_text);
+        function submit_form() {
 
-        $("#create_form").submit();
-    }
+            let selected_automations_text = JSON.stringify(selected_automations, null, 2);
+            $("#input_forms").val(selected_automations_text);
+            // submit the form here after we are all done
+            let selected_screen_widgets_text = JSON.stringify(selected_screen_widgets, null, 2);
+            $("#screen_widgets").val(selected_screen_widgets_text);
 
-    function add_automation() {
-        let ta = $("#template_autocomplete");
-        let automation_name = ta.val();
+            let new_labels_string = JSON.stringify(new_labels, null, 2);
+            $("#new_labels").val(new_labels_string);
 
-        selected_automations.push(automation_name);
-        let new_li = $("<li>")
-        new_li.append(automation_name);
-        $("#selected_automations_ui").append(new_li);
-
-        ta.val("");
-        ta.focus();
-    }
-
-    function add_screen_widget() {
-        let screen_widget_name = $('#screen_widget_select').val();
-        if (screen_widget_name === 'none') {
-            return;
+            $("#create_form").submit();
         }
-        selected_screen_widgets.push(screen_widget_name);
-        let new_li = $("<li>")
-        new_li.append(screen_widget_name);
-        $("#selected_screen_widgets_ui").append(new_li);
-        $('#screen_widget_select').val('none');
-    }
 
-    $(window).load(function() {
-        $( "#template_autocomplete" ).autocomplete({
-            source: "/input_forms/searchAll",
-            focus: function(event, ui) {
-				event.preventDefault();
-		        $("#template_autocomplete").val(ui.item.label);
-			},
-            select: function (event, ui) {
-                $("#template_autocomplete").val(ui.item.label);
-                $("#template_autocomplete_id").val(ui.item.value);
-                add_automation();
-                return false;
+        function add_automation() {
+            let ta = $("#template_autocomplete");
+            let automation_name = ta.val();
+
+            selected_automations.push(automation_name);
+            let new_li = $("<li>")
+            new_li.append(automation_name);
+            $("#selected_automations_ui").append(new_li);
+
+            ta.val("");
+            ta.focus();
+        }
+
+        function add_screen_widget() {
+            let screen_widget_name = $('#screen_widget_select').val();
+            if (screen_widget_name === 'none') {
+                return;
             }
+            selected_screen_widgets.push(screen_widget_name);
+            let new_li = $("<li>")
+            new_li.append(screen_widget_name);
+            $("#selected_screen_widgets_ui").append(new_li);
+            $('#screen_widget_select').val('none');
+        }
+
+        function add_label() {
+            let label_name_sel = $('#new_screen_label_name');
+            let label_name = label_name_sel.val();
+            label_name_sel.val('');
+
+            let label_value_sel = $('#new_screen_label_value');
+            let label_value = label_value_sel.val();
+            label_value_sel.val('');
+
+            new_labels.push({'name': label_name, 'value': label_value});
+            let assigned_labels_sel = $('#assigned_screen_labels');
+            let new_assigned_row = $('<div class="screen_label"/>');
+            {#new_assigned_row.append('<div>' + label_name + '</div><div>' + label_value + '</div>');#}
+            new_assigned_row.append('<input type="text" disabled="disabled" value="' + label_name + '"/>');
+            new_assigned_row.append('&nbsp;');
+            new_assigned_row.append('<input type="text" disabled="disabled" value="' + label_value + '"/>');
+            assigned_labels_sel.append(new_assigned_row);
+        }
+
+        $(window).load(function () {
+            $("#template_autocomplete").autocomplete({
+                source: "/input_forms/searchAll",
+                focus: function (event, ui) {
+                    event.preventDefault();
+                    $("#template_autocomplete").val(ui.item.label);
+                },
+                select: function (event, ui) {
+                    $("#template_autocomplete").val(ui.item.label);
+                    $("#template_autocomplete_id").val(ui.item.value);
+                    add_automation();
+                    return false;
+                }
+            });
         });
-    });
 
 
-</script>
-{% endblock%}
+    </script>
+{% endblock %}
 {% block content %}
-<h2>Create a new Screen</h2>
-<form method="POST" action="/screens/create" id="create_form">
-    <table>
-        <tr>
-            <td>
-                Name:
-            </td>
-            <td>
-                <input type="text" name="name" id="name" size="50" placeholder="Name of this screen view"
-                       onblur="return clean_string_no_special(this);"/>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                Tag:
-            </td>
-            <td>
-                <input type="text" name="tag" id="tag" size="50" placeholder="Tag Metadata"
-                       onblur="return clean_string_no_special(this);"/>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                Theme:
-            </td>
-            <td>
-                <select name="theme" id="theme">
-                    {% for theme in themes %}
-                    <option value="{{ theme.base_template }}">{{ theme.label }}</option>
-                    {% endfor %}
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                Description:
-            </td>
-            <td>
-                <textarea rows="5" cols="60" name="description" id="description"></textarea>
-            </td>
-        </tr>
+    <h2>Create a new Screen</h2>
+    <form method="POST" action="/screens/create" id="create_form">
+        <table>
+            <tr>
+                <td>
+                    Name:
+                </td>
+                <td>
+                    <input type="text" name="name" id="name" size="50" placeholder="Name of this screen view"
+                           onblur="return clean_string_no_special(this);"/>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Tag:
+                </td>
+                <td>
+                    <input type="text" name="tag" id="tag" size="50" placeholder="Tag Metadata"
+                           onblur="return clean_string_no_special(this);"/>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Theme:
+                </td>
+                <td>
+                    <select name="theme" id="theme">
+                        {% for theme in themes %}
+                            <option value="{{ theme.base_template }}">{{ theme.label }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Labels:
+                </td>
+                <td>
+                    <div id="assigned_screen_labels">
+                    </div>
+                    <div class="screen_label">
+                        <input type="text" id="new_screen_label_name" placeholder="Label Name"/>
+                        <input type="text" id="new_screen_label_value" placeholder="Label Value"/>
+                        <input type="button" onclick="add_label()" value="Add"/>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Description:
+                </td>
+                <td>
+                    <textarea rows="5" cols="60" name="description" id="description"></textarea>
+                </td>
+            </tr>
 
-        <tr>
-            <td>
-                Add Automation:
-            </td>
-            <td>
-                <input type="text" size="25" id="template_autocomplete"
-                       placeholder="Choose Automation">
-            </td>
-        </tr>
-        <tr>
-            <td>
-                Automations:
-            </td>
-            <td>
-                <input type="hidden" name="input_forms" id="input_forms" value="">
-                <ul id="selected_automations_ui">
+            <tr>
+                <td>
+                    Add Automation:
+                </td>
+                <td>
+                    <input type="text" size="25" id="template_autocomplete"
+                           placeholder="Choose Automation">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Automations:
+                </td>
+                <td>
+                    <input type="hidden" name="input_forms" id="input_forms" value="">
+                    <ul id="selected_automations_ui">
 
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                Add Screen Widget:
-            </td>
-            <td>
-                <select id="screen_widget_select" name="screen_widget_add" onchange="add_screen_widget()">
-                    <option value="none">Choose Widget</option>
-                    {% for w in widgets %}
-                    <option value="{{ w.id }}">{{ w.label }}</option>
-                    {% endfor %}
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                Screen Widgets:
-            </td>
-            <td>
-                <input type="hidden" name="screen_widgets" id="screen_widgets" value="">
-                <ul id="selected_screen_widgets_ui">
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Add Screen Widget:
+                </td>
+                <td>
+                    <select id="screen_widget_select" name="screen_widget_add" onchange="add_screen_widget()">
+                        <option value="none">Choose Widget</option>
+                        {% for w in widgets %}
+                            <option value="{{ w.id }}">{{ w.label }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Screen Widgets:
+                </td>
+                <td>
+                    <input type="hidden" name="screen_widgets" id="screen_widgets" value="">
+                    <ul id="selected_screen_widgets_ui">
 
-                </ul>
-            </td>
-        </tr>
+                    </ul>
+                </td>
+            </tr>
 
-        <tr>
-            <td colspan="2">
-                <input type="button" onclick="submit_form()" value="Save"/>
-            </td>
-        </tr>
-    </table>
-</form>
+            <tr>
+                <td colspan="2">
+                    <input type="hidden" name="new_labels" id="new_labels"/>
+                    <input type="button" onclick="submit_form()" value="Save"/>
+                </td>
+            </tr>
+        </table>
+    </form>
 
 {% endblock %}

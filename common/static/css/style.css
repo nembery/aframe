@@ -189,6 +189,7 @@ input[type=submit], input[type=button] {
     display: inline;
     font-size: inherit;
     width: auto;
+    min-width: 90px;
     border: 1px solid rgb(94, 158, 214);
     padding: 8px;
     background-color: rgb(94, 158, 214);
@@ -409,7 +410,15 @@ div .unknownAlert {
     padding-right: 5px;
 }
 
+.screen_label div {
+    display: inline;
+    min-width: 125px;
+}
 
+.screen_label {
+    /*padding: 5px;*/
+    margin-bottom: 10px;
+}
 
 
 
