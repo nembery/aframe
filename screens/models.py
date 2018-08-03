@@ -5,7 +5,7 @@ from input_forms.models import InputForm
 import uuid
 
 
-class ScreenLabels(models.Model):
+class ScreenLabel(models.Model):
     name = models.CharField(max_length=32)
     value = models.CharField(max_length=32)
 
@@ -31,7 +31,7 @@ class Screen(models.Model):
     screen_widgets = models.ManyToManyField(ScreenWidget)
     layout = models.TextField()
     tag = models.TextField(default="aframe")
-    labels = models.ManyToManyField(ScreenLabels)
+    labels = models.ManyToManyField(ScreenLabel)
     theme = models.CharField(max_length=32)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
