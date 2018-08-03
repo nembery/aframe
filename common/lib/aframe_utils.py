@@ -649,7 +649,7 @@ def import_screen(json_data):
         screen.layout = json.dumps(new_layout)
         screen.save()
 
-        labels = screen_data.get('labels', [])
+        labels = json_data.get('labels', [])
         for label in labels:
             if not ScreenLabel.objects.filter(name=label["name"], value=label["value"]).exists():
                 screen_label = ScreenLabel()
@@ -659,6 +659,9 @@ def import_screen(json_data):
                 screen_label = ScreenLabel.objects.get(name=label["name"], value=label["value"])
 
             screen.labels.add(screen_label)
+
+        screen.save()
+        return screen.id
 
     except KeyError as ke:
         logger.error('Could not import screen!')
