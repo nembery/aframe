@@ -95,6 +95,8 @@ def detail(request, screen_id):
         if t not in tags:
             tags.append(t)
 
+    tags.sort()
+
     context = {'screen': screen,
                'input_forms_json': input_forms_json,
                'input_form_ids': ifi_json,
