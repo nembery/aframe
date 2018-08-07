@@ -456,6 +456,7 @@ def export_input_form(input_form_id):
     form_options["description"] = input_form.description
     form_options["instructions"] = input_form.instructions
     form_options["json"] = quote(input_form.json)
+    form_options["output_parser"] = input_form.output_parser
 
     tag_list = list()
     for t in tags:
@@ -654,7 +655,8 @@ def import_screen(json_data):
             if not ScreenLabel.objects.filter(name=label["name"], value=label["value"]).exists():
                 screen_label = ScreenLabel()
                 screen_label.name = label["name"]
-                screen_label.value = label["name"]
+                screen_label.value = label["value"]
+                screen_label.save()
             else:
                 screen_label = ScreenLabel.objects.get(name=label["name"], value=label["value"])
 
