@@ -6,7 +6,6 @@
             // on load
             let config_element;
             let widget_layout_id = {{ widget_layout_id }};
-            let widget_id = '{{ widget_id }}';
             if (layout['widgets'][widget_layout_id] === undefined) {
                 layout['widgets'][widget_layout_id] = {};
             }
@@ -18,20 +17,19 @@
             if (config_element['widget_config'] !== undefined
                 && config_element['widget_config']['contents'] !== undefined)
             {
-                let unquoted = decodeURI(config_element['widget_config']['contents']).replace(/%27/g, "'");
+                let url = config_element['widget_config']['url'];
                 let title = config_element['widget_config']['title'];
-                console.log(unquoted);
-                $('#html_contents').val(unquoted);
-                $('#html_title').val(title);
+                $('#embedded_url').val(url);
+                $('#embedded_title').val(title);
             }
 
         });
 
-        function set_html_config() {
+        function set_embedded_config() {
 
             let config = {};
-            config['contents'] = encodeURI($('#html_contents').val()).replace(/'/g,  "%27");
-            config['title'] = $('#html_title').val();
+            config['url'] = $('#embedded_url').val();
+            config['title'] = $('#embedded_title').val();
 
             let widget_layout_id = {{ widget_layout_id }};
             let widget_id = '{{  widget_id }}';
@@ -44,11 +42,20 @@
             load_widget(widget_id, widget_layout_id);
         }
 
+        function check_prefix(obj) {
+            let txt = obj.value;
+            if (! txt.startsWith('http')) {
+                txt = 'https://' + txt;
+            }
+            obj.value = txt;
+        }
+
     </script>
     <table>
         <tr>
             <td colspan="2">
-                Raw HTML Widget. All HTML code entered here will be rendered in the widget as desired.
+                Embedded Content Widget. Uses an IFrame to display content inline. Warning: Not all sites
+                allows content to be embedded via an IFrame. This will silenty fail on most modern browsers.
             </td>
         </tr>
         <tr>
@@ -56,20 +63,20 @@
                 Title:
             </td>
             <td>
-                <input type="text" id="html_title" placeholder="Widget Title"/>
+                <input type="text" id="embedded_title" placeholder="Embedded Content Title"/>
             </td>
         </tr>
         <tr>
             <td>
-                Contents:
+                Embedded URL:
             </td>
             <td>
-                <textarea title="Raw HTML input" id="html_contents" rows="10" cols="65"></textarea>
+                <input type="text" id="embedded_url" placeholder="Embedded URL" onblur="check_prefix(this)"/>
             </td>
         </tr>
         <tr>
             <td colspan="2">
-                <input type="button" onclick="set_html_config()" value="OK"/>
+                <input type="button" onclick="set_embedded_config()" value="OK"/>
             </td>
         </tr>
     </table>

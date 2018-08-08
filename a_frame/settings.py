@@ -674,5 +674,12 @@ SCREEN_WIDGETS = (
         "configuration_template": "html_config.html",
         "id": "html_contents",
         "render_template": "html.html"
+    },
+    {
+        "label": "Embedded Content",
+        "configurable": True,
+        "configuration_template": "embedded_config.html",
+        "id": "embedded_contents",
+        "render_template": "embedded.html"
     }
 )

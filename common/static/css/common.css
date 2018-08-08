@@ -26,6 +26,19 @@
     box-shadow: 5px 5px 20px 0px black;
 }
 
+.widget_embedded_url {
+    height: 600px;
+    width: 600px;
+}
+
+.widget_embedded_url_container {
+    padding: 10px;
+}
+
+.widget_embedded_url_link {
+    text-align: center;
+}
+
 #context-menu-layer {
     z-index: 1000;
 }

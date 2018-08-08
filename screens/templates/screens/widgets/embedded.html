@@ -1,5 +1,6 @@
-<div class="overlay_menu" id="html_contents_title_{{ widget_layout_id }}">
-    <!-- widget_base.html -->
+<!-- Embedded Content embedded.embedded -->
+<div class="overlay_menu" id="embedded_url_title_{{ widget_layout_id }}">
+    <!-- widget_base.embedded -->
     <div class="overlay_close">
         <a href="#" title="Configure"
            onclick="sticky_widget({{ widget_layout_id }})">
@@ -12,27 +13,46 @@
         <a href="#" title="Close" onclick="close_screen_widget({{ widget_layout_id }})">X</a>
     </div>
 </div>
-<td>
-    <div id="html_contents_{{ widget_layout_id }}" class="widget_html_contents"></div>
+    <div id="embedded_url_{{ widget_layout_id }}" class="widget_embedded_url_container">
+        <iframe id="embedded_url_frame_{{ widget_layout_id }}"></iframe>
+    </div>
+    <div class="widget_embedded_url_link">
+        <a href="#" onclick="open_embedded_content()">Open Embedded Content in New Window</a>
+    </div>
     <script type="text/javascript">
-
         $(function() {
             let widget_layout_id = {{ widget_layout_id }};
             let config = {};
 
-            let contents = '<pre>N/A</pre>';
+            if (layout['widgets'][widget_layout_id]['widget_config'] !== undefined) {
+                config = layout['widgets'][widget_layout_id]['widget_config'];
+                console.log(config);
+                let url = config['url'];
+                let title = config['title'];
+                let iframe = $('#embedded_url_frame_{{ widget_layout_id }}');
+                iframe.append('<a href="' + url + '">Open Embedded Content</a>');
+                iframe.attr('src', url);
+                iframe.attr('class', 'widget_embedded_url');
+                try {
+                    $('#embedded_url_{{ widget_layout_id }}').append(iframe);
+                    $('#embedded_url_title_{{ widget_layout_id }}').append(title);
+                } catch {
+                    alert('caught an error!');
+                }
+            }
+        });
+
+        function open_embedded_content() {
+            let widget_layout_id = {{ widget_layout_id }};
+            let config = {};
 
             if (layout['widgets'][widget_layout_id]['widget_config'] !== undefined) {
                 config = layout['widgets'][widget_layout_id]['widget_config'];
                 console.log(config);
-                let raw_contents = config['contents'];
-                let title = config['title'];
-                contents = decodeURI(raw_contents);
-                console.log(contents);
-                console.log(title);
-                $('#html_contents_{{ widget_layout_id }}').append(contents);
-                $('#html_contents_title_{{ widget_layout_id }}').append(title);
+                let url = config['url'];
+                window.open(url);
+            } else {
+                alert('No Valid URL was found on this Widget!');
             }
-        });
+        }
     </script>
-</td>
