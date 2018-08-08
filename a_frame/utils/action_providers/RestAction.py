@@ -58,7 +58,7 @@ class RestAction(ActionBase):
         :param template: the completed template from the user or API
         :return Boolean based on execution outcome.
         """
-        print("executing %s" % template)
+        # print("executing %s" % template)
 
         if not self.url.startswith(':') and not self.url.startswith('/'):
             self.url = "/" + self.url
@@ -78,9 +78,9 @@ class RestAction(ActionBase):
             full_url = self.full_url
 
         if self.request_type == "GET" and template != '':
-            print(template)
+            # print(template)
             ct = self.unescape(template)
-            print(ct)
+            # print(ct)
             try:
                 json_query_params = json.loads(ct)
                 query_data = urllib.urlencode(json_query_params)
@@ -157,7 +157,7 @@ class RestAction(ActionBase):
 
         data = str(template + "\n\n")
         print("Request type: %s" % self.request_type)
-        print("%s" % data)
+        #print("%s" % data)
 
         if self.request_type == "GET" or self.request_type == "DELETE":
             try:
@@ -195,12 +195,11 @@ class RestAction(ActionBase):
                 # check if this is a binary file
                 if not re.search('json|text|html|xml', content_type):
                     attachment = result_object.info().getheader('Content-Disposition')
-                    print(attachment)
-                    print(type(attachment))
+                    # print(attachment)
+                    # print(type(attachment))
                     if attachment is not None and 'filename=' in attachment:
-                        print('GOT A FILENAME')
                         filename = attachment.split('filename=')[1]
-                        print(filename)
+                        print('using filename: {}'.format(filename))
                     else:
                         if 'zip' in content_type:
                             filename = 'aframe_archive.zip'
@@ -403,8 +402,6 @@ class RestAction(ActionBase):
 
     @staticmethod
     def __perform_post(request, data):
-        print("PERFORMING POST")
-        print(data)
         try:
             if hasattr(ssl, 'SSLContext'):
                 context = ssl.create_default_context()  # disables SSL cert checking!
@@ -413,7 +410,6 @@ class RestAction(ActionBase):
                 return urllib2.urlopen(request, data, context=context)
 
             else:
-                print("no ssl")
                 return urllib2.urlopen(request, data)
         except HTTPError as he:
             print("HTTP Error performing POST operation")
@@ -457,7 +453,6 @@ class RestAction(ActionBase):
         try:
             if type(results) == "str" and results.startswith("<?xml"):
                 print("Found XML results - using pretty_print")
-                print(results)
                 xml = etree.fromstring(results)
                 return etree.tostring(xml, pretty_print=True)
         except etree.XMLSyntaxError:
@@ -473,3 +468,4 @@ class RestAction(ActionBase):
             # this isn't xml or json, so just return it!
             print("Unknown results!")
             return results
+
