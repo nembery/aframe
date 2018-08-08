@@ -334,7 +334,6 @@ def execute_template(post_vars):
     # compiled_template = get_template_from_string(config_template.template)
     completed_template = str(compiled_template.render(context))
 
-    print(completed_template)
     action_name = config_template.action_provider
     action_options = json.loads(config_template.action_provider_options)
 

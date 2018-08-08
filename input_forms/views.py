@@ -240,7 +240,6 @@ def detail(request, input_form_id):
 
     logger.debug(input_form.json)
     json_object = json.loads(input_form.json)
-
     for j in json_object:
         if "widget" in j:
             # modify widget options in place
@@ -589,7 +588,6 @@ def apply_per_endpoint_template(request):
         logger.error("Caught a template syntax error!")
         return render(request, "error.html", {"error": "Invalid Template Syntax: %s" % str(e)})
 
-    logger.debug(completed_template)
     action_name = config_template.action_provider
 
     action_options = json.loads(config_template.action_provider_options)
@@ -669,9 +667,7 @@ def apply_standalone_template(request):
             post_tags = "</pre></body</html>"
             return HttpResponse(pre_tags + completed_template + post_tags)
 
-    logger.info(completed_template)
     action_name = config_template.action_provider
-    logger.info(action_name)
 
     action_options = json.loads(config_template.action_provider_options)
     logger.info(action_options)

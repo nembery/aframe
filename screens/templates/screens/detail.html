@@ -495,23 +495,33 @@
         }
 
         function apply_inline(obj) {
-
-            var doc = $(document.documentElement);
-            doc.css("cursor", "progress");
+            // called to submit an inline form
 
             // where were we clicked from?
-            var j = $(obj);
+            let j = $(obj);
             console.log(j);
 
-            var parent_form = j.parents('form');
-            console.log(parent_form);
-            console.log('the parent form was ^^');
+            let parent_form = j.parents('form');
 
-            console.log(parent_form.serialize());
+            let all_inputs = parent_form.serializeArray();
+            for (let i in all_inputs) {
+                let input_object = all_inputs[i];
+                if (input_object["value"] === "") {
+                    let n = input_object["name"];
+                    alert('No blank values are allowed here!');
+                    let blank_one = parent_form.find('[name=' + n + ']');
+                    blank_one.effect('highlight');
+                    blank_one.focus();
+                    return false;
+                }
+            }
             //var url = '/input_forms/applyStandalone';
-            var url = parent_form.prop('action');
+            let url = parent_form.prop('action');
 
-            var post = $.post(url, parent_form.serialize(), function (response) {
+            let doc = $(document.documentElement);
+            doc.css("cursor", "progress");
+
+            let post = $.post(url, parent_form.serialize(), function (response) {
                 console.log(response);
                 load_overlay(response);
                 doc.css("cursor", "");
