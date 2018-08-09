@@ -45,6 +45,10 @@
                 //console.log(o.val());
                 // o.prop('disabled', true);
                 return true;
+            } else {
+                let o  = $(obj);
+                let s = $('#{{ j.name }}');
+                s.val(o.val());
             }
         }
     </script>
