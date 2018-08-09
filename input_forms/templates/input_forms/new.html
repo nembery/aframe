@@ -140,7 +140,11 @@
             <td>
                 <select name="output_parser" id="output_parser">
                     {% for op in output_parsers %}
-                    <option name="{{ op.value }}">{{ op.label }}</option>
+                        {%  if op.label == 'default' %}
+                        <option name="{{ op.value }}" selected="selected">{{ op.label }}</option>
+                        {%  else %}
+                        <option name="{{ op.value }}">{{ op.label }}</option>
+                        {% endif %}
                     {%  endfor %}
                 </select>
             </td>
