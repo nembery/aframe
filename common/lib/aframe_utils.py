@@ -454,7 +454,7 @@ def export_input_form(input_form_id):
     form_options["name"] = input_form.name
     form_options["description"] = input_form.description
     form_options["instructions"] = input_form.instructions
-    form_options["json"] = quote(input_form.json)
+    form_options["json"] = quote(input_form.json.encode('utf-8'))
     form_options["output_parser"] = input_form.output_parser
 
     tag_list = list()
@@ -538,13 +538,19 @@ def import_form(jd):
         template.save()
     else:
         print('ConfigTemplate %s already exists' % template_options['name'])
+        template = ConfigTemplate.objects.get(name=template_options['name'])
 
     if not InputForm.objects.filter(name=form_options['name']).exists():
         input_form = InputForm()
         input_form.name = form_options["name"]
         input_form.description = form_options["description"]
         input_form.instructions = form_options["instructions"]
-        input_form.json = unquote(form_options["json"])
+        # preserve utf-8 chars in embedded json for form labels
+        # see https://stackoverflow.com/questions/14539807/convert-unicode-with-utf-8-string-as-content-to-str
+        # str is already a unicode but the wrong encoding is used
+        json_str = unquote(form_options["json"].encode('latin1'))
+        # now convert it back to unicode with the correct utf-8 bytes decoded
+        input_form.json = unicode(json_str, encoding='utf-8')
         input_form.output_parser = form_options.get('output_parser', 'default.html')
         input_form.script = template
 
