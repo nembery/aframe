@@ -36,8 +36,11 @@
 
             console.log(select_list_options);
 
-            let option_name = $("#select_list_option_name").val();
-            let option_value = $("#select_list_option_value").val();
+            let select_list_option_name_el = $("#select_list_option_name");
+            let select_list_option_value_el = $("#select_list_option_value");
+
+            let option_name = select_list_option_name_el.val();
+            let option_value = select_list_option_value_el.val();
 
             // create html fragment to show the item being added
             let new_row = $('<tr id="slo_' + option_name + '"/>');
@@ -54,8 +57,8 @@
 
             select_list_options.push(new_select_list_option);
 
-            $("#select_list_option_name").val("");
-            $("#select_list_option_value").val("");
+            select_list_option_name_el.val("");
+            select_list_option_value_el.val("");
 
             // and debug log for developer sanity
             console.log(select_list_options);
