@@ -72,7 +72,7 @@ def detail(request, screen_id):
             logger.warn("unknown input form id for %s" % inf)
 
     ifi_json = json.dumps(input_form_ids)
-    input_forms_json = json.dumps(input_forms)
+    input_forms_json = json.dumps(input_forms).replace("'", "\\'")
 
     widgets_list = screen.screen_widgets.all().order_by("id")
     widget_ids = list()
