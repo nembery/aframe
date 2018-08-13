@@ -76,6 +76,11 @@
 
                     new_window.css("left", this_layout["x"]);
                     new_window.css("top", this_layout["y"]);
+
+                    if('z' in this_layout) {
+                        new_window.css('z-index', this_layout['z']);
+                    }
+
                 } else {
                     // unknown or new window being added
                     new_window.css("left", left);
@@ -167,36 +172,36 @@
                 return;
             }
 
-            var doc = $(document.documentElement);
+            let doc = $(document.documentElement);
             doc.css('cursor', 'progress');
 
-            var url = '/screens/load_widget';
+            let url = '/screens/load_widget';
 
-            var params = {
+            let params = {
                 'widget_id': widget_id,
                 'widget_layout_id': widget_layout_id,
                 'screen_id': "{{ screen.id }}"
             };
 
             // pass along any extra arguments as well
-            for (arg in args) {
+            for (let arg in args) {
                 params[arg] = args[arg];
             }
 
-            if (widget_layout_id == undefined) {
+            if (widget_layout_id === undefined) {
                 widget_layout_id = generate_widget_layout_id();
             }
 
-            var post = $.post(url, params, function (response) {
+            let post = $.post(url, params, function (response) {
 
-                var content = $(response);
-                var base_window = "";
-                var new_window = "";
+                let content = $(response);
+                let base_window = "";
+                let new_window = "";
 
                 base_window = $("#widget_box_base");
                 new_window = base_window.clone();
 
-                var new_window_id = "widget_container_" + widget_layout_id;
+                let new_window_id = "widget_container_" + widget_layout_id;
                 new_window.prop("id", new_window_id);
                 new_window.draggable({
                     grid: [10, 10],
@@ -222,6 +227,14 @@
 
                     new_window.css("left", this_layout["x"]);
                     new_window.css("top", this_layout["y"]);
+
+                    if('z' in this_layout) {
+                        console.log('restoring z-index');
+                        new_window.css('z-index', this_layout["z"]);
+                    } else {
+                        bring_window_to_front(new_window);
+                    }
+
                 } else {
                     // unknown or new window being added
                     new_window.css("left", 30);
@@ -233,21 +246,20 @@
                     this_layout["y"] = 150;
 
                     layout['widgets'][widget_layout_id]['layout'] = this_layout;
+                    bring_window_to_front(new_window);
                 }
 
 
                 // let's make everything pretty and line up on 10 pixel boundaries
-                var height = new_window.css('height');
-                var height_num = parseInt(height);
+                let height = new_window.css('height');
+                let height_num = parseInt(height);
 
-                while (height_num % 10 != 0) {
+                while (height_num % 10 !== 0) {
                     height_num += 1;
                 }
 
                 console.log('resizing widget box to ' + height_num);
                 new_window.css('height', height_num);
-
-                bring_window_to_front(new_window);
 
                 set_global_sticky_widget(widget_layout_id);
 
@@ -384,7 +396,7 @@
         }
 
         function bring_window_to_front(obj) {
-            var highest_z = find_highest_screen_box();
+            let highest_z = find_highest_screen_box();
 
             if (highest_z >= 99) {
                 console.log('reset z-index to safe levels again!');
@@ -394,7 +406,7 @@
                 $(obj).css('z-index', 2);
 
             } else {
-                if ($(obj).css('z-index') != highest_z) {
+                if ($(obj).css('z-index') !== highest_z) {
                     console.log('new highest is ' + highest_z);
                     $(obj).css('z-index', highest_z + 1);
                 }
@@ -440,12 +452,14 @@
                 let input_form_box = $("#input_form_box_" + input_form_id);
                 let current_y = input_form_box.css("top");
                 let current_x = input_form_box.css("left");
+                let current_z = input_form_box.css("z-index");
 
                 let this_layout = layout['input_forms'][input_form_id];
                 console.log(input_form_id);
                 console.log(this_layout);
                 this_layout["x"] = current_x;
                 this_layout["y"] = current_y;
+                this_layout["z"] = current_z;
                 console.log('layout for input form here \/');
                 console.log(this_layout);
             }
@@ -454,12 +468,13 @@
                 let widget_box = $('#widget_container_' + w);
                 let current_y = widget_box.css('top');
                 let current_x = widget_box.css('left');
-
+                let current_z = widget_box.css('z-index');
                 let this_layout = layout['widgets'][w]['layout'];
                 console.log(this_layout);
 
                 this_layout["x"] = current_x;
                 this_layout["y"] = current_y;
+                this_layout["z"] = current_z;
 
                 console.log(this_layout);
             }
