@@ -184,6 +184,19 @@ def create(request):
     return HttpResponseRedirect("/input_forms/view_from_template/%s" % template.id)
 
 
+def clone_from_input_form(request, input_form_id):
+    """
+    Clones a template. Allows quickly creating new templates from existing ones. Uses an existing input_form
+    as the basis for the clone
+
+    :param request:
+    :param input_form_id: id of the input_form to be used for the clone operation
+    :return: redirect to edit screen of new template!
+    """
+    input_form = get_object_or_404(InputForm, pk=input_form_id)
+    return _clone(request, input_form.script, input_form)
+
+
 def clone(request, template_id):
     """
     Clones a template. Allows quickly creating new templates from existing ones.
@@ -193,7 +206,20 @@ def clone(request, template_id):
     :return: redirect to edit screen of new template!
     """
     template = get_object_or_404(ConfigTemplate, pk=template_id)
+    # handle case where more than 1 input form exists per template
+    input_form = InputForm.objects.filter(script=template).order_by('id').first()
+    return _clone(request, template, input_form)
 
+
+def _clone(request, template, input_form):
+    """
+    Internal function to perform the actual clone. Which template and input_form to clone is handled in different
+    functions depending on need
+    :param request: HTTP Request
+    :param template: which template to clone
+    :param input_form: which input_form to clone
+    :return: redirect to /tool/edit
+    """
     # create our Dolly the sheep (clone)
     dolly = ConfigTemplate()
     dolly.name = template.name + " Clone"
@@ -209,24 +235,19 @@ def clone(request, template_id):
 
     # attempt to save any existing input form associations on the session
     # we'll retrieve this later when creating a new input form
-    try:
-        input_form = InputForm.objects.get(script=template)
 
-        if 'cloned_templates' in request.session:
-            cloned_templates = request.session['cloned_templates']
-        else:
-            cloned_templates = dict()
+    if 'cloned_templates' in request.session:
+        cloned_templates = request.session['cloned_templates']
+    else:
+        cloned_templates = dict()
 
-        cloned_templates[dollies_id] = dict()
-        cloned_templates[dollies_id]['cloned_from'] = template.id
-        cloned_templates[dollies_id]['input_form_id'] = input_form.id
-        print('added a template to the cloned templates cache in the session')
-        print(dollies_id)
+    cloned_templates[dollies_id] = dict()
+    cloned_templates[dollies_id]['cloned_from'] = template.id
+    cloned_templates[dollies_id]['input_form_id'] = input_form.id
+    print('added a template to the cloned templates cache in the session')
+    print(dollies_id)
 
-        request.session['cloned_templates'] = cloned_templates
-
-    except InputForm.DoesNotExist as dne:
-        print('Could not find input_form for this cloned template')
+    request.session['cloned_templates'] = cloned_templates
 
     return HttpResponseRedirect('/tools/edit/%s/' % dolly.id)
 

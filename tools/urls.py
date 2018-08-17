@@ -15,6 +15,8 @@ urlpatterns = [
         name="create"),
     url(r"^clone/(?P<template_id>\d+)/$", views.clone,
         name="clone"),
+    url(r"^cloneFromInputForm/(?P<input_form_id>\d+)/$", views.clone_from_input_form,
+        name="clone_from_input_form"),
     url(r"^update/$", views.update,
         name="update"),
     url(r"^delete/(?P<template_id>\d+)/$", views.delete,
