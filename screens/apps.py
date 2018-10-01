@@ -2,7 +2,6 @@ import json
 import logging
 import os
 from shutil import copyfile
-from urllib import unquote
 
 from django.apps import AppConfig
 
@@ -16,8 +15,6 @@ class ScreensAppConfig(AppConfig):
     def ready(self):
 
         logger.info('Checking for screens to import')
-        from screens.models import Screen
-        from screens.models import ScreenWidgetConfig
 
         from common.lib import aframe_utils
 

@@ -157,7 +157,6 @@ class RestAction(ActionBase):
 
         data = str(template + "\n\n")
         print("Request type: %s" % self.request_type)
-        #print("%s" % data)
 
         if self.request_type == "GET" or self.request_type == "DELETE":
             try:
@@ -167,8 +166,8 @@ class RestAction(ActionBase):
                 else:
                     results = results_object.read()
 
-                content_type = results_object.info().getheader('Content-Type')
-                print(content_type)
+                # content_type = results_object.info().getheader('Content-Type')
+                # print(content_type)
                 if results != "":
                     return self.__format_results(results)
                 else:
